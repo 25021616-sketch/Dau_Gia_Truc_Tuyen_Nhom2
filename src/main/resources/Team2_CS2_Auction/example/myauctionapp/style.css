@@ -1,0 +1,387 @@
+/* Thiết lập chung */
+.root {
+    -fx-font-family: "Segoe UI", Tahoma, sans-serif;
+    -fx-background-color: #F3F4F6;
+}
+
+/* Nút bấm chính - Tông xanh Navy */
+.btn-primary {
+    -fx-background-color: #20335e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+
+.btn-primary:hover {
+    -fx-background-color: #2D4A85;
+}
+
+/* Nút quay lại */
+.back-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #20335e;
+    -fx-border-color: #20335e;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.back-button:hover {
+    -fx-background-color: #E2E8F0;
+}
+
+/* Thẻ bao quanh (Card) */
+.card {
+    -fx-background-color: white;
+    -fx-padding: 25;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 4);
+}
+
+/* Ô nhập liệu */
+.input-field {
+    -fx-background-color: white;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+}
+
+.input-field:focused {
+    -fx-border-color: #20335e;
+    -fx-border-width: 2;
+}
+
+/* ScrollPane tùy chỉnh */
+.custom-scroll {
+    -fx-background-color: transparent;
+}
+
+.custom-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Khung upload ảnh */
+.image-upload-main {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #20335e;
+    -fx-border-style: dashed;
+    -fx-border-radius: 10;
+    -fx-border-width: 1.5;
+}
+
+.image-upload-sub {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E1;
+    -fx-border-style: dashed;
+    -fx-border-radius: 8;
+}
+Để tích hợp CSS cho file FXML này mà không làm lỗi diện tích (đảm bảo giao diện vẫn giữ đúng kích thước, lề lối và tỉ lệ như bạn đã thiết kế), chúng ta sẽ thực hiện phương pháp "Bóc tách kiểu dáng": Giữ các thông số về kích thước (Width, Height, Spacing, Padding) ở FXML và chuyển các thông số về màu sắc, font chữ, hiệu ứng vào file CSS.
+
+Dưới đây là cách triển khai:
+
+1. File CSS: style.css (Bản tích hợp cho Admin)
+Bạn hãy thêm các class này vào file style.css chung mà chúng ta đã làm ở các bước trước.
+
+CSS
+/* Màu sắc chủ đạo cho Admin */
+.admin-sidebar {
+    -fx-background-color: #E2E8F0;
+}
+
+.brand-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 16;
+    -fx-text-fill: #1A365D;
+}
+
+/* Nút Menu SideBar */
+.menu-btn {
+    -fx-background-color: transparent;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-font-size: 14;
+    -fx-padding: 0 0 0 20;
+    -fx-text-fill: #4A5568;
+}
+
+.menu-btn:hover {
+    -fx-background-color: #CBD5E0;
+    -fx-text-fill: #1A365D;
+}
+
+/* Nút đang được chọn (Active) */
+.menu-btn-active {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-weight: bold;
+    -fx-font-size: 14;
+    -fx-padding: 0 0 0 20;
+    -fx-text-fill: #1A365D;
+    /* Hiệu ứng đổ bóng giúp nút nổi bật */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+
+/* Các thẻ thống kê (Cards) */
+.stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 5);
+}
+
+/* Thanh tìm kiếm */
+.search-bar-container {
+    -fx-background-color: #E2E8F0;
+    -fx-background-radius: 10;
+    -fx-padding: 5 15;
+}
+
+.search-field {
+    -fx-background-color: transparent;
+    -fx-font-size: 13;
+}
+/* Card màu xanh đậm đặc thù cho doanh thu (Blue Dark Card) */
+.card-revenue {
+    -fx-background-color: #1E3A8A;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(30,58,138,0.15), 15, 0, 0, 8);
+}
+
+.text-revenue-light {
+    -fx-text-fill: #93C5FD;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+    -fx-text-transform: uppercase;
+}
+
+/* Nút đặc biệt màu vàng (Báo cáo) */
+.btn-warning {
+    -fx-background-color: #F59E0B;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.btn-warning:hover {
+    -fx-background-color: #D97706;
+}
+
+/* Kiểu cho Hyperlink trong Admin */
+.admin-link {
+    -fx-text-fill: #3182CE;
+    -fx-font-weight: bold;
+    -fx-font-size: 13;
+    -fx-underline: false;
+}
+.admin-link:hover {
+    -fx-text-fill: #2B6CB0;
+    -fx-underline: true;
+}
+/* Badge trạng thái hoạt động */
+.status-active {
+    -fx-text-fill: #38A169;
+    -fx-font-weight: bold;
+    -fx-font-size: 12;
+}
+
+/* Badge vai trò (Role) */
+.role-badge {
+    -fx-background-color: #EBF4FF;
+    -fx-text-fill: #5A67D8;
+    -fx-padding: 4 12;
+    -fx-background-radius: 10;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+}
+
+/* Thanh filter tìm kiếm */
+.filter-container {
+    -fx-background-color: #E2E8F0;
+    -fx-background-radius: 12;
+    -fx-padding: 10 20;
+}
+
+/* Nút nổi (Floating Action Button - FAB) */
+.fab-button {
+    -fx-background-color: #1A365D;
+    -fx-background-radius: 15;
+    -fx-text-fill: white;
+    -fx-font-size: 24;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 5);
+    -fx-cursor: hand;
+}
+.fab-button:hover {
+    -fx-background-color: #2D4A85;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* Card dòng người dùng */
+.user-row-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 15 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);
+}
+/* Card sản phẩm lớn (Featured Card) */
+.featured-card {
+    -fx-background-color: #F4F5F7;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 5);
+}
+
+/* Card sản phẩm nhỏ */
+.product-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+}
+
+/* Badge trạng thái (Ví dụ: Đang theo dõi) */
+.badge-blue {
+    -fx-background-color: #1A365D;
+    -fx-text-fill: white;
+    -fx-background-radius: 15;
+    -fx-padding: 5 15;
+    -fx-font-size: 10;
+    -fx-font-weight: bold;
+}
+
+/* Nút phân trang (Pagination) */
+.page-btn {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E9ECEF;
+    -fx-text-fill: #6C757D;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-pref-width: 35;
+    -fx-pref-height: 35;
+}
+.page-btn-active {
+    -fx-background-color: #1A365D;
+    -fx-text-fill: white;
+    -fx-background-radius: 20;
+    -fx-pref-width: 35;
+    -fx-pref-height: 35;
+}
+
+/* Nút Đặt giá viền xanh (Outline Button) */
+.btn-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: #1A365D;
+    -fx-text-fill: #1A365D;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+/* Tối ưu hóa cho User Interface */
+.header-bar {
+    -fx-background-color: white;
+    -fx-border-color: #F1F5F9;
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);
+}
+
+.search-container {
+    -fx-background-color: #F1F3F5;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+}
+
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #F1F5F9;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* Nút bấm ở Sidebar */
+.side-btn {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-text-fill: #64748B;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+    -fx-alignment: BASELINE_LEFT;
+    -fx-padding: 12 16;
+    -fx-background-radius: 8;
+}
+
+.side-btn:hover {
+    -fx-background-color: #F8FAFC;
+    -fx-text-fill: #1A365D;
+}
+
+.side-btn-active {
+    -fx-background-color: #1A365D;
+    -fx-text-fill: white;
+    -fx-background-radius: 20;
+}
+
+/* Thẻ sản phẩm (Product Card) */
+.lot-card {
+    -fx-background-color: white;
+    -fx-padding: 0;
+    -fx-spacing: 12;
+}
+
+.lot-image-placeholder {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 12;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1;
+}
+
+.lot-badge {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-padding: 6 12;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+
+.lot-title {
+    -fx-font-size: 22;
+    -fx-font-weight: bold;
+    -fx-text-fill: #002045;
+}
+/* Đồng bộ thanh Search Header */
+.search-bar-container {
+    -fx-background-color: #F1F5F9; /* Màu nền xám nhạt đồng bộ */
+    -fx-background-radius: 10;
+    -fx-padding: 6 15;
+    -fx-border-color: transparent;
+}
+
+.search-field {
+    -fx-background-color: transparent;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-font-size: 14;
+    -fx-border-width: 0;
+}
+
+/* Nút phân trang ở dưới */
+.page-btn {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 5;
+    -fx-text-fill: #64748B;
+    -fx-cursor: hand;
+}
+
+.page-btn-active {
+    -fx-background-color: #1A365D;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+}
+
+/* Lot Card Container */
+.lot-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+}

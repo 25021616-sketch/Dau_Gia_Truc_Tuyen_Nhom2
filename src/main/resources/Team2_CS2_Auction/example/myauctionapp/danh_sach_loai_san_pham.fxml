@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="Team2_CS2_Auction.Controller.danh_sach_san_pham_Controller"
+            prefHeight="400.0" prefWidth="600.0">
+    <ComboBox fx:id="loaiSanPhamCombo" maxWidth="1.7976931348623157E308" prefHeight="45.0" promptText="Chọn loại sản phẩm"
+              style="-fx-background-color: #F3F4F6; -fx-background-radius: 8;" />
+
+</AnchorPane>

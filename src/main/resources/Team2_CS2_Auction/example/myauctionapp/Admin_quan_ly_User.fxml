@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<BorderPane prefHeight="850.0" prefWidth="1300.0"
+            style="-fx-background-color: #F4F7FE;"
+            stylesheets="@style.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Team2_CS2_Auction.Controller.Admin_quan_li_User_Controller">
+
+    <left>
+        <VBox prefWidth="260.0" styleClass="admin-sidebar">
+            <padding><Insets bottom="20" left="20" right="20" top="30" /></padding>
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Circle fill="#1A365D" radius="18" />
+                    <VBox>
+                        <Label styleClass="brand-title" text="The Curator" />
+                        <Label style="-fx-font-size: 10; -fx-text-fill: #718096; -fx-text-transform: uppercase;" text="Giám sát hệ thống" />
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="10.0" VBox.vgrow="ALWAYS">
+                    <padding><Insets top="40" /></padding>
+                    <Button fx:id="Dashboard" maxWidth="Infinity" prefHeight="45" onAction="#handleGoToDashboard" styleClass="menu-btn" text="Bảng điều khiển" />
+                    <Button fx:id="users" maxWidth="Infinity" prefHeight="45" styleClass="menu-btn-active" text="Người dùng" />
+                    <Button fx:id="inventory" maxWidth="Infinity" prefHeight="45" onAction="#handleGoToInventory" styleClass="menu-btn" text="Kho hàng" />
+                    <Button fx:id="history" maxWidth="Infinity" prefHeight="45" onAction="#handleGoToHistory" styleClass="menu-btn" text="Lịch sử" />
+                </VBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 12;">
+                    <Circle fill="#2D3748" radius="15" />
+                    <VBox>
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 12;" text="Quản trị viên" />
+                        <Label style="-fx-font-size: 10; -fx-text-fill: #A0AEC0;" text="Hồ sơ quản lý" />
+                    </VBox>
+                </HBox>
+            </children>
+        </VBox>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll">
+            <content>
+                <VBox spacing="25.0">
+                    <padding><Insets bottom="30" left="40" right="40" top="30" /></padding>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox>
+                            <Label style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #1A365D;" text="Quản lý Người dùng" />
+                            <Label style="-fx-text-fill: #718096; -fx-font-size: 14;" text="Quản lý vai trò, xác minh thông tin và theo dõi hoạt động." />
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER" spacing="20">
+                            <StackPane style="-fx-cursor: hand;">
+                                <Circle fill="#F6AD55" radius="16" />
+                                <Label style="-fx-font-size: 14; -fx-text-fill: white;" text="🔔" />
+                            </StackPane>
+                            <Circle fill="#2D3748" radius="18" />
+                        </HBox>
+                    </HBox>
+
+                    <HBox spacing="25">
+                        <VBox prefWidth="300" spacing="12" styleClass="stat-card">
+                            <Label style="-fx-font-size: 11; -fx-text-fill: #718096; -fx-font-weight: bold; -fx-text-transform: uppercase;" text="TỔNG QUẢN TRỊ" />
+                            <HBox alignment="BASELINE_LEFT" spacing="10">
+                                <Label style="-fx-font-size: 32; -fx-font-weight: bold;" text="1,284" />
+                                <Label style="-fx-text-fill: #48BB78; -fx-font-size: 12; -fx-font-weight: bold;" text="↗ +12%" />
+                            </HBox>
+                        </VBox>
+                        <VBox prefWidth="300" spacing="12" styleClass="stat-card">
+                            <Label style="-fx-font-size: 11; -fx-text-fill: #718096; -fx-font-weight: bold; -fx-text-transform: uppercase;" text="NGƯỜI ĐẤU GIÁ" />
+                            <HBox alignment="BASELINE_LEFT" spacing="10">
+                                <Label style="-fx-font-size: 32; -fx-font-weight: bold;" text="8,421" />
+                                <Label style="-fx-text-fill: #48BB78; -fx-font-size: 12; -fx-font-weight: bold;" text="↗ +5.4%" />
+                            </HBox>
+                        </VBox>
+                        <VBox prefWidth="300" spacing="12" styleClass="stat-card">
+                            <Label style="-fx-font-size: 11; -fx-text-fill: #718096; -fx-font-weight: bold; -fx-text-transform: uppercase;" text="CHỜ PHÊ DUYỆT" />
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #B7791F;" text="42" />
+                                <Label style="-fx-background-color: #FEFCBF; -fx-padding: 4 10; -fx-background-radius: 8; -fx-font-size: 11; -fx-text-fill: #B7791F; -fx-font-weight: bold;" text="Cần xử lý" />
+                            </HBox>
+                        </VBox>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="15" styleClass="filter-container">
+                        <Label style="-fx-font-size: 16;" text="🔍" />
+                        <TextField prefWidth="400" promptText="Tìm kiếm tên, email hoặc ID..." styleClass="search-field" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox spacing="10">
+                            <Button styleClass="btn-secondary" text="Tất cả vai trò" />
+                            <Button style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Admin" />
+                            <Button style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Người bán" />
+                        </HBox>
+                        <Button styleClass="btn-primary" text="+ Mời người dùng" />
+                    </HBox>
+
+                    <VBox spacing="10" VBox.vgrow="ALWAYS">
+                        <HBox spacing="10" style="-fx-padding: 0 20;">
+                            <Label prefWidth="320" style="-fx-font-weight: bold; -fx-text-fill: #718096; -fx-font-size: 12;" text="THÔNG TIN NGƯỜI DÙNG" />
+                            <Label prefWidth="180" style="-fx-font-weight: bold; -fx-text-fill: #718096; -fx-font-size: 12;" text="VAI TRÒ" />
+                            <Label prefWidth="150" style="-fx-font-weight: bold; -fx-text-fill: #718096; -fx-font-size: 12;" text="TRẠNG THÁI" />
+                            <Label prefWidth="150" style="-fx-font-weight: bold; -fx-text-fill: #718096; -fx-font-size: 12;" text="NGÀY THAM GIA" />
+                        </HBox>
+
+                        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="user-row-card">
+                            <HBox prefWidth="320" spacing="15" alignment="CENTER_LEFT">
+                                <Circle fill="#CBD5E0" radius="20" />
+                                <VBox>
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 15; -fx-text-fill: #1A365D;" text="Julian Sterling" />
+                                    <Label style="-fx-font-size: 12; -fx-text-fill: #A0AEC0;" text="julian.s@curator.io" />
+                                </VBox>
+                            </HBox>
+                            <HBox prefWidth="180" alignment="CENTER_LEFT">
+                                <Label styleClass="role-badge" text="Đấu giá viên trưởng" />
+                            </HBox>
+                            <Label prefWidth="150" styleClass="status-active" text="● ĐANG HOẠT ĐỘNG" />
+                            <Label prefWidth="150" style="-fx-text-fill: #4A5568; -fx-font-size: 13;" text="12/10/2023" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button style="-fx-background-color: transparent; -fx-text-fill: #A0AEC0; -fx-font-size: 18; -fx-cursor: hand;" text="⋮" />
+                        </HBox>
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+    <bottom>
+        <StackPane alignment="CENTER_RIGHT">
+            <padding><Insets bottom="30" right="40" /></padding>
+            <Button prefHeight="55" prefWidth="55" styleClass="fab-button" text="+" />
+        </StackPane>
+    </bottom>
+</BorderPane>
