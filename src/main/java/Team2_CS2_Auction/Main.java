@@ -7,13 +7,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.io.IOException;
 
-public class HelloApplication extends Application {
+public class Main extends Application {
     @Override
     public void start(Stage stage) {
         try {
             // 1. Tải file FXML
             // Lưu ý: Đảm bảo đường dẫn này khớp chính xác với cấu trúc trong thư mục src/main/resources
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Phien_Dau_Gia.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/dang_nhap.fxml"));
             Parent root = fxmlLoader.load();
 
             // 2. Tạo Scene

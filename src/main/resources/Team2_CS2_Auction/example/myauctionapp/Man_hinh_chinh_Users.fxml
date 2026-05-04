@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
@@ -141,9 +142,13 @@
                             </children>
                         </HBox>
 
+                        <FlowPane fx:id="pnlItems" hgap="30.0" vgap="30.0" prefWrapLength="1000.0">
+                            <children>
+                            </children>
+                        </FlowPane>
+
                         <VBox spacing="30.0">
                             <children>
-
                                 <HBox spacing="25.0" style="-fx-border-color: #E9ECEF; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 30 0;">
                                     <children>
                                         <Pane prefHeight="160.0" prefWidth="240.0" style="-fx-background-color: #ADB5BD;" />
@@ -189,7 +194,6 @@
                                         </VBox>
                                     </children>
                                 </HBox>
-
                             </children>
                         </VBox>
 

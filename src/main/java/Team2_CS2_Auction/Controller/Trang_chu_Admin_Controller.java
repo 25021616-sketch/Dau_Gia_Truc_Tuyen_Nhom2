@@ -23,8 +23,8 @@ public class Trang_chu_Admin_Controller extends Base_Admin_Controller {
 
     @FXML
     public void handleGoToUser(ActionEvent event) {
-        // Gõ đúng tên file trong ảnh: Admin_quan_ly_User.fxml
-        switchScene(event, "Admin_quan_ly_User.fxml", "Quản lý người dùng");
+        // Gõ đúng tên file trong ảnh: Admin_quan_li_User.fxml
+        switchScene(event, "Admin_quan_li_User.fxml", "Quản lý người dùng");
     }
 
     @FXML

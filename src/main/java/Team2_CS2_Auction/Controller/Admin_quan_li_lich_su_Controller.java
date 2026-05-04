@@ -23,7 +23,7 @@ public class Admin_quan_li_lich_su_Controller extends Base_Admin_Controller {
     // Phần chuyển giao diện
     @FXML
     public void handleGoToUsers(ActionEvent event) {
-        switchScene(event, "Admin_quan_ly_User.fxml", "Quản lý người dùng");
+        switchScene(event, "Admin_quan_li_User.fxml", "Quản lý người dùng");
     }
     @FXML
     public void handleGoToInventory(ActionEvent event) {

@@ -1,125 +1,118 @@
 package Team2_CS2_Auction.Controller;
 
+import Team2_CS2_Auction.Model.item.Item;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import java.net.URL;
+import java.text.DecimalFormat;
+import java.util.ResourceBundle;
 
-public class Phien_Dau_Gia_Controller {
+public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements Initializable {
 
-    // --- Các thành phần UI khai báo trong FXML ---
-    @FXML
-    private Label currentBidLabel;     // Hiển thị giá hiện tại
-    @FXML
-    private Label targetPriceLabel;    // Hiển thị giá dự kiến (Giá hiện tại + n * bước giá)
-    @FXML
-    private Spinner<Integer> stepSpinner; // Ô chọn số bước nhảy n
-    @FXML
-    private ComboBox<String> bidStepCombo; // Ô chọn mức tăng (vd: $250)
-    @FXML
-    private TextField autoLimitField;  // Ô nhập giới hạn tự động
-    @FXML
-    private ImageView productImage;    // Ảnh sản phẩm
+    @FXML private ImageView productImage;
+    @FXML private Label currentBidLabel;
+    @FXML private Label targetPriceLabel; // Nhãn màu xanh (Giá dự kiến)
+    @FXML private Label lblTenSanPham;    // THÊM MỚI
+    @FXML private Label lblMoTa;          // THÊM MỚI
+    @FXML private Label lblThoiGian;      // Đồng bộ với FXML
+    @FXML private Spinner<Integer> stepSpinner;
+    @FXML private ComboBox<String> bidStepCombo;
+    @FXML private TextField autoLimitField;
 
-    // --- Biến lưu trữ dữ liệu ---
-    private double currentPrice = 12000.0; // Giá gốc ban đầu (có thể lấy từ DB)
+    private Item currentItem;
+    private double currentPrice;
+    private final DecimalFormat formatter = new DecimalFormat("#,###");
 
-    /**
-     * Hàm initialize() tự động chạy khi FXML được load
-     */
-    @FXML
-    public void initialize() {
-        // 1. Cấu hình Spinner cho số bước nhảy (n) từ 1 - 100
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // Cấu hình Spinner (n) từ 1 đến 100
         SpinnerValueFactory<Integer> valueFactory =
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 1);
         stepSpinner.setValueFactory(valueFactory);
 
-        // 2. Thiết lập giá trị mặc định cho ComboBox nếu chưa chọn trong FXML
-        if (bidStepCombo.getValue() == null) {
-            bidStepCombo.setValue("$ 250");
+        // Lắng nghe Spinner. Mỗi khi bấm tăng/giảm n, nhãn màu xanh tự tính lại ngay
+        stepSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTargetPrice());
+    }
+
+    /**
+     * HÀM NHẬN DỮ LIỆU TỪ TRANG CHỦ
+     * Đổ tất cả thông tin từ Item sang giao diện chi tiết
+     */
+    public void setItemData(Item item) {
+        this.currentItem = item;
+        this.currentPrice = item.getGiaKhoiDiem();
+
+        // --- ĐỔ DỮ LIỆU TÊN VÀ MÔ TẢ ---
+        if (lblTenSanPham != null) lblTenSanPham.setText(item.getTenSanPham());
+        if (lblMoTa != null) lblMoTa.setText(item.getMoTa());
+
+        // Hiển thị giá hiện tại
+        currentBidLabel.setText(formatter.format(currentPrice));
+
+        // Hiển thị ảnh
+        if (item.getImagePath() != null && !item.getImagePath().isEmpty()) {
+            productImage.setImage(new Image(item.getImagePath()));
         }
 
-        // 3. Lắng nghe thay đổi trên Spinner (Khi nhấn mũi tên hoặc nhập số)
-        stepSpinner.valueProperty().addListener((obs, oldVal, newVal) -> calculateTargetPrice());
+        // Nạp bước giá do người bán quy ước vào ComboBox
+        double buocGiaTuModel = item.getBuocGia();
+        bidStepCombo.getItems().clear();
+        bidStepCombo.getItems().add(formatter.format(buocGiaTuModel));
+        bidStepCombo.getSelectionModel().selectFirst();
+        bidStepCombo.setDisable(true); // Khóa lại theo quy ước người bán
 
-        // 4. Lắng nghe thay đổi trên ComboBox (Khi chọn mức tiền khác)
-        bidStepCombo.valueProperty().addListener((obs, oldVal, newVal) -> calculateTargetPrice());
-
-        // Tính toán hiển thị lần đầu
-        updateUI();
+        updateTargetPrice();
     }
 
-    /**
-     * Hàm cập nhật UI giá hiện tại
-     */
-    private void updateUI() {
-        currentBidLabel.setText(String.format("$ %,.0f", currentPrice));
-        calculateTargetPrice();
-    }
-
-    /**
-     * Logic tính toán: Giá dự kiến = Giá hiện tại + (n * mức tăng)
-     */
-    private void calculateTargetPrice() {
+    private void updateTargetPrice() {
+        if (currentItem == null) return;
         try {
-            int nSteps = stepSpinner.getValue();
-
-            // Lấy giá trị từ ComboBox, loại bỏ ký tự $ và dấu phẩy
-            String selectedValue = bidStepCombo.getValue().replaceAll("[^0-9]", "");
-            double stepAmount = Double.parseDouble(selectedValue);
-
-            double totalPotentialPrice = currentPrice + (nSteps * stepAmount);
-
-            // Cập nhật nhãn hiển thị giá dự kiến
-            targetPriceLabel.setText(String.format("$ %,.0f", totalPotentialPrice));
+            int n = stepSpinner.getValue();
+            double d = currentItem.getBuocGia();
+            double targetPrice = currentPrice + (n * d);
+            targetPriceLabel.setText(formatter.format(targetPrice));
         } catch (Exception e) {
-            System.err.println("Lỗi xử lý tính toán: " + e.getMessage());
+            targetPriceLabel.setText(formatter.format(currentPrice));
         }
     }
 
-    /**
-     * Sự kiện khi nhấn nút "ĐẶT GIÁ THẦU NGAY"
-     */
     @FXML
     private void handlePlaceBid() {
-        String finalPrice = targetPriceLabel.getText();
-
-        // Tạo Alert xác nhận
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Xác nhận đấu thầu");
-        alert.setHeaderText("Bạn có chắc chắn muốn đặt mức giá này?");
-        alert.setContentText("Mức giá đặt: " + finalPrice);
-
-        if (alert.showAndWait().get() == ButtonType.OK) {
-            System.out.println("Đã gửi giá thầu " + finalPrice + " lên hệ thống.");
-            // Ở đây bạn có thể cập nhật currentPrice = totalPotentialPrice và gọi updateUI()
+        if (currentItem == null) return;
+        try {
+            double finalPrice = Double.parseDouble(targetPriceLabel.getText().replace(",", ""));
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Xác nhận đặt giá");
+            alert.setHeaderText("Bạn muốn đặt thầu mức giá: $" + targetPriceLabel.getText());
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    this.currentPrice = finalPrice;
+                    this.currentItem.setGiaKhoiDiem(finalPrice);
+                    currentBidLabel.setText(formatter.format(currentPrice));
+                    updateTargetPrice();
+                    new Alert(Alert.AlertType.INFORMATION, "Đặt giá thành công!").show();
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Lỗi khi đặt giá: " + e.getMessage());
         }
     }
 
-    /**
-     * Sự kiện khi nhấn nút "KÍCH HOẠT ĐẤU THẦU ỦY QUYỀN"
-     */
     @FXML
     private void handleActivateAutoBid() {
         String limit = autoLimitField.getText();
-        if (limit == null || limit.isEmpty()) {
-            showError("Vui lòng nhập giới hạn giá tối đa cho Bot.");
+        if (limit.isEmpty()) {
+            new Alert(Alert.AlertType.WARNING, "Vui lòng nhập giới hạn tối đa!").show();
             return;
         }
-        System.out.println("Đã kích hoạt Bot tự động với giới hạn: " + limit);
+        System.out.println("Kích hoạt đấu giá tự động đến mức: " + limit);
     }
 
-    /**
-     * Sự kiện đóng cửa sổ
-     */
     @FXML
-    private void handleClose() {
-        System.out.println("Đang đóng phiên đấu giá...");
-        // Code để đóng Stage ở đây
-    }
-
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setContentText(message);
-        alert.show();
+    private void handleClose(javafx.event.ActionEvent event) {
+        switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
     }
 }
