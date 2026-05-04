@@ -12,15 +12,15 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #F8F9FA;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Danh_sach_theo_doi_san_pham_Controller">
+<BorderPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #FFFFFF;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Danh_sach_theo_doi_san_pham_Controller">
 
     <top>
-        <HBox alignment="CENTER_LEFT" prefHeight="72.0" spacing="30.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
+        <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="30.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
             <padding>
-                <Insets bottom="15.0" left="32.0" right="32.0" top="15.0" />
+                <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
             </padding>
             <children>
-                <Label text="Nhà Sưu Tầm Tinh Hoa" textFill="#1A365D">
+                <Label text="Nhà Sưu Tầm Tinh Hoa" textFill="#1A237E">
                     <font>
                         <Font name="System Bold Italic" size="24.0" />
                     </font>
@@ -28,12 +28,12 @@
 
                 <Region HBox.hgrow="ALWAYS" />
 
-                <HBox alignment="CENTER_LEFT" prefWidth="280.0" style="-fx-background-color: #F1F3F5; -fx-background-radius: 8;">
+                <HBox alignment="CENTER_LEFT" prefWidth="280.0" style="-fx-background-color: #F8F9FA; -fx-background-radius: 5;">
                     <padding>
                         <Insets bottom="8.0" left="15.0" right="15.0" top="8.0" />
                     </padding>
                     <children>
-                        <Label text="🔍 " textFill="#ADB5BD" />
+                        <Label text="🔍" textFill="#ADB5BD" />
                         <TextField promptText="Tìm kiếm bộ sưu tập..." style="-fx-background-color: transparent; -fx-prompt-text-fill: #ADB5BD;" HBox.hgrow="ALWAYS">
                             <font>
                                 <Font size="13.0" />
@@ -42,53 +42,51 @@
                     </children>
                 </HBox>
 
-                <Label style="-fx-cursor: hand;" text="🔔" textFill="#1A365D">
-                    <font><Font size="20.0" /></font>
+                <Label style="-fx-cursor: hand;" text="🔔" textFill="#1A237E">
+                    <font><Font size="18.0" /></font>
                 </Label>
             </children>
         </HBox>
     </top>
 
     <left>
-        <VBox prefWidth="250.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 1 0 0;" BorderPane.alignment="CENTER">
+        <VBox prefWidth="240.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 1 0 0;" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="30.0" left="20.0" right="20.0" top="40.0" />
+            </padding>
             <children>
-                <VBox spacing="6.0">
-                    <padding>
-                        <Insets bottom="30.0" left="25.0" right="25.0" top="40.0" />
-                    </padding>
+                <VBox spacing="5.0">
                     <children>
-                        <Label text="Bộ Sưu Tập" textFill="#1A365D">
-                            <font><Font name="System Bold" size="20.0" /></font>
+                        <Label text="Bộ Sưu Tập" textFill="#1A237E">
+                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
                         <Label text="PHÒNG TRƯNG BÀY " textFill="#6C757D">
-                            <font><Font name="System Bold" size="10.0" /></font>
+                            <font><Font size="10.0" /></font>
+                            <VBox.margin><Insets bottom="20.0" /></VBox.margin>
                         </Label>
                     </children>
                 </VBox>
 
                 <VBox spacing="10.0">
-                    <padding>
-                        <Insets left="20.0" right="20.0" />
-                    </padding>
                     <children>
-                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleQuayLaiTrangChu" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #43474E;" text="ĐẤU GIÁ">
+                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleQuayLaiTrangChu" style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="ĐẤU GIÁ">
                             <font><Font name="System Bold" size="11.0" /></font>
-                            <padding><Insets bottom="12.0" left="20.0" right="20.0" top="12.0" /></padding>
+                            <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
                         </Button>
 
-                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" style="-fx-background-color: #1A365D; -fx-background-radius: 25; -fx-cursor: hand; -fx-text-fill: white;" text="DANH SÁCH THEO DÕI">
+                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" style="-fx-background-color: #1A237E; -fx-text-fill: white; -fx-background-radius: 20; -fx-cursor: hand;" text="DANH SÁCH THEO DÕI">
                             <font><Font name="System Bold" size="11.0" /></font>
-                            <padding><Insets bottom="12.0" left="20.0" right="20.0" top="12.0" /></padding>
+                            <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
                         </Button>
 
-                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleGoToLichSu" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #43474E;" text="GIAO DỊCH">
+                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleGoToLichSu" style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="GIAO DỊCH">
                             <font><Font name="System Bold" size="11.0" /></font>
-                            <padding><Insets bottom="12.0" left="20.0" right="20.0" top="12.0" /></padding>
+                            <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
                         </Button>
 
-                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleGoTothemsanpham" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #43474E;" text="THÊM SẢN PHẨM">
+                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleGoTothemsanpham" style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="THÊM SẢN PHẨM">
                             <font><Font name="System Bold" size="11.0" /></font>
-                            <padding><Insets bottom="12.0" left="20.0" right="20.0" top="12.0" /></padding>
+                            <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
                         </Button>
                     </children>
                 </VBox>
@@ -97,11 +95,11 @@
     </left>
 
     <center>
-        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #F8F9FA;" BorderPane.alignment="CENTER">
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #FFFFFF;" BorderPane.alignment="CENTER">
             <content>
                 <VBox spacing="40.0">
                     <padding>
-                        <Insets bottom="50.0" left="50.0" right="50.0" top="40.0" />
+                        <Insets bottom="50.0" left="60.0" right="60.0" top="40.0" />
                     </padding>
                     <children>
 
@@ -109,21 +107,21 @@
                             <children>
                                 <VBox spacing="5.0">
                                     <children>
-                                        <Label text="Danh sách theo dõi của tôi" textFill="#1A365D">
+                                        <Label text="Danh sách theo dõi của tôi" textFill="#1A237E">
                                             <font><Font name="Times New Roman Bold" size="36.0" /></font>
                                         </Label>
                                         <Label text="Lưu giữ bộ sưu tập cá nhân của bạn. Theo dõi những tác phẩm được săn đón nhất thế giới." textFill="#6C757D">
-                                            <font><Font name="System Italic" size="14.0" /></font>
+                                            <font><Font size="15.0" /></font>
                                         </Label>
                                     </children>
                                 </VBox>
                                 <Region HBox.hgrow="ALWAYS" />
                                 <HBox spacing="10.0">
                                     <children>
-                                        <Label style="-fx-background-color: #1A365D; -fx-text-fill: white; -fx-background-radius: 15; -fx-padding: 5 15 5 15;" text="ĐANG THEO DÕI: 04">
+                                        <Label style="-fx-background-color: #1A237E; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 5 15 5 15;" text="ĐANG THEO DÕI: 04">
                                             <font><Font name="System Bold" size="10.0" /></font>
                                         </Label>
-                                        <Label style="-fx-background-color: #E9ECEF; -fx-text-fill: #495057; -fx-background-radius: 15; -fx-padding: 5 15 5 15;" text="BỘ SƯU TẬP: 08">
+                                        <Label style="-fx-background-color: #E9ECEF; -fx-text-fill: #495057; -fx-background-radius: 20; -fx-padding: 5 15 5 15;" text="BỘ SƯU TẬP: 08">
                                             <font><Font name="System Bold" size="10.0" /></font>
                                         </Label>
                                     </children>
@@ -133,39 +131,25 @@
 
                         <HBox spacing="30.0">
                             <children>
-                                <VBox style="-fx-background-color: #F4F5F7; -fx-background-radius: 4; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);" HBox.hgrow="ALWAYS">
+                                <VBox style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 5);" HBox.hgrow="ALWAYS">
                                     <children>
-                                        <Pane prefHeight="400.0" style="-fx-background-color: #01579B; -fx-background-radius: 4 4 0 0;" />
-
+                                        <Pane prefHeight="400.0" style="-fx-background-color: #243B63; -fx-background-radius: 4 4 0 0;" />
                                         <VBox spacing="15.0">
-                                            <padding>
-                                                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-                                            </padding>
+                                            <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
                                             <children>
-                                                <Label style="-fx-background-color: #E3F2FD; -fx-text-fill: #1976D2; -fx-padding: 4 10 4 10; -fx-background-radius: 3;" text="LÔ CAO CẤP #042">
+                                                <Label text="LÔ CAO CẤP #042" textFill="#1A237E">
                                                     <font><Font name="System Bold" size="10.0" /></font>
                                                 </Label>
-                                                <Label text="Bản dạ khúc Sapphire" textFill="#1A365D">
+                                                <Label text="Bản dạ khúc Sapphire" textFill="#1A237E">
                                                     <font><Font name="Times New Roman Bold" size="28.0" /></font>
                                                 </Label>
                                                 <HBox alignment="BOTTOM_LEFT">
                                                     <children>
-                                                        <Label maxWidth="450.0" text="Một ví dụ xuất sắc về chủ nghĩa biểu hiện trừu tượng giữa thế kỷ. Có nguồn gốc từ một bộ sưu tập tư nhân ở Geneva." textFill="#6C757D" wrapText="true">
-                                                            <font><Font size="14.0" /></font>
-                                                        </Label>
+                                                        <Label maxWidth="450.0" text="Một ví dụ xuất sắc về chủ nghĩa biểu hiện trừu tượng giữa thế kỷ." textFill="#6C757D" wrapText="true" />
                                                         <Region HBox.hgrow="ALWAYS" />
-                                                        <VBox alignment="CENTER_RIGHT" spacing="5.0">
-                                                            <children>
-                                                                <Label text="GIÁ HIỆN TẠI" textFill="#ADB5BD">
-                                                                    <font><Font name="System Bold" size="10.0" /></font>
-                                                                </Label>
-                                                                <Label text="\$1,240,000" textFill="#1A365D">
-                                                                    <font><Font name="Times New Roman Bold" size="32.0" /></font>
-                                                                </Label>
-                                                                <Label text="KẾT THÚC TRONG 02:14:10" textFill="#D32F2F">
-                                                                    <font><Font name="System Bold" size="10.0" /></font>
-                                                                </Label>
-                                                            </children>
+                                                        <VBox alignment="CENTER_RIGHT">
+                                                            <Label text="GIÁ HIỆN TẠI" textFill="#ADB5BD"><font><Font size="10.0" /></font></Label>
+                                                            <Label text="\$1,240,000" textFill="#1A237E"><font><Font name="Times New Roman Bold" size="32.0" /></font></Label>
                                                         </VBox>
                                                     </children>
                                                 </HBox>
@@ -173,152 +157,6 @@
                                         </VBox>
                                     </children>
                                 </VBox>
-
-                                <VBox prefWidth="350.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 4; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
-                                    <children>
-                                        <Pane prefHeight="300.0" style="-fx-background-color: #212121; -fx-background-radius: 4 4 0 0;" />
-
-                                        <VBox spacing="15.0" VBox.vgrow="ALWAYS">
-                                            <padding>
-                                                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-                                            </padding>
-                                            <children>
-                                                <Label text="GỐM SỨ ĐƯƠNG ĐẠI" textFill="#1A365D">
-                                                    <font><Font name="System Bold" size="10.0" /></font>
-                                                </Label>
-                                                <Label text="Bình khối đá" textFill="#1A365D">
-                                                    <font><Font name="Times New Roman Bold" size="20.0" /></font>
-                                                </Label>
-                                                <Label text="Đồ đá nung thủ công với men núi lửa." textFill="#6C757D" wrapText="true">
-                                                    <font><Font size="14.0" /></font>
-                                                </Label>
-                                                <Region VBox.vgrow="ALWAYS" />
-                                                <HBox spacing="30.0">
-                                                    <children>
-                                                        <VBox spacing="5.0">
-                                                            <children>
-                                                                <Label text="ƯỚC TÍNH" textFill="#ADB5BD">
-                                                                    <font><Font name="System Bold" size="10.0" /></font>
-                                                                </Label>
-                                                                <Label text="\$15,000 - $20,000" textFill="#ADB5BD">
-                                                                    <font><Font name="Times New Roman" size="16.0" /></font>
-                                                                </Label>
-                                                            </children>
-                                                        </VBox>
-                                                        <VBox alignment="TOP_RIGHT" spacing="5.0" HBox.hgrow="ALWAYS">
-                                                            <children>
-                                                                <Label text="HIỆN TẠI" textFill="#ADB5BD">
-                                                                    <font><Font name="System Bold" size="10.0" /></font>
-                                                                </Label>
-                                                                <Label text="\$18,500" textFill="#1A365D">
-                                                                    <font><Font name="Times New Roman Bold" size="18.0" /></font>
-                                                                </Label>
-                                                            </children>
-                                                        </VBox>
-                                                    </children>
-                                                </HBox>
-                                                <Button maxWidth="Infinity" mnemonicParsing="false" style="-fx-background-color: #1A365D; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;" text="ĐẶT GIÁ">
-                                                    <font><Font name="System Bold" size="12.0" /></font>
-                                                    <padding>
-                                                        <Insets bottom="12.0" top="12.0" />
-                                                    </padding>
-                                                    <VBox.margin>
-                                                        <Insets top="10.0" />
-                                                    </VBox.margin>
-                                                </Button>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </VBox>
-                            </children>
-                        </HBox>
-
-                        <HBox spacing="30.0">
-                            <children>
-                                <HBox style="-fx-background-color: #F4F5F7; -fx-background-radius: 4; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <Pane prefHeight="160.0" prefWidth="180.0" style="-fx-background-color: #4E342E; -fx-background-radius: 4 0 0 4;" />
-                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
-                                            <padding><Insets bottom="20.0" left="25.0" right="25.0" top="20.0" /></padding>
-                                            <children>
-                                                <Label text="NỘI THẤT DI SẢN" textFill="#1A365D">
-                                                    <font><Font name="System Bold" size="9.0" /></font>
-                                                </Label>
-                                                <Label text="Ghế bành nghệ nhân" textFill="#1A365D">
-                                                    <font><Font name="Times New Roman Bold" size="18.0" /></font>
-                                                </Label>
-                                                <Label text="Da hạt dẻ hiện đại giữa thế kỷ" textFill="#6C757D" wrapText="true">
-                                                    <font><Font name="System Italic" size="12.0" /></font>
-                                                </Label>
-                                                <Region VBox.vgrow="ALWAYS" />
-                                                <HBox alignment="BOTTOM_LEFT">
-                                                    <children>
-                                                        <Label text="\$45,000" textFill="#1A365D">
-                                                            <font><Font name="Times New Roman Bold" size="22.0" /></font>
-                                                        </Label>
-                                                        <Region HBox.hgrow="ALWAYS" />
-                                                        <Button mnemonicParsing="false" prefWidth="90.0" style="-fx-background-color: #1A365D; -fx-text-fill: white; -fx-background-radius: 3; -fx-cursor: hand;" text="ĐẶT GIÁ">
-                                                            <font><Font name="System Bold" size="10.0" /></font>
-                                                            <padding><Insets bottom="8.0" top="8.0" /></padding>
-                                                        </Button>
-                                                    </children>
-                                                </HBox>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </HBox>
-
-                                <HBox style="-fx-background-color: #F4F5F7; -fx-background-radius: 4; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <Pane prefHeight="160.0" prefWidth="180.0" style="-fx-background-color: #263238; -fx-background-radius: 4 0 0 4;" />
-                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
-                                            <padding><Insets bottom="20.0" left="25.0" right="25.0" top="20.0" /></padding>
-                                            <children>
-                                                <Label text="ĐỒNG HỒ" textFill="#1A365D">
-                                                    <font><Font name="System Bold" size="9.0" /></font>
-                                                </Label>
-                                                <Label text="Zenith Tối giản '72" textFill="#1A365D">
-                                                    <font><Font name="Times New Roman Bold" size="18.0" /></font>
-                                                </Label>
-                                                <Label text="Còn lại 5 ngày" textFill="#6C757D" wrapText="true">
-                                                    <font><Font name="System Italic" size="12.0" /></font>
-                                                </Label>
-                                                <Region VBox.vgrow="ALWAYS" />
-                                                <HBox alignment="BOTTOM_LEFT">
-                                                    <children>
-                                                        <Label text="\$12,200" textFill="#1A365D">
-                                                            <font><Font name="Times New Roman Bold" size="22.0" /></font>
-                                                        </Label>
-                                                        <Region HBox.hgrow="ALWAYS" />
-                                                        <Button mnemonicParsing="false" prefWidth="90.0" style="-fx-background-color: transparent; -fx-border-color: #1A365D; -fx-text-fill: #1A365D; -fx-background-radius: 3; -fx-border-radius: 3; -fx-cursor: hand;" text="XEM XẾT">
-                                                            <font><Font name="System Bold" size="10.0" /></font>
-                                                            <padding><Insets bottom="7.0" top="7.0" /></padding>
-                                                        </Button>
-                                                    </children>
-                                                </HBox>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </HBox>
-                            </children>
-                        </HBox>
-
-                        <HBox alignment="CENTER_LEFT">
-                            <VBox.margin><Insets top="20.0" /></VBox.margin>
-                            <children>
-                                <Label text="Đang hiển thị 4 trên 28 mục được theo dõi" textFill="#ADB5BD">
-                                    <font><Font name="System Italic" size="12.0" /></font>
-                                </Label>
-                                <Region HBox.hgrow="ALWAYS" />
-                                <HBox spacing="5.0">
-                                    <children>
-                                        <Button mnemonicParsing="false" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-text-fill: #6C757D; -fx-border-radius: 20; -fx-background-radius: 20; -fx-cursor: hand; -fx-pref-width: 35; -fx-pref-height: 35;" text="&lt;" />
-                                        <Button mnemonicParsing="false" style="-fx-background-color: #1A365D; -fx-text-fill: white; -fx-background-radius: 20; -fx-cursor: hand; -fx-pref-width: 35; -fx-pref-height: 35;" text="1" />
-                                        <Button mnemonicParsing="false" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-text-fill: #6C757D; -fx-border-radius: 20; -fx-background-radius: 20; -fx-cursor: hand; -fx-pref-width: 35; -fx-pref-height: 35;" text="2" />
-                                        <Button mnemonicParsing="false" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-text-fill: #6C757D; -fx-border-radius: 20; -fx-background-radius: 20; -fx-cursor: hand; -fx-pref-width: 35; -fx-pref-height: 35;" text="3" />
-                                        <Button mnemonicParsing="false" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-text-fill: #6C757D; -fx-border-radius: 20; -fx-background-radius: 20; -fx-cursor: hand; -fx-pref-width: 35; -fx-pref-height: 35;" text="&gt;" />
-                                    </children>
-                                </HBox>
                             </children>
                         </HBox>
 

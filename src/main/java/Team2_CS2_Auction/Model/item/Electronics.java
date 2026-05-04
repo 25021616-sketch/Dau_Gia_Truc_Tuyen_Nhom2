@@ -6,19 +6,22 @@ public class Electronics extends Item {
     private String brand;
     private String power;
 
-    // Constructor cải tiến: Nhận thêm 'loai' để Controller có thể truyền vào linh hoạt
+    // Constructor cập nhật: Thêm tham số imagePath vào danh sách nhận vào
     public Electronics(String id, String ten, String loai, String moTa, double gia, double buoc,
-                       LocalDateTime batDau, LocalDateTime ketThuc, String brand, String power) {
+                       LocalDateTime batDau, LocalDateTime ketThuc, String imagePath, // <-- THÊM Ở ĐÂY
+                       String brand, String power) {
 
-        // Gọi Constructor của lớp cha Item
-        // Đảm bảo truyền đúng 8 tham số mà class Item đang yêu cầu
-        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc);
+        /**
+         * super(...) phải truyền đủ 9 tham số để khớp với Item.java mới nhất:
+         * id, tên, loại, mô tả, giá khởi điểm, bước giá, bắt đầu, kết thúc, đường dẫn ảnh.
+         */
+        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc, imagePath);
 
         this.brand = brand;
         this.power = power;
     }
 
-    // --- GETTERS ---
+    // --- CÁC GETTER/SETTER CỦA BẠN (GIỮ NGUYÊN) ---
     public String getBrand() {
         return brand;
     }
@@ -27,7 +30,6 @@ public class Electronics extends Item {
         return power;
     }
 
-    // --- SETTERS ---
     public void setBrand(String brand) {
         this.brand = brand;
     }

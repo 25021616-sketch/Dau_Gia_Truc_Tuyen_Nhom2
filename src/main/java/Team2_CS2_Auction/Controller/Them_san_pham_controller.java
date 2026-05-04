@@ -54,29 +54,53 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     @FXML
     private void handleDangSanPham(ActionEvent event) {
         try {
+            // Lấy thời gian bắt đầu và kết thúc
             LocalDateTime start = ngayBatDauPicker.getValue().atTime(Integer.parseInt(gioBatDau.getText()), Integer.parseInt(phutBatDau.getText()));
             LocalDateTime end = ngayKetThucPicker.getValue().atTime(Integer.parseInt(gioKetThuc.getText()), Integer.parseInt(phutKetThuc.getText()));
 
+            // Tạo ID ngẫu nhiên và lấy các thông tin chung
             String customID = "ITEM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             String loai = loaiSanPhamCombo.getValue();
+            String ten = txtTenSanPham.getText();
+            String moTa = txtMoTa.getText();
+            double gia = Double.parseDouble(txtGiaKhoiDiem.getText());
+            double buoc = Double.parseDouble(txtBuocGia.getText());
+
             Item newItem;
 
-            // Logic tạo Object theo lớp con (giữ nguyên chức năng cũ)
+            // --- LOGIC TẠO OBJECT QUA FACTORY (ĐÃ CẬP NHẬT) ---
             switch (loai) {
-                case "Đồ điện tử": newItem = new Electronics(customID, txtTenSanPham.getText(), loai, txtMoTa.getText(), Double.parseDouble(txtGiaKhoiDiem.getText()), Double.parseDouble(txtBuocGia.getText()), start, end, txtHangSX.getText(), txtCongSuat.getText()); break;
-                case "Bất động sản": newItem = new RealEstate(customID, txtTenSanPham.getText(), loai, txtMoTa.getText(), Double.parseDouble(txtGiaKhoiDiem.getText()), Double.parseDouble(txtBuocGia.getText()), start, end, txtDiaChiBDS.getText(), Double.parseDouble(txtDienTichBDS.getText()), "Sổ đỏ"); break;
-                case "Sách", "Tác phẩm nghệ thuật": newItem = new Art(customID, txtTenSanPham.getText(), loai, txtMoTa.getText(), Double.parseDouble(txtGiaKhoiDiem.getText()), Double.parseDouble(txtBuocGia.getText()), start, end, txtTacGia.getText(), txtNamSangTac.getText()); break;
-                default: newItem = new Art(customID, txtTenSanPham.getText(), loai, txtMoTa.getText(), Double.parseDouble(txtGiaKhoiDiem.getText()), Double.parseDouble(txtBuocGia.getText()), start, end, "N/A", "N/A");
+                case "Đồ điện tử":
+                    newItem = ElectronicsFactory.create(customID, ten, loai, moTa, gia, buoc, start, end, selectedImagePath,
+                            txtHangSX.getText(), txtCongSuat.getText());
+                    break;
+
+                case "Bất động sản":
+                    newItem = RealEstateFactory.create(customID, ten, loai, moTa, gia, buoc, start, end, selectedImagePath,
+                            txtDiaChiBDS.getText(), Double.parseDouble(txtDienTichBDS.getText()), "Sổ đỏ");
+                    break;
+
+                case "Sách", "Tác phẩm nghệ thuật":
+                    newItem = ArtFactory.create(customID, ten, loai, moTa, gia, buoc, start, end, selectedImagePath,
+                            txtTacGia.getText(), txtNamSangTac.getText());
+                    break;
+
+                default: // Mặc định là Vehicle (áp dụng cho Đồng hồ, Xe hơi, Trang sức, Khác)
+                    newItem = VehicleFactory.create(customID, ten, loai, moTa, gia, buoc, start, end, selectedImagePath,
+                            txtThuongHieuDH.getText(), txtNamSXDH.getText());
+                    break;
             }
 
-            newItem.setImagePath(selectedImagePath);
+            // Lưu sản phẩm vào danh sách chung
             AuctionData.listSanPham.add(newItem);
 
             resetForm(); // Làm sạch form sau khi đăng
             new Alert(Alert.AlertType.INFORMATION, "Sản phẩm đã được đăng thành công!").showAndWait();
             handleBackToHome(event);
+
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
+            new Alert(Alert.AlertType.ERROR, "Lỗi khi đăng sản phẩm: " + e.getMessage()).show();
+            e.printStackTrace();
         }
     }
 
@@ -85,6 +109,14 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         txtMoTa.clear();
         txtGiaKhoiDiem.clear();
         txtBuocGia.clear();
+        // Reset các trường thời gian
+        gioBatDau.clear();
+        phutBatDau.clear();
+        gioKetThuc.clear();
+        phutKetThuc.clear();
+        ngayBatDauPicker.setValue(null);
+        ngayKetThucPicker.setValue(null);
+        // Reset ảnh
         imgPreview.setImage(null);
         selectedImagePath = "";
         hideAllGroups();
@@ -93,6 +125,10 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     @FXML
     private void handleChooseImage() {
         FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn ảnh sản phẩm");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
         File file = fileChooser.showOpenDialog(null);
         if (file != null) {
             selectedImagePath = file.toURI().toString();
@@ -107,10 +143,18 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     private void hideAllGroups() {
         VBox[] groups = {groupDoDienTu, groupDongHo, groupSach, groupBatDongSan};
-        for (VBox g : groups) if (g != null) { g.setVisible(false); g.setManaged(false); }
+        for (VBox g : groups) {
+            if (g != null) {
+                g.setVisible(false);
+                g.setManaged(false);
+            }
+        }
     }
 
     private void showGroup(VBox g) {
-        if (g != null) { g.setVisible(true); g.setManaged(true); }
+        if (g != null) {
+            g.setVisible(true);
+            g.setManaged(true);
+        }
     }
 }

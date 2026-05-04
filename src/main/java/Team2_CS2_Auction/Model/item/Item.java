@@ -11,13 +11,13 @@ public abstract class Item {
     private double buocGia;
     private LocalDateTime thoiGianBatDau;
     private LocalDateTime thoiGianKetThuc;
-    // --- BỔ SUNG: Thuộc tính lưu đường dẫn ảnh ---
     private String imagePath;
 
-    // Constructor đầy đủ (Đã cập nhật để nhận imagePath)
+    // SỬA: Thêm tham số imagePath vào Constructor
     public Item(String id, String tenSanPham, String loaiSanPham, String moTa,
                 double giaKhoiDiem, double buocGia,
-                LocalDateTime thoiGianBatDau, LocalDateTime thoiGianKetThuc) {
+                LocalDateTime thoiGianBatDau, LocalDateTime thoiGianKetThuc,
+                String imagePath) { // Nhận imagePath từ Factory truyền vào
         this.id = id;
         this.tenSanPham = tenSanPham;
         this.loaiSanPham = loaiSanPham;
@@ -26,10 +26,10 @@ public abstract class Item {
         this.buocGia = buocGia;
         this.thoiGianBatDau = thoiGianBatDau;
         this.thoiGianKetThuc = thoiGianKetThuc;
-        this.imagePath = ""; // Khởi tạo mặc định là chuỗi rỗng
+        this.imagePath = imagePath; // Gán giá trị thực tế thay vì để rỗng
     }
 
-    // --- GETTERS ---
+    // --- GIỮ NGUYÊN TẤT CẢ GETTER/SETTER CỦA BẠN ---
     public String getId() { return id; }
     public String getTenSanPham() { return tenSanPham; }
     public String getLoaiSanPham() { return loaiSanPham; }
@@ -38,10 +38,8 @@ public abstract class Item {
     public double getBuocGia() { return buocGia; }
     public LocalDateTime getThoiGianBatDau() { return thoiGianBatDau; }
     public LocalDateTime getThoiGianKetThuc() { return thoiGianKetThuc; }
-    // --- BỔ SUNG: Getter cho ảnh ---
     public String getImagePath() { return imagePath; }
 
-    // --- SETTERS ---
     public void setId(String id) { this.id = id; }
     public void setTenSanPham(String tenSanPham) { this.tenSanPham = tenSanPham; }
     public void setLoaiSanPham(String loaiSanPham) { this.loaiSanPham = loaiSanPham; }
@@ -50,37 +48,18 @@ public abstract class Item {
     public void setBuocGia(double buocGia) { this.buocGia = buocGia; }
     public void setThoiGianBatDau(LocalDateTime thoiGianBatDau) { this.thoiGianBatDau = thoiGianBatDau; }
     public void setThoiGianKetThuc(LocalDateTime thoiGianKetThuc) { this.thoiGianKetThuc = thoiGianKetThuc; }
-    // --- BỔ SUNG: Setter cho ảnh ---
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
 
-    // --- PHƯƠNG THỨC BỔ TRỢ (UTILITIES) ---
-
-    /**
-     * Kiểm tra xem phiên đấu giá hiện tại có đang diễn ra hay không
-     */
+    // --- GIỮ NGUYÊN CÁC PHƯƠNG THỨC LOGIC CỦA BẠN ---
     public boolean dangDauGia() {
         LocalDateTime now = LocalDateTime.now();
         return now.isAfter(thoiGianBatDau) && now.isBefore(thoiGianKetThuc);
     }
 
-    /**
-     * Kiểm tra xem phiên đấu giá đã kết thúc chưa
-     */
     public boolean daKetThuc() {
         return LocalDateTime.now().isAfter(thoiGianKetThuc);
     }
 
-    @Override
-    public String toString() {
-        return "Sản phẩm: " + tenSanPham + " [" + loaiSanPham + "]" +
-                "\nGiá khởi điểm: " + giaKhoiDiem +
-                "\nBắt đầu: " + thoiGianBatDau +
-                "\nKết thúc: " + thoiGianKetThuc +
-                "\nĐường dẫn ảnh: " + imagePath;
-    }
-    /**
-     * Cho nó bắt thời gian để chuyển sang trạng thái đúng của nó
-     */
     public String getTrangThai() {
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(thoiGianBatDau)) {
@@ -90,5 +69,12 @@ public abstract class Item {
         } else {
             return "ĐÃ KẾT THÚC";
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Sản phẩm: " + tenSanPham + " [" + loaiSanPham + "]" +
+                "\nGiá hiện tại: " + giaKhoiDiem +
+                "\nTrạng thái: " + getTrangThai();
     }
 }

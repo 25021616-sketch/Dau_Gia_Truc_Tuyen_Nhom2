@@ -6,19 +6,22 @@ public class Vehicle extends Item {
     private String manufacturer; // Hãng sản xuất / Thương hiệu
     private String modelYear;    // Đời xe / Năm sản xuất
 
-    // Constructor cải tiến: Nhận tham số 'loai' để phân biệt Xe hơi/Đồng hồ/Trang sức
+    // Constructor cập nhật: Nhận thêm tham số imagePath
     public Vehicle(String id, String ten, String loai, String moTa, double gia, double buoc,
-                   LocalDateTime batDau, LocalDateTime ketThuc,
+                   LocalDateTime batDau, LocalDateTime ketThuc, String imagePath, // <-- THÊM Ở ĐÂY
                    String manufacturer, String modelYear) {
 
-        // Gọi Constructor cha (Item) - Thứ tự chuẩn 8 tham số: id, ten, loai, moTa, gia, buoc, batDau, ketThuc
-        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc);
+        /**
+         * super(...) phải truyền đủ 9 tham số để khớp với Item.java mới:
+         * id, tên, loại, mô tả, giá khởi điểm, bước giá, bắt đầu, kết thúc, ảnh.
+         */
+        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc, imagePath);
 
         this.manufacturer = manufacturer;
         this.modelYear = modelYear;
     }
 
-    // --- GETTERS ---
+    // --- CÁC GETTER/SETTER CỦA BẠN (GIỮ NGUYÊN 100%) ---
     public String getManufacturer() {
         return manufacturer;
     }
@@ -27,7 +30,6 @@ public class Vehicle extends Item {
         return modelYear;
     }
 
-    // --- SETTERS ---
     public void setManufacturer(String manufacturer) {
         this.manufacturer = manufacturer;
     }

@@ -7,20 +7,23 @@ public class RealEstate extends Item {
     private double area;
     private String legal;
 
-    // Constructor cải tiến: Nhận tham số 'loai' để truyền từ Controller vào
+    // Constructor cập nhật: Nhận thêm tham số imagePath
     public RealEstate(String id, String ten, String loai, String moTa, double gia, double buoc,
-                      LocalDateTime batDau, LocalDateTime ketThuc,
+                      LocalDateTime batDau, LocalDateTime ketThuc, String imagePath, // <-- THÊM Ở ĐÂY
                       String address, double area, String legal) {
 
-        // Gọi Constructor cha (Item) - Đảm bảo khớp 100% với 8 tham số của Item.java
-        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc);
+        /**
+         * super(...) phải truyền đủ 9 tham số để khớp với Item.java mới:
+         * id, tên, loại, mô tả, giá khởi điểm, bước giá, bắt đầu, kết thúc, ảnh.
+         */
+        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc, imagePath);
 
         this.address = address;
         this.area = area;
         this.legal = legal;
     }
 
-    // --- GETTERS ---
+    // --- CÁC GETTER/SETTER CỦA BẠN (GIỮ NGUYÊN 100%) ---
     public String getAddress() {
         return address;
     }
@@ -33,7 +36,6 @@ public class RealEstate extends Item {
         return legal;
     }
 
-    // --- SETTERS ---
     public void setAddress(String address) {
         this.address = address;
     }

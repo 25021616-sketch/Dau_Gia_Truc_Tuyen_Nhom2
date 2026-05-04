@@ -3,26 +3,25 @@ package Team2_CS2_Auction.Model.item;
 import java.time.LocalDateTime;
 
 public class Art extends Item {
-    private String artist;   // Họa sĩ / Nghệ nhân / Tác giả
-    private String material; // Chất liệu / Năm sáng tác (tùy biến)
+    private String artist;   // Tác giả
+    private String material; // Chất liệu / Năm sáng tác
 
-    // Constructor cải tiến
+    // Constructor cập nhật: Thêm tham số imagePath
     public Art(String id, String ten, String loai, String moTa, double gia, double buoc,
-               LocalDateTime batDau, LocalDateTime ketThuc,
+               LocalDateTime batDau, LocalDateTime ketThuc, String imagePath, // <--- THÊM Ở ĐÂY
                String artist, String material) {
 
         /**
-         * CHÚ Ý: super(...) phải khớp chính xác với số lượng và thứ tự tham số
-         * trong Constructor của class Item.
-         * Ở đây là 8 tham số (id, ten, loai, moTa, gia, buoc, batDau, ketThuc).
+         * super(...) bây giờ nhận 9 tham số để khớp với Item.java mới.
+         * Thứ tự phải chuẩn: id, tên, loại, mô tả, giá, bước, bắt đầu, kết thúc, ảnh.
          */
-        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc);
+        super(id, ten, loai, moTa, gia, buoc, batDau, ketThuc, imagePath);
 
         this.artist = artist;
         this.material = material;
     }
 
-    // --- GETTERS ---
+    // --- CÁC GETTER/SETTER CŨ GIỮ NGUYÊN (KHÔNG XÓA) ---
     public String getArtist() {
         return artist;
     }
@@ -31,7 +30,6 @@ public class Art extends Item {
         return material;
     }
 
-    // --- SETTERS ---
     public void setArtist(String artist) {
         this.artist = artist;
     }
