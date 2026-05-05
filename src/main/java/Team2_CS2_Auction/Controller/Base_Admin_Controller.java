@@ -1,6 +1,5 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Model.item.Item;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -9,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
+import Team2_CS2_Auction.Model.item.Item;
 
 public abstract class Base_Admin_Controller {
 

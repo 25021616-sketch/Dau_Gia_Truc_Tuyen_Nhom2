@@ -1,6 +1,5 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Model.item.Item;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -12,6 +11,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import Team2_CS2_Auction.Model.item.Item;
 
 import java.time.LocalDateTime;
 import java.text.DecimalFormat;

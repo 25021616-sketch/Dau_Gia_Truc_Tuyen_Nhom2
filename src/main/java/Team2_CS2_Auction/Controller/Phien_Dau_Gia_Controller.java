@@ -1,6 +1,5 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Model.item.Item;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -9,6 +8,7 @@ import javafx.scene.image.ImageView;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ResourceBundle;
+import Team2_CS2_Auction.Model.item.Item;
 
 public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements Initializable {
 
