@@ -44,9 +44,7 @@ public class Auction implements Serializable {
         this.status = AuctionStatus.PENDING;
     }
 
-    // =========================
     // BID
-    // =========================
     public synchronized void addBid(Bid bid) {
 
         if (status != AuctionStatus.OPEN) {
@@ -55,6 +53,10 @@ public class Auction implements Serializable {
 
         if (LocalDateTime.now().isAfter(endTime)) {
             throw new IllegalStateException("Auction has ended.");
+        }
+
+        if (bid.getBidder().getId() == this.seller.getId()) {
+            throw new IllegalArgumentException("Seller cannot bid on their own auction.");
         }
 
         double minBid = currentPrice + stepPrice;
@@ -70,9 +72,7 @@ public class Auction implements Serializable {
         winner = bid.getBidder();
     }
 
-    // =========================
     // STATUS
-    // =========================
     public synchronized void openAuction() {
         if (status == AuctionStatus.APPROVED) {
             status = AuctionStatus.OPEN;
@@ -91,9 +91,7 @@ public class Auction implements Serializable {
         status = AuctionStatus.REJECTED;
     }
 
-    // =========================
     // GETTERS
-    // =========================
     public String getId() {
         return id;
     }
@@ -134,9 +132,7 @@ public class Auction implements Serializable {
         return new ArrayList<>(bidHistory);
     }
 
-    // =========================
     // SETTERS
-    // =========================
     public void setId(String id) {
         this.id = id;
     }
