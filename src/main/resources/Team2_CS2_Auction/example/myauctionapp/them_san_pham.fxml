@@ -1,33 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<AnchorPane style="-fx-background-color: #F9FAFB;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Them_san_pham_controller">
+<AnchorPane style="-fx-background-color: #F9FAFB;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Them_san_pham_controller">
     <children>
         <HBox alignment="CENTER_LEFT" prefHeight="65.0" spacing="15.0" style="-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-width: 0 0 1 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
                 <Button fx:id="Quay_lai_trang_chủ" mnemonicParsing="false" onAction="#handleBackToHome" styleClass="back-button" text="← Trang chủ">
                     <font><Font name="System Bold" size="13.0" /></font>
                 </Button>
-                <Label style="-fx-font-weight: bold; -fx-text-fill: #1A365D;" text="The Curator">
+                <Label style="-fx-font-weight: bold; -fx-text-fill: #1A365D;" text="THÔNG TIN PHIÊN ĐẤU GIÁ">
                     <font><Font size="20.0" /></font>
                 </Label>
                 <Region HBox.hgrow="ALWAYS" />
-                <Button mnemonicParsing="false" prefHeight="35.0" prefWidth="120.0" styleClass="btn-primary" text="Admin Panel" />
             </children>
             <padding><Insets left="20.0" right="30.0" /></padding>
         </HBox>
@@ -51,22 +39,18 @@
                                     <children>
                                         <Label style="-fx-font-weight: bold;" text="Hình ảnh sản phẩm" />
 
-                                        <StackPane fx:id="paneChonAnh" onMouseClicked="#handleChooseImage" prefHeight="200.0" styleClass="image-upload-main" style="-fx-cursor: hand;">
+                                        <StackPane onMouseClicked="#handleChooseImage" prefHeight="150.0" style="-fx-cursor: hand; -fx-background-color: #f1f5f9; -fx-border-color: #cbd5e1; -fx-border-style: dashed; -fx-border-radius: 5px;" styleClass="image-upload-main">
                                             <children>
                                                 <VBox alignment="CENTER" spacing="5.0">
                                                     <children>
                                                         <Label style="-fx-font-size: 30;" text="📸" />
-                                                        <Label style="-fx-font-weight: bold;" text="Ảnh chính" textFill="#64748B" />
+                                                        <Label style="-fx-font-weight: bold;" text="Nhấp để thêm ảnh" textFill="#64748B" />
                                                     </children>
                                                 </VBox>
-                                                <ImageView fx:id="imgPreview" fitHeight="190.0" fitWidth="330.0" pickOnBounds="true" preserveRatio="true" />
                                             </children>
                                         </StackPane>
 
-                                        <HBox spacing="10.0">
-                                            <StackPane prefHeight="70.0" styleClass="image-upload-sub" HBox.hgrow="ALWAYS" />
-                                            <StackPane prefHeight="70.0" styleClass="image-upload-sub" HBox.hgrow="ALWAYS" />
-                                        </HBox>
+                                        <FlowPane fx:id="imageGalleryPane" hgap="10.0" vgap="10.0" />
                                     </children>
                                 </VBox>
 
@@ -78,77 +62,13 @@
                                         </VBox>
 
                                         <VBox spacing="5.0">
-                                            <Label style="-fx-font-weight: bold;" text="Loại sản phẩm" />
+                                            <Label style="-fx-font-weight: bold;" text="Danh mục sản phẩm" />
                                             <ComboBox fx:id="loaiSanPhamCombo" maxWidth="Infinity" prefHeight="35.0" promptText="Chọn danh mục..." styleClass="input-field" />
                                         </VBox>
 
-                                        <StackPane>
-                                            <children>
-                                                <VBox fx:id="groupDoDienTu" managed="false" spacing="10.0" visible="false">
-                                                    <children>
-                                                        <HBox spacing="10">
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Hãng sản xuất" />
-                                                                <TextField fx:id="txtHangSX" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Công suất" />
-                                                                <TextField fx:id="txtCongSuat" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                        </HBox>
-                                                    </children>
-                                                </VBox>
-
-                                                <VBox fx:id="groupDongHo" managed="false" spacing="10.0" visible="false">
-                                                    <children>
-                                                        <HBox spacing="10">
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Thương hiệu/Hãng" />
-                                                                <TextField fx:id="txtThuongHieuDH" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Năm sản xuất" />
-                                                                <TextField fx:id="txtNamSXDH" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                        </HBox>
-                                                    </children>
-                                                </VBox>
-
-                                                <VBox fx:id="groupSach" managed="false" spacing="10.0" visible="false">
-                                                    <children>
-                                                        <HBox spacing="10">
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Tác giả" />
-                                                                <TextField fx:id="txtTacGia" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Năm sáng tác" />
-                                                                <TextField fx:id="txtNamSangTac" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                        </HBox>
-                                                    </children>
-                                                </VBox>
-
-                                                <VBox fx:id="groupBatDongSan" managed="false" spacing="10.0" visible="false">
-                                                    <children>
-                                                        <HBox spacing="10">
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Địa chỉ" />
-                                                                <TextField fx:id="txtDiaChiBDS" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                                                <Label style="-fx-font-weight: bold;" text="Diện tích (m2)" />
-                                                                <TextField fx:id="txtDienTichBDS" prefHeight="35.0" styleClass="input-field" />
-                                                            </VBox>
-                                                        </HBox>
-                                                    </children>
-                                                </VBox>
-                                            </children>
-                                        </StackPane>
-
                                         <VBox spacing="5.0">
-                                            <Label style="-fx-font-weight: bold;" text="Mô tả chi tiết" />
-                                            <TextArea fx:id="txtMoTa" prefHeight="70.0" styleClass="input-field" wrapText="true" />
+                                            <Label style="-fx-font-weight: bold;" text="Mô tả chi tiết (Tình trạng, cấu hình, hãng...)" />
+                                            <TextArea fx:id="txtMoTa" prefHeight="100.0" styleClass="input-field" wrapText="true" />
                                         </VBox>
 
                                         <HBox spacing="15.0">
@@ -185,7 +105,7 @@
                                             </VBox>
                                         </HBox>
 
-                                        <Button fx:id="Đăng_Phien_Đấu_Giá" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleDangSanPham" prefHeight="45.0" styleClass="btn-primary" text="Đăng phiên đấu giá">
+                                        <Button maxWidth="Infinity" mnemonicParsing="false" onAction="#handleDangSanPham" prefHeight="45.0" styleClass="btn-primary" text="Tạo Phiên Đấu Giá">
                                             <VBox.margin><Insets top="10" /></VBox.margin>
                                         </Button>
                                     </children>

@@ -36,7 +36,7 @@ public class User implements Serializable {
         this.createdAt = LocalDateTime.now();
     }
 
-    public int getId() {
+    public boolean getId() {
         return id;
     }
 
