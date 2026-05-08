@@ -5,11 +5,22 @@ import java.sql.DriverManager;
 
 public class DBConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/auction_db";
+    // Railway MySQL
+    private static final String URL =
+            "jdbc:mysql://turntable.proxy.rlwy.net:27416/railway" +
+                    "?useSSL=false&allowPublicKeyRetrieval=true";
+
     private static final String USER = "root";
-    private static final String PASSWORD = "B@iTapLon123";
+
+    private static final String PASSWORD =
+            "wRUFbXdBBbdfWquOSqETKpVqzRzEYjEr";
 
     public static Connection getConnection() throws Exception {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+
+        return DriverManager.getConnection(
+                URL,
+                USER,
+                PASSWORD
+        );
     }
 }
