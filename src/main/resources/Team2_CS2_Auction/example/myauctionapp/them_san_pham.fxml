@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
@@ -47,10 +48,9 @@
                                                         <Label style="-fx-font-weight: bold;" text="Nhấp để thêm ảnh" textFill="#64748B" />
                                                     </children>
                                                 </VBox>
+                                                <ImageView fx:id="imgPreview" fitHeight="150.0" fitWidth="330.0" mouseTransparent="true" preserveRatio="true" visible="false" />
                                             </children>
                                         </StackPane>
-
-                                        <FlowPane fx:id="imageGalleryPane" hgap="10.0" vgap="10.0" />
                                     </children>
                                 </VBox>
 
@@ -64,6 +64,38 @@
                                         <VBox spacing="5.0">
                                             <Label style="-fx-font-weight: bold;" text="Danh mục sản phẩm" />
                                             <ComboBox fx:id="loaiSanPhamCombo" maxWidth="Infinity" prefHeight="35.0" promptText="Chọn danh mục..." styleClass="input-field" />
+                                        </VBox>
+
+                                        <VBox fx:id="groupDoDienTu" managed="false" spacing="8.0" visible="false">
+                                            <children>
+                                                <Label style="-fx-font-weight: bold;" text="Thêm thông tin: Đồ điện tử" />
+                                                <TextField fx:id="txtHangSX" prefHeight="35.0" promptText="Hãng sản xuất" styleClass="input-field" />
+                                                <TextField fx:id="txtCongSuat" prefHeight="35.0" promptText="Công suất / thông số" styleClass="input-field" />
+                                            </children>
+                                        </VBox>
+
+                                        <VBox fx:id="groupDongHo" managed="false" spacing="8.0" visible="false">
+                                            <children>
+                                                <Label style="-fx-font-weight: bold;" text="Thêm thông tin: Đồng hồ / Xe / Trang sức" />
+                                                <TextField fx:id="txtThuongHieuDH" prefHeight="35.0" promptText="Thương hiệu" styleClass="input-field" />
+                                                <TextField fx:id="txtNamSXDH" prefHeight="35.0" promptText="Năm sản xuất / model..." styleClass="input-field" />
+                                            </children>
+                                        </VBox>
+
+                                        <VBox fx:id="groupSach" managed="false" spacing="8.0" visible="false">
+                                            <children>
+                                                <Label style="-fx-font-weight: bold;" text="Thêm thông tin: Sách / Nghệ thuật" />
+                                                <TextField fx:id="txtTacGia" prefHeight="35.0" promptText="Tác giả / nghệ sĩ" styleClass="input-field" />
+                                                <TextField fx:id="txtNamSangTac" prefHeight="35.0" promptText="Năm sáng tác / đời" styleClass="input-field" />
+                                            </children>
+                                        </VBox>
+
+                                        <VBox fx:id="groupBatDongSan" managed="false" spacing="8.0" visible="false">
+                                            <children>
+                                                <Label style="-fx-font-weight: bold;" text="Thêm thông tin: Bất động sản" />
+                                                <TextField fx:id="txtDiaChiBDS" prefHeight="35.0" promptText="Địa chỉ" styleClass="input-field" />
+                                                <TextField fx:id="txtDienTichBDS" prefHeight="35.0" promptText="Diện tích (m²)" styleClass="input-field" />
+                                            </children>
                                         </VBox>
 
                                         <VBox spacing="5.0">

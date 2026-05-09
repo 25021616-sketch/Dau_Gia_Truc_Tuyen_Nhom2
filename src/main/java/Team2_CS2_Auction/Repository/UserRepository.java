@@ -1,7 +1,10 @@
 package Team2_CS2_Auction.Repository;
 
+import Team2_CS2_Auction.Model.user.Admin;
+import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.util.DBConnection;
+import Team2_CS2_Auction.util.PasswordUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,24 +13,42 @@ import java.sql.ResultSet;
 public class UserRepository {
 
     public User login(String username, String password) {
-        String sql = "SELECT * FROM user WHERE username=? AND password=?";
+        String sql = "SELECT * FROM user WHERE LOWER(username)=LOWER(?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, username);
-            ps.setString(2, password);
+            ps.setString(1, username != null ? username.trim() : null);
 
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                User user = new User();
+                String storedPassword = rs.getString("password");
+                if (storedPassword != null) {
+                    storedPassword = storedPassword.trim();
+                }
 
-                user.setId(rs.getInt("id"));
-                user.setUsername(rs.getString("username"));
-                user.setPassword(rs.getString("password"));
-                user.setPhone(rs.getString("phone"));
-                user.setRole(rs.getString("role"));
+                String inputPassword = password != null ? password.trim() : "";
+                String hashedInput = PasswordUtils.hashSha256(inputPassword);
+
+                boolean isPasswordMatch = storedPassword != null
+                        && (storedPassword.equals(inputPassword) || storedPassword.equals(hashedInput));
+
+                if (!isPasswordMatch) {
+                    return null;
+                }
+
+                int id = rs.getInt("id");
+                String usernameInDb = rs.getString("username");
+                String phone = rs.getString("phone");
+                String roleRaw = rs.getString("role");
+
+                User user;
+                if (roleRaw != null && roleRaw.equalsIgnoreCase("ADMIN")) {
+                    user = new Admin(id, usernameInDb, password, phone);
+                } else {
+                    user = new Member(id, usernameInDb, password, phone);
+                }
 
                 return user;
             }

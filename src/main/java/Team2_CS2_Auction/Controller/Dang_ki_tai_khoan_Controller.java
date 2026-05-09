@@ -1,5 +1,6 @@
 package Team2_CS2_Auction.Controller;
 
+import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Service.UserService;
 import javafx.event.ActionEvent;
@@ -119,10 +120,8 @@ public class Dang_ki_tai_khoan_Controller extends Base_Admin_Controller {
         }
 
         // 9. Tạo tài khoản
-        User user = new User();
-        user.setUsername(username);
+        User user = new Member(username, password);
         user.setPhone(phone);
-        user.setPassword(password);
 
         boolean result = userService.register(user);
 

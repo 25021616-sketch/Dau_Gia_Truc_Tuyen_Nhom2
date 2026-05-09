@@ -1,7 +1,12 @@
 package Team2_CS2_Auction.Controller;
 
+import Team2_CS2_Auction.Model.user.UserRole;
 import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Service.UserService;
+
+// ✅ IMPORT SESSION
+import Team2_CS2_Auction.Session.Session;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.event.ActionEvent;
@@ -21,100 +26,174 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
     @FXML
     private void handleLogin(ActionEvent event) {
 
+        // =========================
+        // 1. LẤY DỮ LIỆU TỪ FORM
+        // =========================
         String username = Ten_dang_nhap.getText().trim();
-        String password = Mat_khau.getText().trim();
+        String password = Mat_khau.getText();
 
-        // 🔥 chống null checkbox
-        boolean isAdminLogin = Dang_nhap_Admin != null && Dang_nhap_Admin.isSelected();
+        // 🔥 tránh lỗi null checkbox
+        boolean isAdminLogin =
+                Dang_nhap_Admin != null
+                        && Dang_nhap_Admin.isSelected();
 
         // =========================
-        // 1. CHECK RỖNG
+        // 2. CHECK RỖNG
         // =========================
         if (username.isEmpty() || password.isEmpty()) {
-            showAlert("Thiếu thông tin",
+
+            showAlert(
+                    "Thiếu thông tin",
                     "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.",
-                    Alert.AlertType.WARNING);
+                    Alert.AlertType.WARNING
+            );
+
             return;
         }
 
         // =========================
-        // 2. LOGIN
+        // 3. KIỂM TRA LOGIN
         // =========================
         User user = userService.login(username, password);
 
-        // 🔥 DEBUG
+        // DEBUG
         System.out.println("LOGIN RESULT: " + user);
 
+        // =========================
+        // 4. LOGIN THẤT BẠI
+        // =========================
         if (user == null) {
-            showAlert("Đăng nhập thất bại",
+
+            showAlert(
+                    "Đăng nhập thất bại",
                     "Sai tên đăng nhập hoặc mật khẩu.",
-                    Alert.AlertType.ERROR);
+                    Alert.AlertType.ERROR
+            );
+
             return;
         }
 
+        // ==================================================
+        // 5. LƯU USER HIỆN TẠI VÀO SESSION
+        // ==================================================
+        // Sau này toàn hệ thống sẽ biết:
+        // - ai đang đăng nhập
+        // - ai đăng sản phẩm
+        // - ai đấu giá
+        // - phân quyền admin/user
+        // ==================================================
+        Session.currentUser = user;
+
+        // DEBUG
+        System.out.println(
+                "Current User: "
+                        + Session.currentUser.getUsername()
+        );
+
         // =========================
-        // 3. ADMIN LOGIN
+        // 6. LOGIN ADMIN
         // =========================
         if (isAdminLogin) {
 
-            String role = user.getRole();
+            UserRole role = user.getRole();
 
-            if (role != null && role.equalsIgnoreCase("ADMIN")) {
+            if (role == UserRole.ADMIN) {
 
-                showAlert("Thành công",
+                showAlert(
+                        "Thành công",
                         "Đăng nhập Admin thành công.",
-                        Alert.AlertType.INFORMATION);
+                        Alert.AlertType.INFORMATION
+                );
 
-                navigateTo(event, FXML_ADMIN_HOME, "Trang Quản Trị");
+                navigateTo(
+                        event,
+                        FXML_ADMIN_HOME,
+                        "Trang Quản Trị"
+                );
 
             } else {
 
-                showAlert("Từ chối truy cập",
+                showAlert(
+                        "Từ chối truy cập",
                         "Tài khoản này không có quyền Admin.",
-                        Alert.AlertType.WARNING);
+                        Alert.AlertType.WARNING
+                );
             }
 
         } else {
 
             // =========================
-            // 4. USER LOGIN
+            // 7. LOGIN USER THƯỜNG
             // =========================
-            showAlert("Thành công",
+            showAlert(
+                    "Thành công",
                     "Đăng nhập thành công.",
-                    Alert.AlertType.INFORMATION);
+                    Alert.AlertType.INFORMATION
+            );
 
-            navigateTo(event, FXML_USER_HOME, "Trang Người Dùng");
+            navigateTo(
+                    event,
+                    FXML_USER_HOME,
+                    "Trang Người Dùng"
+            );
         }
     }
 
     @FXML
     public void handleSwitchToRegister(ActionEvent event) {
-        navigateTo(event, FXML_REGISTER, "Đăng ký tài khoản");
+
+        navigateTo(
+                event,
+                FXML_REGISTER,
+                "Đăng ký tài khoản"
+        );
     }
 
-    private void navigateTo(ActionEvent event, String fxmlFile, String title) {
+    private void navigateTo(
+            ActionEvent event,
+            String fxmlFile,
+            String title
+    ) {
+
         try {
+
             switchScene(event, fxmlFile, title);
+
         } catch (Exception e) {
-            showAlert("Lỗi hệ thống",
+
+            showAlert(
+                    "Lỗi hệ thống",
                     "Không thể tải trang: " + fxmlFile,
-                    Alert.AlertType.ERROR);
+                    Alert.AlertType.ERROR
+            );
+
             e.printStackTrace();
         }
     }
 
     @FXML
     public void handleBackToMain(ActionEvent event) {
-        navigateTo(event, FXML_USER_HOME, "Màn hình chính");
+
+        navigateTo(
+                event,
+                FXML_USER_HOME,
+                "Màn hình chính"
+        );
     }
 
-    private void showAlert(String title, String message, Alert.AlertType type) {
+    private void showAlert(
+            String title,
+            String message,
+            Alert.AlertType type
+    ) {
 
         Alert alert = new Alert(type);
+
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
 
-        alert.showAndWait(); // 🔥 QUAN TRỌNG
+        // 🔥 QUAN TRỌNG
+        alert.showAndWait();
     }
 }

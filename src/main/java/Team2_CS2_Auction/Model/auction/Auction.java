@@ -35,7 +35,9 @@ public class Auction implements Serializable {
     public synchronized void addBid(Bid bid) {
         if (status != AuctionStatus.OPEN) throw new IllegalStateException("Phiên đấu giá chưa mở.");
         if (LocalDateTime.now().isAfter(endTime)) throw new IllegalStateException("Phiên đấu giá đã kết thúc.");
-        if (bid.getBidder().getId()) throw new IllegalArgumentException("Người bán không thể tự đặt giá.");
+        if (seller != null && bid.getBidder() != null && bid.getBidder().getId() == seller.getId()) {
+            throw new IllegalArgumentException("Người bán không thể tự đặt giá.");
+        }
 
         double minBid = currentPrice + stepPrice;
         if (bid.getAmount() < minBid) throw new IllegalArgumentException("Giá đặt tối thiểu phải là: " + minBid);

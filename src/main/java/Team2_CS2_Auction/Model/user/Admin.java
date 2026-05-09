@@ -11,7 +11,11 @@ public class Admin extends User {
                  String password,
                  String phone) {
 
-        super(id, username, password, phone, "ADMIN");
+        super(id, username, password, phone, UserRole.ADMIN);
+    }
+
+    public Admin(String username, String password) {
+        super(username, password, UserRole.ADMIN);
     }
 
     public void setAdminService(AdminService adminService) {
@@ -32,5 +36,10 @@ public class Admin extends User {
         }
 
         adminService.rejectAuction(auctionId, reason);
+    }
+
+    @Override
+    public String getInfo() {
+        return String.format("Admin{id=%d, username='%s'}", getId(), getUsername());
     }
 }

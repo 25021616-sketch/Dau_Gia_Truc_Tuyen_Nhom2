@@ -1,19 +1,19 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Model.auction.Auction;
-import Team2_CS2_Auction.Model.item.Item;
-import Team2_CS2_Auction.Model.item.ItemFactory;
+import Team2_CS2_Auction.Model.item.*;
 import Team2_CS2_Auction.Repository.AuctionData;
-// import Team2_CS2_Auction.Repository.ProductRepository;
+import Team2_CS2_Auction.Repository.ProductRepository;
+import Team2_CS2_Auction.Session.Session;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -27,29 +27,66 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     @FXML private TextField txtTenSanPham, txtGiaKhoiDiem, txtBuocGia;
     @FXML private TextField gioBatDau, phutBatDau, gioKetThuc, phutKetThuc;
+
     @FXML private ComboBox<String> loaiSanPhamCombo;
     @FXML private TextArea txtMoTa;
-    @FXML private DatePicker ngayBatDauPicker, ngayKetThucPicker;
-    @FXML private FlowPane imageGalleryPane;
 
-    private List<String> listImagePaths = new ArrayList<>();
+    @FXML private DatePicker ngayBatDauPicker, ngayKetThucPicker;
+
+    @FXML private ImageView imgPreview;
+
+    @FXML private VBox groupDoDienTu, groupDongHo, groupSach, groupBatDongSan;
+
+    @FXML private TextField txtHangSX, txtCongSuat;
+    @FXML private TextField txtThuongHieuDH, txtNamSXDH;
+    @FXML private TextField txtTacGia, txtNamSangTac;
+    @FXML private TextField txtDiaChiBDS, txtDienTichBDS;
+
+    private String selectedImagePath = "";
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+
         loaiSanPhamCombo.setItems(FXCollections.observableArrayList(
-                "Đồ điện tử",           // Mapped to Electronics
-                "Tác phẩm nghệ thuật",  // Mapped to Art
-                "Bất động sản",         // Mapped to RealEstate
-                "Xe hơi",               // Mapped to Vehicle
-                "Khác"                  // Mapped to Other
+                "Đồng hồ",
+                "Sách",
+                "Trang sức",
+                "Xe hơi",
+                "Tác phẩm nghệ thuật",
+                "Bất động sản",
+                "Đồ điện tử",
+                "Khác"
         ));
+
+        hideAllGroups();
+
+        loaiSanPhamCombo.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((obs, oldVal, newVal) -> {
+
+                    hideAllGroups();
+
+                    if (newVal == null) return;
+
+                    switch (newVal) {
+                        case "Đồ điện tử" -> showGroup(groupDoDienTu);
+                        case "Đồng hồ", "Xe hơi", "Trang sức" -> showGroup(groupDongHo);
+                        case "Sách", "Tác phẩm nghệ thuật" -> showGroup(groupSach);
+                        case "Bất động sản" -> showGroup(groupBatDongSan);
+                    }
+                });
     }
 
     @FXML
     private void handleDangSanPham(ActionEvent event) {
+
         try {
+
             String loai = loaiSanPhamCombo.getValue();
-            if (loai == null) throw new Exception("Vui lòng chọn loại sản phẩm!");
+
+            if (loai == null) {
+                throw new Exception("Vui lòng chọn loại sản phẩm");
+            }
 
             LocalDateTime start = ngayBatDauPicker.getValue().atTime(
                     Integer.parseInt(gioBatDau.getText()),
@@ -61,108 +98,236 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
                     Integer.parseInt(phutKetThuc.getText())
             );
 
-            if(start.isAfter(end)) throw new Exception("Thời gian bắt đầu không được lớn hơn kết thúc!");
+            List<byte[]> images = new ArrayList<>();
 
-            // TẠO ITEM
-            String itemId = "ITEM_" + System.currentTimeMillis();
-            Item newItem = ItemFactory.createItem(
-                    itemId,
+            Item newItem;
+
+            String id = "ID" + System.currentTimeMillis(); // tạo id tạm
+
+            switch (loai) {
+
+                case "Đồ điện tử" -> newItem = new Electronics(
+                        id,
+                        txtTenSanPham.getText(),
+                        loai,
+                        txtMoTa.getText(),
+                        Double.parseDouble(txtGiaKhoiDiem.getText()),
+                        Double.parseDouble(txtBuocGia.getText()),
+                        start,
+                        end,
+                        selectedImagePath,
+                        txtHangSX.getText(),
+                        txtCongSuat.getText()
+                );
+
+                case "Sách", "Tác phẩm nghệ thuật" -> newItem = new Art(
+                        id,
+                        txtTenSanPham.getText(),
+                        loai,
+                        txtMoTa.getText(),
+                        Double.parseDouble(txtGiaKhoiDiem.getText()),
+                        Double.parseDouble(txtBuocGia.getText()),
+                        start,
+                        end,
+                        selectedImagePath,
+                        txtTacGia.getText(),
+                        txtNamSangTac.getText()
+                );
+
+                case "Bất động sản" -> newItem = new RealEstate(
+                        id,
+                        txtTenSanPham.getText(),
+                        loai,
+                        txtMoTa.getText(),
+                        Double.parseDouble(txtGiaKhoiDiem.getText()),
+                        Double.parseDouble(txtBuocGia.getText()),
+                        start,
+                        end,
+                        selectedImagePath,
+                        txtDiaChiBDS.getText(),
+                        Double.parseDouble(txtDienTichBDS.getText()),
+                        "Nhà đất"
+                );
+
+                case "Xe hơi" -> newItem = new Vehicle(
+                        id,
+                        txtTenSanPham.getText(),
+                        loai,
+                        txtMoTa.getText(),
+                        Double.parseDouble(txtGiaKhoiDiem.getText()),
+                        Double.parseDouble(txtBuocGia.getText()),
+                        start,
+                        end,
+                        selectedImagePath,
+                        txtThuongHieuDH.getText(),
+                        txtNamSXDH.getText()   // ✅ chỉ 2 field cuối
+                );
+
+                default -> newItem = new Art(
+                        id,
+                        txtTenSanPham.getText(),
+                        loai,
+                        txtMoTa.getText(),
+                        Double.parseDouble(txtGiaKhoiDiem.getText()),
+                        Double.parseDouble(txtBuocGia.getText()),
+                        start,
+                        end,
+                        selectedImagePath,
+                        txtTacGia.getText(),
+                        txtNamSangTac.getText()   // ✅ FIX ở đây
+                );
+            }
+
+
+            ProductRepository repo = new ProductRepository();
+
+            boolean success = repo.insertProduct(
+
+                    // =========================
+                    // THÔNG TIN SẢN PHẨM
+                    // =========================
                     txtTenSanPham.getText(),
-                    loai,
+
                     txtMoTa.getText(),
-                    new ArrayList<>(listImagePaths)
-            );
 
-            // TẠO AUCTION
-            String auctionId = "AUC_" + System.currentTimeMillis();
-            double startPrice = Double.parseDouble(txtGiaKhoiDiem.getText());
-            double stepPrice = Double.parseDouble(txtBuocGia.getText());
+                    loai,
 
-            // TODO: Ở đây lấy Seller từ session đang login. Tạm thời truyền null hoặc mockup.
-            Auction newAuction = new Auction(
-                    auctionId,
-                    newItem,
-                    null, // currentUser hoặc seller
-                    startPrice,
-                    stepPrice,
+                    // =========================
+                    // GIÁ
+                    // =========================
+                    Double.parseDouble(txtGiaKhoiDiem.getText()),
+
+                    // current_price ban đầu = giá khởi điểm
+                    Double.parseDouble(txtGiaKhoiDiem.getText()),
+
+                    Double.parseDouble(txtBuocGia.getText()),
+
+                    // ==========================================
+                    // SELLER ID
+                    // ==========================================
+                    // Lấy id của user đang đăng nhập
+                    // thay vì hardcode = 1
+                    // ==========================================
+                    Session.currentUser.getId(),
+
+                    // =========================
+                    // THỜI GIAN
+                    // =========================
                     start,
-                    end
+
+                    end,
+
+                    // =========================
+                    // TRẠNG THÁI
+                    // =========================
+                    "PENDING",
+
+                    // =========================
+                    // ẢNH
+                    // =========================
+                    selectedImagePath
             );
-
-            // LƯU VÀO CƠ SỞ DỮ LIỆU
-            /* TODO: Cập nhật lại Repository của bạn để lưu cả Item và Auction nhé.
-               Vì bạn đã sửa Model nên bảng DB cũng cần thay đổi để tách bảng Items và Auctions.
-
-               ProductRepository repo = new ProductRepository();
-               boolean success = repo.insertAuctionAndItem(newAuction);
-            */
-            boolean success = true; // Giả lập lưu thành công
 
             if (success) {
-                // Nếu List này nằm trong ram dùng cho test thì lưu Auction thay vì Item
-                // AuctionData.listAuction.add(newAuction);
+
+                System.out.println("Lưu DB thành công");
+
+                AuctionData.listSanPham.add(newItem);
 
                 resetForm();
-                new Alert(Alert.AlertType.INFORMATION, "Tạo phiên đấu giá thành công!").showAndWait();
+
+                new Alert(
+                        Alert.AlertType.INFORMATION,
+                        "Đăng sản phẩm thành công!"
+                ).showAndWait();
+
                 handleBackToHome(event);
+
             } else {
-                throw new Exception("Không thể lưu dữ liệu vào DataBase!");
+                throw new Exception("Không thể lưu dữ liệu");
             }
 
-        } catch (NumberFormatException e) {
-            new Alert(Alert.AlertType.ERROR, "Lỗi: Giá và Giờ phải là con số hợp lệ!").show();
         } catch (Exception e) {
             e.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
-        }
-    }
 
-    @FXML
-    private void handleChooseImage() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
-        );
-
-        // Hỗ trợ chọn nhiều ảnh cùng lúc
-        List<File> files = fileChooser.showOpenMultipleDialog(null);
-
-        if (files != null && !files.isEmpty()) {
-            for (File file : files) {
-                String path = file.toURI().toString();
-                listImagePaths.add(path);
-
-                // Tạo ImageView thumbnail và nhét vào giao diện
-                ImageView thumbnail = new ImageView(new Image(path));
-                thumbnail.setFitWidth(80);
-                thumbnail.setFitHeight(80);
-                thumbnail.setPreserveRatio(false); // Cắt vuông ảnh
-
-                // Gắn CSS để đẹp hơn (Nếu có class 'thumbnail-img' trong css)
-                thumbnail.getStyleClass().add("thumbnail-img");
-
-                imageGalleryPane.getChildren().add(thumbnail);
-            }
+            new Alert(Alert.AlertType.ERROR,
+                    "Lỗi: " + e.getMessage()).show();
         }
     }
 
     private void resetForm() {
+
         txtTenSanPham.clear();
         txtMoTa.clear();
         txtGiaKhoiDiem.clear();
         txtBuocGia.clear();
-        gioBatDau.clear(); phutBatDau.clear();
-        gioKetThuc.clear(); phutKetThuc.clear();
+
+        gioBatDau.clear();
+        phutBatDau.clear();
+        gioKetThuc.clear();
+        phutKetThuc.clear();
+
         ngayBatDauPicker.setValue(null);
         ngayKetThucPicker.setValue(null);
-        loaiSanPhamCombo.getSelectionModel().clearSelection();
 
-        listImagePaths.clear();
-        imageGalleryPane.getChildren().clear();
+        if (imgPreview != null) {
+            imgPreview.setImage(null);
+            imgPreview.setVisible(false);
+        }
+
+        selectedImagePath = "";
+
+        hideAllGroups();
+    }
+
+    @FXML
+    private void handleChooseImage() {
+
+        FileChooser fileChooser = new FileChooser();
+
+        File file = fileChooser.showOpenDialog(null);
+
+        if (file != null) {
+            selectedImagePath = file.toURI().toString();
+            if (imgPreview != null) {
+                imgPreview.setImage(new Image(selectedImagePath));
+                imgPreview.setVisible(true);
+            }
+        }
     }
 
     @FXML
     public void handleBackToHome(ActionEvent event) {
-        switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
+
+        switchScene(
+                event,
+                "Man_hinh_chinh_Users.fxml",
+                "Trang chủ"
+        );
+    }
+
+    private void hideAllGroups() {
+
+        VBox[] groups = {
+                groupDoDienTu,
+                groupDongHo,
+                groupSach,
+                groupBatDongSan
+        };
+
+        for (VBox g : groups) {
+            if (g != null) {
+                g.setVisible(false);
+                g.setManaged(false);
+            }
+        }
+    }
+
+    private void showGroup(VBox g) {
+
+        if (g != null) {
+            g.setVisible(true);
+            g.setManaged(true);
+        }
     }
 }
