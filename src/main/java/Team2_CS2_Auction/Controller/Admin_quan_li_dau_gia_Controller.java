@@ -1,65 +1,74 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Repository.AuctionData;
+import Team2_CS2_Auction.Model.auction.Auction; // ✅ Sử dụng Auction
+import Team2_CS2_Auction.Repository.ProductRepository;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
-import Team2_CS2_Auction.Model.item.Item;
 
 public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller implements Initializable {
-    // Các cột thành phần
-    @FXML private TableView<Item> tableItems;
-    @FXML private TableColumn<Item, String> colID;
-    @FXML private TableColumn<Item, String> colTen;
-    @FXML private TableColumn<Item, String> colLoai;
-    @FXML private TableColumn<Item, Double> colGia;
-    @FXML private TableColumn<Item, LocalDateTime> colKetThuc;
-    @FXML private TableColumn<Item, LocalDateTime> colBatDau;
-    @FXML private TableColumn<Item, Double> colBuocGia;
+
+    @FXML private TableView<Auction> tableItems; // ✅ Chuyển sang Auction
+    @FXML private TableColumn<Auction, String> colID;
+    @FXML private TableColumn<Auction, String> colTen;
+    @FXML private TableColumn<Auction, String> colLoai;
+    @FXML private TableColumn<Auction, Double> colGia;
+    @FXML private TableColumn<Auction, LocalDateTime> colKetThuc;
+    @FXML private TableColumn<Auction, LocalDateTime> colBatDau;
+    @FXML private TableColumn<Auction, Double> colBuocGia;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // 1. Ánh xạ dữ liệu cơ bản
-        colID.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colTen.setCellValueFactory(new PropertyValueFactory<>("tenSanPham"));
-        colLoai.setCellValueFactory(new PropertyValueFactory<>("loaiSanPham"));
+        // 1. Ánh xạ dữ liệu thông qua Auction.getItem()
+        // Vì dữ liệu nằm trong lớp Item bên trong Auction, ta dùng lambda để lấy
+        colID.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItem().getId()));
+        colTen.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItem().getTenSanPham()));
+        colLoai.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItem().getLoaiSanPham()));
 
-        // 2. Định dạng cột GIÁ KHỞI ĐIỂM (colGia)
-        colGia.setCellValueFactory(new PropertyValueFactory<>("giaKhoiDiem"));
+        // 2. Định dạng cột GIÁ (Lấy giá khởi điểm từ Auction)
+        colGia.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCurrentPrice()));
         formatPriceColumn(colGia);
 
-        // 3. Định dạng cột BƯỚC GIÁ (colBuocGia) - MỚI
-        colBuocGia.setCellValueFactory(new PropertyValueFactory<>("buocGia"));
+        // 3. Định dạng cột BƯỚC GIÁ
+        colBuocGia.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getStepPrice()));
         formatPriceColumn(colBuocGia);
 
-        // 4. Định dạng cột THỜI GIAN BẮT ĐẦU (colBatDau) - MỚI
-        colBatDau.setCellValueFactory(new PropertyValueFactory<>("thoiGianBatDau"));
+        // 4. Định dạng cột THỜI GIAN BẮT ĐẦU
+        colBatDau.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getStartTime()));
         formatDateColumn(colBatDau);
 
-        // 5. Định dạng cột THỜI GIAN KẾT THÚC (colKetThuc)
-        colKetThuc.setCellValueFactory(new PropertyValueFactory<>("thoiGianKetThuc"));
+        // 5. Định dạng cột THỜI GIAN KẾT THÚC
+        colKetThuc.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getEndTime()));
         formatDateColumn(colKetThuc);
 
-        // 6. Đổ dữ liệu vào bảng
-        if (AuctionData.listSanPham != null) {
-            tableItems.setItems(AuctionData.listSanPham);
+        // 6. TẢI DỮ LIỆU TỪ DATABASE (PRODUCT REPOSITORY)
+        loadDataFromDatabase();
+    }
+
+    private void loadDataFromDatabase() {
+        ProductRepository repo = new ProductRepository();
+        // Lấy danh sách từ DB
+        ObservableList<Auction> list = FXCollections.observableArrayList(repo.getAllProducts());
+
+        if (list != null) {
+            tableItems.setItems(list);
             tableItems.refresh();
-            System.out.println(">>> [HỆ THỐNG ADMIN] Đã tải: " + AuctionData.listSanPham.size() + " vật phẩm.");
+            System.out.println(">>> [ADMIN] Đã tải: " + list.size() + " phiên đấu giá từ Database.");
         }
     }
 
-    /**
-     * Hàm dùng chung để định dạng hiển thị tiền tệ ($1,234.00)
-     */
-    private void formatPriceColumn(TableColumn<Item, Double> column) {
+    private void formatPriceColumn(TableColumn<Auction, Double> column) {
         column.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double price, boolean empty) {
@@ -73,10 +82,7 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
         });
     }
 
-    /**
-     * Hàm dùng chung để định dạng hiển thị ngày tháng (dd/MM/yyyy HH:mm)
-     */
-    private void formatDateColumn(TableColumn<Item, LocalDateTime> column) {
+    private void formatDateColumn(TableColumn<Auction, LocalDateTime> column) {
         column.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(LocalDateTime date, boolean empty) {
@@ -91,7 +97,6 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
     }
 
     // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
-
     @FXML
     public void handleGoToDashboard(ActionEvent event) {
         switchScene(event, "Trang_chu_Admin.fxml", "Bảng điều khiển");
