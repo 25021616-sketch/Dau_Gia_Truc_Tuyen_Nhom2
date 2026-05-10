@@ -22,21 +22,11 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
     @FXML
     private Button users;
 
-    @FXML
-    public void handleGoToInventory(ActionEvent event) {
-        // Mở trang Quản lý sản phẩm đấu giá
-        switchScene(event, "Admin_quan_li_dau_gia.fxml", "Quản lý đấu giá");
-    }
 
     @FXML
-    public void handleGoToHistory(ActionEvent event) {
-        // Mở trang Lịch sử đấu giá
-        switchScene(event, "Admin_quan_li_lich_su.fxml", "Lịch sử đấu giá");
-    }
-
+    public void handleGoToInventory(ActionEvent event) {switchScene(event, "Admin_quan_li_dau_gia.fxml", "Quản lý đấu giá");}
     @FXML
-    public void handleGoToDashboard(ActionEvent event) {
-        // Quay lại Trang chủ Admin
-        switchScene(event, "Trang_chu_Admin.fxml", "Trang chủ Admin");
-    }
+    public void handleGoToHistory(ActionEvent event) {switchScene(event, "Admin_quan_li_lich_su.fxml", "Lịch sử đấu giá");}
+    @FXML
+    public void handleGoToDashboard(ActionEvent event) {switchScene(event, "Trang_chu_Admin.fxml", "Trang chủ Admin");}
 }
