@@ -65,5 +65,20 @@ public class Auction implements Serializable {
     public synchronized AuctionStatus getStatus() { return status; }
     public synchronized List<Bid> getBidHistory() { return new ArrayList<>(bidHistory); }
     public void setId(String id) { this.id = id; }
+    public String getAuctionId() {
+        return id;
+    }
     public synchronized void setStatus(AuctionStatus status) { this.status = status; }
+    public synchronized void setCurrentPrice(double currentPrice) {
+        this.currentPrice = currentPrice;
+    }
+
+
+    public void setSeller(Member seller) {
+        this.seller = seller;
+    }
+
+    public synchronized void setWinner(Member winner) {
+        this.winner = winner;
+    }
 }

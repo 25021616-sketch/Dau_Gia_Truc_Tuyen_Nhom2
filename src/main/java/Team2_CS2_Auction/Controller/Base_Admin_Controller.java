@@ -1,5 +1,6 @@
 package Team2_CS2_Auction.Controller;
 
+import Team2_CS2_Auction.Model.auction.Auction; // ✅ Import Auction
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -8,31 +9,22 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
-import Team2_CS2_Auction.Model.item.Item;
 
 public abstract class Base_Admin_Controller {
 
-    // Đường dẫn gốc đến thư mục chứa FXML của bạn
     private final String BASE_PATH = "/Team2_CS2_Auction/example/myauctionapp/";
 
-    /**
-     * Hàm chuyển trang cơ bản (không truyền dữ liệu)
-     */
     public void switchScene(ActionEvent event, String fxmlFileName, String title) {
         navigate(event, fxmlFileName, title, null);
     }
 
     /**
-     * Hàm chuyển trang CÓ TRUYỀN DỮ LIỆU (Dùng để vào trang chi tiết đấu giá)
-     * @param data: Đối tượng Item cần truyền đi
+     * ✅ Sửa parameter từ Item sang Object hoặc Auction để đồng bộ
      */
     public void switchSceneWithData(ActionEvent event, String fxmlFileName, String title, Object data) {
         navigate(event, fxmlFileName, title, data);
     }
 
-    /**
-     * Hàm điều hướng lõi xử lý mọi trường hợp
-     */
     private void navigate(ActionEvent event, String fxmlFileName, String title, Object data) {
         try {
             URL fxmlLocation = getClass().getResource(BASE_PATH + fxmlFileName);
@@ -44,13 +36,14 @@ public abstract class Base_Admin_Controller {
             FXMLLoader loader = new FXMLLoader(fxmlLocation);
             Parent root = loader.load();
 
-            // --- PHẦN QUAN TRỌNG: TRUYỀN DỮ LIỆU SANG CONTROLLER MỚI ---
+            // --- PHẦN QUAN TRỌNG: TRUYỀN DỮ LIỆU ---
             if (data != null) {
                 Object controller = loader.getController();
 
-                // Nếu trang đích là Phiên Đấu Giá, hãy gọi hàm nạp dữ liệu của nó
+                // ✅ Sửa logic kiểm tra: Nếu là trang Phiên Đấu Giá, truyền Auction
                 if (controller instanceof Phien_Dau_Gia_Controller) {
-                    ((Phien_Dau_Gia_Controller) controller).setItemData((Item) data);
+                    // Gọi hàm setAuctionData (hàm chúng ta vừa đổi tên ở bước trước)
+                    ((Phien_Dau_Gia_Controller) controller).setAuctionData((Auction) data);
                 }
             }
 

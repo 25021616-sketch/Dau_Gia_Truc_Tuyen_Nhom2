@@ -5,38 +5,22 @@ import java.util.List;
 import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import Team2_CS2_Auction.Model.item.*;
-import java.sql.ResultSet;
+import Team2_CS2_Auction.Model.auction.Auction;
+import Team2_CS2_Auction.Model.user.Member;
 
 public class ProductRepository {
 
-    public boolean insertProduct(
-            String name,
-            String description,
-            String category,
-            double startPrice,
-            double currentPrice,
-            double stepPrice,
-            int sellerId,
-            LocalDateTime startTime,
-            LocalDateTime endTime,
-            String status,
-            String imagePath
-    ) {
-
-        String sql = """
-            INSERT INTO products
-            (name, description, category, start_price, current_price,
-             step_price, seller_id, start_time, end_time, status, image_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-
-        try (
-                Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
-        ) {
-
+    // --- Hàm insertProduct: Giữ nguyên logic thêm mới ---
+    public boolean insertProduct(String name, String description, String category, double startPrice,
+                                 double currentPrice, double stepPrice, int sellerId,
+                                 LocalDateTime startTime, LocalDateTime endTime, String status, String imagePath) {
+        String sql = "INSERT INTO products (name, description, category, start_price, current_price, " +
+                "step_price, seller_id, start_time, end_time, status, image_path) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setString(2, description);
             ps.setString(3, category);
@@ -44,95 +28,108 @@ public class ProductRepository {
             ps.setDouble(5, currentPrice);
             ps.setDouble(6, stepPrice);
             ps.setInt(7, sellerId);
-
-            // 🔥 FIX QUAN TRỌNG
             ps.setTimestamp(8, java.sql.Timestamp.valueOf(startTime));
             ps.setTimestamp(9, java.sql.Timestamp.valueOf(endTime));
-
             ps.setString(10, status);
             ps.setString(11, imagePath);
-
             return ps.executeUpdate() > 0;
-
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
-    public List<Item> getAllProducts() {
 
-        List<Item> list = new ArrayList<>();
+    /**
+     * Lấy sản phẩm hiển thị trên MÀN HÌNH CHÍNH
+     * Chỉ lấy những sản phẩm đã được Admin duyệt (status = 'OPENING')
+     */
+    public List<Auction> getAllActiveProducts() {
+        String sql = "SELECT * FROM products WHERE status = 'OPENING'";
+        return getListFromQuery(sql, null);
+    }
 
-        String sql = "SELECT * FROM products";
+    /**
+     * Lấy sản phẩm của RIÊNG TÔI
+     * Lấy tất cả trạng thái (PENDING, OPENING, FINISHED) để chủ sở hữu theo dõi
+     */
+    public List<Auction> getProductsBySellerId(int sellerId) {
+        String sql = "SELECT * FROM products WHERE seller_id = ?";
+        return getListFromQuery(sql, sellerId);
+    }
 
-        try (
-                Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()
-        ) {
+    /**
+     * Cập nhật giá hiện tại khi có người đấu giá
+     */
+    public boolean updateCurrentPrice(int id, double newPrice) {
+        String sql = "UPDATE products SET current_price = ? WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, newPrice);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-            while (rs.next()) {
+    /**
+     * Hàm bổ trợ để thực thi Query và Map dữ liệu
+     */
+    private List<Auction> getListFromQuery(String sql, Integer paramId) {
+        List<Auction> auctionList = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                String id = String.valueOf(rs.getInt("id"));
-                String name = rs.getString("name");
-                String description = rs.getString("description");
-                String category = rs.getString("category");
-
-                double startPrice = rs.getDouble("start_price");
-                double stepPrice = rs.getDouble("step_price");
-
-                LocalDateTime startTime =
-                        rs.getTimestamp("start_time").toLocalDateTime();
-
-                LocalDateTime endTime =
-                        rs.getTimestamp("end_time").toLocalDateTime();
-
-                String imagePath = rs.getString("image_path");
-
-                Item item;
-
-                switch (category) {
-
-                    case "Đồ điện tử" -> item = new Electronics(
-                            id, name, category, description,
-                            startPrice, stepPrice,
-                            startTime, endTime,
-                            imagePath,
-                            "Unknown", "Unknown"
-                    );
-
-                    case "Bất động sản" -> item = new RealEstate(
-                            id, name, category, description,
-                            startPrice, stepPrice,
-                            startTime, endTime,
-                            imagePath,
-                            "Unknown", 0, "Unknown"
-                    );
-
-                    case "Xe hơi" -> item = new Vehicle(
-                            id, name, category, description,
-                            startPrice, stepPrice,
-                            startTime, endTime,
-                            imagePath,
-                            "Unknown", "Unknown"
-                    );
-
-                    default -> item = new Art(
-                            id, name, category, description,
-                            startPrice, stepPrice,
-                            startTime, endTime,
-                            imagePath,
-                            "Unknown", "Unknown"
-                    );
-                }
-
-                list.add(item);
+            if (paramId != null) {
+                ps.setInt(1, paramId);
             }
 
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    auctionList.add(mapResultSetToAuction(rs));
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return auctionList;
+    }
 
-        return list;
+    /**
+     * Hàm tách biệt logic Map dữ liệu từ ResultSet sang Object Auction
+     */
+    private Auction mapResultSetToAuction(ResultSet rs) throws Exception {
+        int idInt = rs.getInt("id");
+        String idStr = String.valueOf(idInt);
+
+        Item item = ItemFactory.createItem(
+                idStr,
+                rs.getString("name"),
+                rs.getString("category"),
+                rs.getString("description"),
+                rs.getString("image_path")
+        );
+
+        int sellerId = rs.getInt("seller_id");
+        Member seller = new Member(sellerId, "Unknown", "Unknown", "Unknown");
+
+        LocalDateTime startTime = rs.getTimestamp("start_time").toLocalDateTime();
+        LocalDateTime endTime = rs.getTimestamp("end_time").toLocalDateTime();
+
+        Auction auction = new Auction(
+                "AUC_" + idStr,
+                item,
+                seller,
+                rs.getDouble("start_price"),
+                rs.getDouble("step_price"),
+                startTime,
+                endTime
+        );
+
+        auction.setCurrentPrice(rs.getDouble("current_price"));
+        // Bạn có thể set thêm status vào Auction model nếu cần quản lý UI nâng cao
+
+        return auction;
     }
 }

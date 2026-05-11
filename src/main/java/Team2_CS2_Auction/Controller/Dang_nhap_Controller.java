@@ -2,9 +2,9 @@ package Team2_CS2_Auction.Controller;
 
 import Team2_CS2_Auction.Model.user.UserRole;
 import Team2_CS2_Auction.Model.user.User;
+import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Service.UserService;
-
-// ✅ IMPORT SESSION
+import Team2_CS2_Auction.Service.AuctionServiceImpl;
 import Team2_CS2_Auction.Session.Session;
 
 import javafx.fxml.FXML;
@@ -25,175 +25,85 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
 
     @FXML
     private void handleLogin(ActionEvent event) {
-
-        // =========================
         // 1. LẤY DỮ LIỆU TỪ FORM
-        // =========================
         String username = Ten_dang_nhap.getText().trim();
         String password = Mat_khau.getText();
 
-        // 🔥 tránh lỗi null checkbox
-        boolean isAdminLogin =
-                Dang_nhap_Admin != null
-                        && Dang_nhap_Admin.isSelected();
+        boolean isAdminLogin = Dang_nhap_Admin != null && Dang_nhap_Admin.isSelected();
 
-        // =========================
-        // 2. CHECK RỖNG
-        // =========================
+        // 2. KIỂM TRA RỖNG
         if (username.isEmpty() || password.isEmpty()) {
-
-            showAlert(
-                    "Thiếu thông tin",
-                    "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.",
-                    Alert.AlertType.WARNING
-            );
-
+            showAlert("Thiếu thông tin", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", Alert.AlertType.WARNING);
             return;
         }
 
-        // =========================
-        // 3. KIỂM TRA LOGIN
-        // =========================
+        // 3. GỌI SERVICE KIỂM TRA ĐĂNG NHẬP
         User user = userService.login(username, password);
 
-        // DEBUG
-        System.out.println("LOGIN RESULT: " + user);
-
-        // =========================
-        // 4. LOGIN THẤT BẠI
-        // =========================
+        // 4. KIỂM TRA KẾT QUẢ ĐĂNG NHẬP
         if (user == null) {
-
-            showAlert(
-                    "Đăng nhập thất bại",
-                    "Sai tên đăng nhập hoặc mật khẩu.",
-                    Alert.AlertType.ERROR
-            );
-
+            showAlert("Đăng nhập thất bại", "Sai tên đăng nhập hoặc mật khẩu.", Alert.AlertType.ERROR);
             return;
         }
 
-        // ==================================================
-        // 5. LƯU USER HIỆN TẠI VÀO SESSION
-        // ==================================================
-        // Sau này toàn hệ thống sẽ biết:
-        // - ai đang đăng nhập
-        // - ai đăng sản phẩm
-        // - ai đấu giá
-        // - phân quyền admin/user
-        // ==================================================
-        Session.currentUser = user;
+        // =====================================================================
+        // 5. XỬ LÝ SESSION & INJECT SERVICE (PHẦN QUAN TRỌNG NHẤT)
+        // =====================================================================
+        if (user.getRole() == UserRole.MEMBER) {
+            // Ép kiểu sang Member để sử dụng các tính năng riêng biệt
+            Member member = (Member) user;
 
-        // DEBUG
-        System.out.println(
-                "Current User: "
-                        + Session.currentUser.getUsername()
-        );
+            // Kích hoạt bộ máy xử lý đấu giá cho Member này
+            member.setAuctionService(new AuctionServiceImpl());
 
-        // =========================
-        // 6. LOGIN ADMIN
-        // =========================
-        if (isAdminLogin) {
-
-            UserRole role = user.getRole();
-
-            if (role == UserRole.ADMIN) {
-
-                showAlert(
-                        "Thành công",
-                        "Đăng nhập Admin thành công.",
-                        Alert.AlertType.INFORMATION
-                );
-
-                navigateTo(
-                        event,
-                        FXML_ADMIN_HOME,
-                        "Trang Quản Trị"
-                );
-
-            } else {
-
-                showAlert(
-                        "Từ chối truy cập",
-                        "Tài khoản này không có quyền Admin.",
-                        Alert.AlertType.WARNING
-                );
-            }
-
+            // Lưu vào Session để dùng chung toàn hệ thống
+            Session.currentUser = member;
         } else {
+            // Nếu là Admin thì lưu trực tiếp
+            Session.currentUser = user;
+        }
 
-            // =========================
-            // 7. LOGIN USER THƯỜNG
-            // =========================
-            showAlert(
-                    "Thành công",
-                    "Đăng nhập thành công.",
-                    Alert.AlertType.INFORMATION
-            );
+        System.out.println("DEBUG: Đã đăng nhập với tư cách: " + Session.currentUser.getUsername());
 
-            navigateTo(
-                    event,
-                    FXML_USER_HOME,
-                    "Trang Người Dùng"
-            );
+        // =====================================================================
+        // 6. ĐIỀU HƯỚNG MÀN HÌNH (ADMIN vs USER)
+        // =====================================================================
+        if (isAdminLogin) {
+            if (user.getRole() == UserRole.ADMIN) {
+                showAlert("Thành công", "Chào mừng Admin quay trở lại.", Alert.AlertType.INFORMATION);
+                navigateTo(event, FXML_ADMIN_HOME, "Trang Quản Trị");
+            } else {
+                showAlert("Từ chối truy cập", "Tài khoản này không có quyền quản trị viên.", Alert.AlertType.WARNING);
+            }
+        } else {
+            // Đăng nhập User thường
+            showAlert("Thành công", "Đăng nhập thành công.", Alert.AlertType.INFORMATION);
+            navigateTo(event, FXML_USER_HOME, "Trang Chủ");
         }
     }
 
     @FXML
     public void handleSwitchToRegister(ActionEvent event) {
-
-        navigateTo(
-                event,
-                FXML_REGISTER,
-                "Đăng ký tài khoản"
-        );
+        navigateTo(event, FXML_REGISTER, "Đăng ký tài khoản");
     }
 
-    private void navigateTo(
-            ActionEvent event,
-            String fxmlFile,
-            String title
-    ) {
 
+    // --- CÁC HÀM HỖ TRỢ (HELPERS) ---
+
+    private void navigateTo(ActionEvent event, String fxmlFile, String title) {
         try {
-
             switchScene(event, fxmlFile, title);
-
         } catch (Exception e) {
-
-            showAlert(
-                    "Lỗi hệ thống",
-                    "Không thể tải trang: " + fxmlFile,
-                    Alert.AlertType.ERROR
-            );
-
+            showAlert("Lỗi hệ thống", "Không thể chuyển trang: " + fxmlFile, Alert.AlertType.ERROR);
             e.printStackTrace();
         }
     }
 
-    @FXML
-    public void handleBackToMain(ActionEvent event) {
-
-        navigateTo(
-                event,
-                FXML_USER_HOME,
-                "Màn hình chính"
-        );
-    }
-
-    private void showAlert(
-            String title,
-            String message,
-            Alert.AlertType type
-    ) {
-
+    private void showAlert(String title, String message, Alert.AlertType type) {
         Alert alert = new Alert(type);
-
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-
-        // 🔥 QUAN TRỌNG
         alert.showAndWait();
     }
 }

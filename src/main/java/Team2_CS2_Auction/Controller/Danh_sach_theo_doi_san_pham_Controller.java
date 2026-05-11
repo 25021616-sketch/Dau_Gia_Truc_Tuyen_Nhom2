@@ -14,7 +14,10 @@ public class Danh_sach_theo_doi_san_pham_Controller extends Base_Admin_Controlle
     public void handleGoToLichSu(ActionEvent event) {
         switchScene(event, "Lich_su_giao_dich.fxml", "Lịch sử giao dịch");
     }
-
+    @FXML
+    public void handleGoToSanPhamCuaToi(ActionEvent event) {
+        switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi");
+    }
     @FXML
     public void handleGoTothemsanpham(ActionEvent event) {
         switchScene(event, "them_san_pham.fxml", "them san pham");

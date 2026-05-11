@@ -92,6 +92,11 @@
                             <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
                         </Button>
 
+                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleGoToSanPhamCuaToi" style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="SẢN PHẨM CỦA TÔI">
+                            <font><Font name="System Bold" size="11.0" /></font>
+                            <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
+                        </Button>
+
                         <Button alignment="BASELINE_LEFT" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleGoTothemsanpham" style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="THÊM SẢN PHẨM">
                             <font><Font name="System Bold" size="11.0" /></font>
                             <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
@@ -245,7 +250,6 @@
                                                 </VBox>
                                             </children>
                                         </HBox>
-
                                     </children>
                                 </VBox>
 

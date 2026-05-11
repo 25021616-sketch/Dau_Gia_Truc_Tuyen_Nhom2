@@ -1,135 +1,95 @@
 package Team2_CS2_Auction.Service;
 
-import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.auction.Auction;
-import Team2_CS2_Auction.Model.auction.AuctionStatus;
-import Team2_CS2_Auction.Model.auction.Bid;
+import Team2_CS2_Auction.Model.item.Item;
+import Team2_CS2_Auction.Model.item.ItemFactory;
 import Team2_CS2_Auction.Model.user.Member;
+import Team2_CS2_Auction.Repository.ProductRepository;
+import Team2_CS2_Auction.Repository.AuctionRepository;
+import Team2_CS2_Auction.Repository.AuctionRepositoryImpl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class AuctionServiceImpl implements AuctionService {
-
-    private final List<Auction> databaseAuctions = new ArrayList<>();
+    private final ProductRepository productRepo = new ProductRepository();
+    private final AuctionRepository auctionRepo = new AuctionRepositoryImpl();
 
     @Override
-    public void createAuction(Member seller,
-                              Item item,
-                              double startPrice,
-                              double stepPrice,
-                              String endTime) throws Exception {
+    public void createAuction(Member seller, String name, String category, String description,
+                              String imagePath, String startPrice, String stepPrice,
+                              LocalDateTime startTime, LocalDateTime endTime) throws Exception {
 
-        if (seller == null || item == null) {
-            throw new Exception("Dữ liệu không hợp lệ");
-        }
+        // 1. Validation (Giữ nguyên logic tốt của bạn)
+        if (name == null || name.isEmpty()) throw new Exception("Tên sản phẩm trống!");
 
-        LocalDateTime end = LocalDateTime.parse(endTime);
+        double price = Double.parseDouble(startPrice);
+        double step = Double.parseDouble(stepPrice);
 
-        if (end.isBefore(LocalDateTime.now())) {
-            throw new Exception("Thời gian phải ở tương lai");
-        }
+        if (price <= 0) throw new Exception("Giá khởi điểm phải > 0!");
+        if (startTime.isAfter(endTime)) throw new Exception("Thời gian không hợp lệ!");
 
-        String itemId = UUID.randomUUID().toString();
-        item.setId(itemId);
+        // 2. Factory (Giữ nguyên)
+        Item newItem = ItemFactory.createItem(null, name, category, description, imagePath);
 
-        String auctionId = UUID.randomUUID().toString();
-
-        Auction newAuction = new Auction(
-                auctionId,
-                item,
-                seller,
-                startPrice,
-                stepPrice,
-                LocalDateTime.now(),
-                end
+        // 3. ĐẨY XUỐNG DB VỚI TRẠNG THÁI PENDING (Để Admin duyệt)
+        boolean success = productRepo.insertProduct(
+                newItem.getTenSanPham(),
+                newItem.getMoTa(),
+                newItem.getLoaiSanPham(),
+                price,
+                price,
+                step,
+                seller.getId(),
+                startTime,
+                endTime,
+                "PENDING", // Đổi từ OPENING sang PENDING
+                imagePath
         );
 
-        synchronized (databaseAuctions) {
-            databaseAuctions.add(newAuction);
-        }
-
-        seller.addOwnedAuction(newAuction);
+        if (!success) throw new Exception("Lỗi lưu Database!");
     }
 
     @Override
-    public synchronized void placeBid(Member bidder,
-                                      String auctionId,
-                                      int multiplier) throws Exception {
-
-        Auction auction = findAuctionById(auctionId);
-
-        if (auction == null) {
-            throw new Exception("Không tìm thấy phiên đấu giá");
-        }
-
-        if (auction.getSeller().getId() == bidder.getId()) {
-            throw new Exception("Không thể tự đấu giá");
-        }
-
-        if (auction.getStatus() != AuctionStatus.OPEN) {
-            throw new Exception("Phiên chưa mở hoặc đã đóng");
-        }
-
-        if (multiplier <= 0) {
-            throw new Exception("Multiplier phải > 0");
-        }
-
-        double newPrice =
-                auction.getCurrentPrice()
-                        + multiplier * auction.getStepPrice();
-
-        if (bidder.getBalance() < newPrice) {
-            throw new Exception("Không đủ số dư");
-        }
-
-        bidder.subtractBalance(newPrice);
-
-        List<Bid> history = auction.getBidHistory();
-
-        if (!history.isEmpty()) {
-            Bid lastBid = history.get(history.size() - 1);
-            lastBid.getBidder().addBalance(lastBid.getAmount());
-        }
-
-        Bid bid = new Bid(
-                UUID.randomUUID().toString(),
-                bidder,
-                newPrice
-        );
-
-        auction.addBid(bid);
-        bidder.addJoinedAuction(auction);
+    public List<Auction> getActiveAuctions() throws Exception {
+        // CHỈ LẤY HÀNG ĐÃ DUYỆT (OPENING)
+        return productRepo.getAllActiveProducts();
     }
 
     @Override
-    public List<Auction> getActiveAuctions() {
-
-        List<Auction> result = new ArrayList<>();
-
-        synchronized (databaseAuctions) {
-            for (Auction auction : databaseAuctions) {
-                if (auction.getStatus() == AuctionStatus.OPEN) {
-                    result.add(auction);
-                }
-            }
-        }
-
-        return result;
+    public List<Auction> getAuctionsBySeller(int sellerId) throws Exception {
+        // LẤY TẤT CẢ (Để User theo dõi tình trạng duyệt bài của mình)
+        return productRepo.getProductsBySellerId(sellerId);
     }
 
-    private Auction findAuctionById(String id) {
-
-        synchronized (databaseAuctions) {
-            for (Auction auction : databaseAuctions) {
-                if (auction.getId().equals(id)) {
-                    return auction;
-                }
-            }
+    @Override
+    public void placeBid(Member bidder, String auctionId, double bidAmount) throws Exception {
+        // 1. Kiểm tra ví tiền (Giả sử Member có hàm getBalance)
+        if (bidder.getBalance() < bidAmount) {
+            throw new Exception("Số dư tài khoản không đủ!");
         }
 
-        return null;
+        // 2. Chuyển đổi ID từ "AUC_12" thành 12
+        int id = Integer.parseInt(auctionId.replace("AUC_", ""));
+
+        // 3. Ghi dữ liệu xuống DB
+        boolean success = productRepo.updateCurrentPrice(id, bidAmount);
+
+        if (success) {
+            System.out.println("User " + bidder.getUsername() + " đặt giá thành công: " + bidAmount);
+        } else {
+            throw new Exception("Lỗi khi cập nhật giá vào hệ thống!");
+        }
+    }
+    @Override
+    public List<Auction> getPendingAuctions() throws Exception {
+        // Gọi sang AuctionRepositoryImpl để lấy danh sách status = 'PENDING'
+        return auctionRepo.findPendingAuctions();
+    }
+
+    @Override
+    public void approveAuction(String auctionId) throws Exception {
+        // Gọi sang AuctionRepositoryImpl để cập nhật status: PENDING -> OPENING
+        auctionRepo.updateStatus(auctionId, "OPENING");
     }
 }
