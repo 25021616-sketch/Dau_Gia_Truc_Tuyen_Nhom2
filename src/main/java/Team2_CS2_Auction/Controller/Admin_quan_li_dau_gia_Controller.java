@@ -67,23 +67,80 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
         colKetThuc.setCellValueFactory(new PropertyValueFactory<>("endTime"));
         formatDateColumn(colKetThuc);
     }
-
     private void setupActionButtons() {
+
         colThaoTac.setCellFactory(param -> new TableCell<>() {
-            private final Button btnApprove = new Button("Duyệt");
-            private final HBox container = new HBox(btnApprove);
+
+            private final Button btnApprove =
+                    new Button("Duyệt");
+
+            private final Button btnReject =
+                    new Button("Từ chối");
+
+            private final HBox container =
+                    new HBox(10, btnApprove, btnReject);
+
             {
-                btnApprove.setStyle("-fx-background-color: #68D391; -fx-text-fill: white; -fx-cursor: hand;");
-                btnApprove.setOnAction(e -> handleApproveAction(getTableView().getItems().get(getIndex())));
-                container.setAlignment(javafx.geometry.Pos.CENTER);
+
+                // ===== STYLE NÚT DUYỆT =====
+
+                btnApprove.setStyle(
+                        "-fx-background-color: #68D391;" +
+                                "-fx-text-fill: white;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-cursor: hand;" +
+                                "-fx-background-radius: 8;"
+                );
+
+                // ===== STYLE NÚT TỪ CHỐI =====
+
+                btnReject.setStyle(
+                        "-fx-background-color: #FC8181;" +
+                                "-fx-text-fill: white;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-cursor: hand;" +
+                                "-fx-background-radius: 8;"
+                );
+
+                // ===== ACTION DUYỆT =====
+
+                btnApprove.setOnAction(e -> {
+
+                    Auction auction =
+                            getTableView()
+                                    .getItems()
+                                    .get(getIndex());
+
+                    handleApproveAction(auction);
+                });
+
+                // ===== ACTION TỪ CHỐI =====
+
+                btnReject.setOnAction(e -> {
+
+                    Auction auction =
+                            getTableView()
+                                    .getItems()
+                                    .get(getIndex());
+
+                    handleRejectAction(auction);
+                });
+
+                container.setAlignment(
+                        javafx.geometry.Pos.CENTER
+                );
             }
+
             @Override
             protected void updateItem(Void item, boolean empty) {
+
                 super.updateItem(item, empty);
+
                 setGraphic(empty ? null : container);
             }
         });
     }
+
 
     private void loadData() {
         try {
@@ -103,6 +160,30 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
             loadData();
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
+        }
+    }
+
+    private void handleRejectAction(Auction auction) {
+
+        try {
+
+            auctionService.rejectAuction(
+                    auction.getAuctionId()
+            );
+
+            new Alert(
+                    Alert.AlertType.INFORMATION,
+                    "Đã từ chối sản phẩm!"
+            ).show();
+
+            loadData();
+
+        } catch (Exception e) {
+
+            new Alert(
+                    Alert.AlertType.ERROR,
+                    "Lỗi: " + e.getMessage()
+            ).show();
         }
     }
 

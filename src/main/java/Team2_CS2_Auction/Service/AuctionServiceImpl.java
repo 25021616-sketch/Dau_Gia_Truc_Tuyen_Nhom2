@@ -92,4 +92,24 @@ public class AuctionServiceImpl implements AuctionService {
         // Gọi sang AuctionRepositoryImpl để cập nhật status: PENDING -> OPENING
         auctionRepo.updateStatus(auctionId, "OPENING");
     }
+
+    @Override
+    public void rejectAuction(String auctionId) throws Exception {
+
+        // Chuyển AUC_12 -> 12
+        int productId =
+                Integer.parseInt(
+                        auctionId.replace("AUC_", "")
+                );
+
+        boolean success =
+                productRepo.rejectProduct(productId);
+
+        if (!success) {
+
+            throw new Exception(
+                    "Không thể từ chối sản phẩm!"
+            );
+        }
+    }
 }
