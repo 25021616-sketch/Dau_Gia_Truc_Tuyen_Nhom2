@@ -1,12 +1,8 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Model.user.UserRole;
 import Team2_CS2_Auction.Model.user.User;
-import Team2_CS2_Auction.Model.user.Member;
+import Team2_CS2_Auction.Model.user.UserRole;
 import Team2_CS2_Auction.Service.UserService;
-import Team2_CS2_Auction.Service.AuctionServiceImpl;
-import Team2_CS2_Auction.Session.Session;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.event.ActionEvent;
@@ -25,85 +21,57 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
 
     @FXML
     private void handleLogin(ActionEvent event) {
-        // 1. LẤY DỮ LIỆU TỪ FORM
-        String username = Ten_dang_nhap.getText().trim();
-        String password = Mat_khau.getText();
+        String username = (Ten_dang_nhap.getText() != null) ? Ten_dang_nhap.getText().trim() : "";
+        String password = (Mat_khau.getText() != null) ? Mat_khau.getText() : "";
+        boolean isAdminLogin = (Dang_nhap_Admin != null && Dang_nhap_Admin.isSelected());
 
-        boolean isAdminLogin = Dang_nhap_Admin != null && Dang_nhap_Admin.isSelected();
+        try {
+            // Sửa tên hàm thành handleLoginLogic để khớp với Service mới
+            User user = userService.handleLoginLogic(username, password, isAdminLogin);
 
-        // 2. KIỂM TRA RỖNG
-        if (username.isEmpty() || password.isEmpty()) {
-            showAlert("Thiếu thông tin", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", Alert.AlertType.WARNING);
-            return;
-        }
-
-        // 3. GỌI SERVICE KIỂM TRA ĐĂNG NHẬP
-        User user = userService.login(username, password);
-
-        // 4. KIỂM TRA KẾT QUẢ ĐĂNG NHẬP
-        if (user == null) {
-            showAlert("Đăng nhập thất bại", "Sai tên đăng nhập hoặc mật khẩu.", Alert.AlertType.ERROR);
-            return;
-        }
-
-        // =====================================================================
-        // 5. XỬ LÝ SESSION & INJECT SERVICE (PHẦN QUAN TRỌNG NHẤT)
-        // =====================================================================
-        if (user.getRole() == UserRole.MEMBER) {
-            // Ép kiểu sang Member để sử dụng các tính năng riêng biệt
-            Member member = (Member) user;
-
-            // Kích hoạt bộ máy xử lý đấu giá cho Member này
-            member.setAuctionService(new AuctionServiceImpl());
-
-            // Lưu vào Session để dùng chung toàn hệ thống
-            Session.currentUser = member;
-        } else {
-            // Nếu là Admin thì lưu trực tiếp
-            Session.currentUser = user;
-        }
-
-        System.out.println("DEBUG: Đã đăng nhập với tư cách: " + Session.currentUser.getUsername());
-
-        // =====================================================================
-        // 6. ĐIỀU HƯỚNG MÀN HÌNH (ADMIN vs USER)
-        // =====================================================================
-        if (isAdminLogin) {
+            // Chuyển trang dựa trên Role từ Enum của Model User
             if (user.getRole() == UserRole.ADMIN) {
-                showAlert("Thành công", "Chào mừng Admin quay trở lại.", Alert.AlertType.INFORMATION);
-                navigateTo(event, FXML_ADMIN_HOME, "Trang Quản Trị");
+                showStyledAlert("Admin", "Xin chào quản trị viên " + user.getUsername() + "!", Alert.AlertType.INFORMATION);
+                navigateTo(event, FXML_ADMIN_HOME, "Hệ thống quản trị");
             } else {
-                showAlert("Từ chối truy cập", "Tài khoản này không có quyền quản trị viên.", Alert.AlertType.WARNING);
+                showStyledAlert("Thành công", "Đăng nhập thành công! Chào mừng " + user.getUsername(), Alert.AlertType.INFORMATION);
+                navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
             }
-        } else {
-            // Đăng nhập User thường
-            showAlert("Thành công", "Đăng nhập thành công.", Alert.AlertType.INFORMATION);
-            navigateTo(event, FXML_USER_HOME, "Trang Chủ");
+
+        } catch (Exception e) {
+            // Hiển thị thông báo lỗi (VD: "Sai tên đăng nhập", "Không có quyền Admin", v.v.)
+            showStyledAlert("Thông báo", e.getMessage(), Alert.AlertType.WARNING);
         }
     }
 
     @FXML
     public void handleSwitchToRegister(ActionEvent event) {
-        navigateTo(event, FXML_REGISTER, "Đăng ký tài khoản");
+        navigateTo(event, FXML_REGISTER, "Đăng ký thành viên");
     }
-
-
-    // --- CÁC HÀM HỖ TRỢ (HELPERS) ---
 
     private void navigateTo(ActionEvent event, String fxmlFile, String title) {
         try {
             switchScene(event, fxmlFile, title);
         } catch (Exception e) {
-            showAlert("Lỗi hệ thống", "Không thể chuyển trang: " + fxmlFile, Alert.AlertType.ERROR);
+            showStyledAlert("Lỗi", "Không thể tải trang: " + fxmlFile, Alert.AlertType.ERROR);
             e.printStackTrace();
         }
     }
 
-    private void showAlert(String title, String message, Alert.AlertType type) {
+    // Dùng Alert có Style cho đồng bộ với trang Đăng ký
+    private void showStyledAlert(String title, String message, Alert.AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+
+        DialogPane pane = alert.getDialogPane();
+        pane.setStyle("-fx-background-color: white; -fx-font-size: 14px; -fx-font-family: 'Segoe UI';");
+
+        Button okButton = (Button) pane.lookupButton(ButtonType.OK);
+        if (okButton != null) {
+            okButton.setStyle("-fx-background-color: #20335e; -fx-text-fill: white; -fx-font-weight: bold;");
+        }
         alert.showAndWait();
     }
 }
