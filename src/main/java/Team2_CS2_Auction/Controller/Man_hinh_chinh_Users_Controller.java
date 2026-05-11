@@ -8,7 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.ResourceBundle;
 
 public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller implements Initializable {
 
-    @FXML private FlowPane pnlItems;
+    @FXML private GridPane pnlItems;
 
     private final AuctionService auctionService = new AuctionServiceImpl();
     private List<Item_Card_Controller> activeControllers = new ArrayList<>();
@@ -59,6 +59,8 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         pnlItems.getChildren().clear();
 
         // 2. Duyệt danh sách để nạp Card
+        int col = 0;
+        int row = 0;
         for (Auction auction : auctions) {
             try {
                 FXMLLoader loader = new FXMLLoader(
@@ -75,7 +77,14 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                 cardController.setOwnerView(isOwnerView);
 
                 activeControllers.add(cardController);
-                pnlItems.getChildren().add(card);
+                pnlItems.add(card, col, row);
+
+                // Tăng cột, nếu đủ 3 cột thì xuống dòng
+                col++;
+                if (col == 3) {
+                    col = 0;
+                    row++;
+                }
 
             } catch (Exception e) {
                 String name = (auction.getItem() != null) ? auction.getItem().getTenSanPham() : "Unknown";
