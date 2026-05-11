@@ -2,7 +2,7 @@ package Team2_CS2_Auction.Controller;
 
 import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Service.AuctionService;
-import Team2_CS2_Auction.Service.AuctionServiceImpl; // Nhớ import cái này
+import Team2_CS2_Auction.Service.AuctionServiceImpl;
 import Team2_CS2_Auction.Session.Session;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
+
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -27,9 +28,8 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     @FXML private ImageView imgPreview;
 
     private String selectedImagePath = "";
+    private File selectedFile = null;
 
-    // === BƯỚC QUAN TRỌNG: KHỞI TẠO SERVICE ===
-    // Khai báo đối tượng cụ thể để gọi được các hàm không phải static
     private final AuctionService auctionService = new AuctionServiceImpl();
 
     @Override
@@ -42,47 +42,80 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     @FXML
     private void handleDangSanPham(ActionEvent event) {
         try {
-            // Kiểm tra session người dùng
-            if (Session.currentUser == null) {
-                throw new Exception("Vui lòng đăng nhập lại!");
-            }
-            Member seller = (Member) Session.currentUser;
+            Member seller = getCurrentUser();
 
-            // THU THẬP DỮ LIỆU THÔ TỪ UI
-            String ten = txtTenSanPham.getText();
+            validateInputFields();
+
+            String ten = txtTenSanPham.getText().trim();
             String loai = loaiSanPhamCombo.getValue();
-            String moTa = txtMoTa.getText();
-            String giaKhoi = txtGiaKhoiDiem.getText();
-            String buocGia = txtBuocGia.getText();
+            String moTa = txtMoTa.getText().trim();
+            String giaKhoi = txtGiaKhoiDiem.getText().trim();
+            String buocGia = txtBuocGia.getText().trim();
 
-            // Kiểm tra input cơ bản (tránh lỗi NullPointerException)
-            if (ngayBatDauPicker.getValue() == null || ngayKetThucPicker.getValue() == null) {
-                throw new Exception("Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc!");
-            }
+            LocalDateTime start = parseDateTime(ngayBatDauPicker, gioBatDau, phutBatDau);
+            LocalDateTime end = parseDateTime(ngayKetThucPicker, gioKetThuc, phutKetThuc);
 
-            // Lấy ngày tháng năm và ghép giờ phút
-            LocalDateTime start = ngayBatDauPicker.getValue().atTime(
-                    Integer.parseInt(gioBatDau.getText().trim()),
-                    Integer.parseInt(phutBatDau.getText().trim()));
+            String finalImagePath = uploadSelectedImage();
 
-            LocalDateTime end = ngayKetThucPicker.getValue().atTime(
-                    Integer.parseInt(gioKetThuc.getText().trim()),
-                    Integer.parseInt(phutKetThuc.getText().trim()));
+            auctionService.createAuction(seller, ten, loai, moTa, finalImagePath, giaKhoi, buocGia, start, end);
 
-            // GỌI SERVICE: Bây giờ auctionService (chữ a thường) đã tồn tại nên sẽ hết lỗi
-            auctionService.createAuction(seller, ten, loai, moTa, selectedImagePath, giaKhoi, buocGia, start, end);
-
-            Alert successAlert = new Alert(Alert.AlertType.INFORMATION, "Đăng sản phẩm thành công!");
-            successAlert.setHeaderText(null);
-            successAlert.showAndWait();
-
+            showSuccessAlert("Đăng sản phẩm thành công!");
             handleBackToHome(event);
 
         } catch (NumberFormatException e) {
-            new Alert(Alert.AlertType.ERROR, "Giờ/Phút hoặc Giá phải là số hợp lệ!").show();
+            showErrorAlert("Giờ/Phút hoặc Giá phải là chữ số hợp lệ!");
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
+            showErrorAlert(e.getMessage());
         }
+    }
+
+    private Member getCurrentUser() throws Exception {
+        if (Session.currentUser == null) {
+            throw new Exception("Vui lòng đăng nhập lại!");
+        }
+        return (Member) Session.currentUser;
+    }
+
+    private void validateInputFields() throws Exception {
+        if (txtTenSanPham.getText().trim().isEmpty() ||
+                txtGiaKhoiDiem.getText().trim().isEmpty() ||
+                txtBuocGia.getText().trim().isEmpty() ||
+                loaiSanPhamCombo.getValue() == null) {
+            throw new Exception("Vui lòng điền đầy đủ các thông tin cơ bản!");
+        }
+        if (ngayBatDauPicker.getValue() == null || ngayKetThucPicker.getValue() == null) {
+            throw new Exception("Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc!");
+        }
+    }
+
+    private LocalDateTime parseDateTime(DatePicker datePicker, TextField hourField, TextField minuteField) {
+        int hour = Integer.parseInt(hourField.getText().trim());
+        int minute = Integer.parseInt(minuteField.getText().trim());
+        return datePicker.getValue().atTime(hour, minute);
+    }
+
+    private String uploadSelectedImage() throws Exception {
+        if (selectedFile == null) {
+            return "";
+        }
+
+        System.out.println("Đang upload ảnh lên mạng...");
+        String uploadedUrl = Team2_CS2_Auction.util.ImgBBUploader.uploadImage(selectedFile);
+
+        if (uploadedUrl == null) {
+            throw new Exception("Lỗi tải ảnh lên server ImgBB! Vui lòng thử lại.");
+        }
+        return uploadedUrl;
+    }
+
+    private void showSuccessAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, message);
+        alert.setHeaderText(null);
+        alert.showAndWait();
+    }
+
+    private void showErrorAlert(String message) {
+        new Alert(Alert.AlertType.ERROR, "Lỗi: " + message).show();
     }
 
     @FXML
@@ -94,6 +127,7 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         );
         File file = fileChooser.showOpenDialog(null);
         if (file != null) {
+            selectedFile = file;
             selectedImagePath = file.toURI().toString();
             imgPreview.setImage(new Image(selectedImagePath));
         }
@@ -101,7 +135,6 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     @FXML
     public void handleBackToHome(ActionEvent event) {
-        // Giả sử switchScene nằm trong Base_Admin_Controller
         switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
     }
 }
