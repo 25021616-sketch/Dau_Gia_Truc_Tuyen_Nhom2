@@ -11,6 +11,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -26,6 +27,8 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     @FXML private TextArea txtMoTa;
     @FXML private DatePicker ngayBatDauPicker, ngayKetThucPicker;
     @FXML private ImageView imgPreview;
+    @FXML private VBox vboxPlaceholder;
+    @FXML private Button btnDeleteImage;
 
     private String selectedImagePath = "";
     private File selectedFile = null;
@@ -130,7 +133,21 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
             selectedFile = file;
             selectedImagePath = file.toURI().toString();
             imgPreview.setImage(new Image(selectedImagePath));
+            imgPreview.setVisible(true);
+            vboxPlaceholder.setVisible(false);
+            btnDeleteImage.setVisible(true);
         }
+    }
+
+    @FXML
+    private void handleDeleteImage(ActionEvent event) {
+        event.consume(); // Ngăn sự kiện click truyền xuống StackPane
+        selectedFile = null;
+        selectedImagePath = "";
+        imgPreview.setImage(null);
+        imgPreview.setVisible(false);
+        vboxPlaceholder.setVisible(true);
+        btnDeleteImage.setVisible(false);
     }
 
     @FXML

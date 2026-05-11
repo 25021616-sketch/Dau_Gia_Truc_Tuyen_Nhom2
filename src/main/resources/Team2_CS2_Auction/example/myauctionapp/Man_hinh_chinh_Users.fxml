@@ -27,7 +27,7 @@
                     </padding>
                     <children>
                         <Label text="🔍" textFill="#ADB5BD" />
-                        <TextField promptText="Tìm kiếm sản phẩm đang đấu giá..." style="-fx-background-color: transparent; -fx-prompt-text-fill: #ADB5BD;" HBox.hgrow="ALWAYS">
+                        <TextField promptText="Chức năng này đang phát triển!" style="-fx-background-color: transparent; -fx-prompt-text-fill: #ADB5BD;" HBox.hgrow="ALWAYS">
                             <font>
                                 <Font size="13.0" />
                             </font>
@@ -121,13 +121,10 @@
                             </children>
                         </HBox>
 
-                        <GridPane fx:id="pnlItems" hgap="30.0" maxWidth="Infinity" vgap="30.0">
-                            <columnConstraints>
-                                <ColumnConstraints hgrow="ALWAYS" percentWidth="33.333" />
-                                <ColumnConstraints hgrow="ALWAYS" percentWidth="33.333" />
-                                <ColumnConstraints hgrow="ALWAYS" percentWidth="33.333" />
-                            </columnConstraints>
-                        </GridPane>
+                        <FlowPane fx:id="pnlItems" hgap="30.0" prefWrapLength="1000.0" vgap="30.0">
+                            <children>
+                            </children>
+                        </FlowPane>
 
                         <VBox spacing="30.0">
                             <children>

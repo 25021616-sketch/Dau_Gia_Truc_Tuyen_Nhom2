@@ -6,7 +6,7 @@
 <?import javafx.scene.shape.*?>
 
 <BorderPane prefHeight="850.0" prefWidth="1300.0"
-            style="-fx-background-color: #F4F7FE; -fx-font-family: 'Segoe UI', sans-serif;"
+            style="-fx-background-color: #F4F7FE; -fx-font-family: 'Segoe UI', system-ui, sans-serif;"
             xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="Team2_CS2_Auction.Controller.Admin_quan_li_User_Controller">
@@ -25,52 +25,49 @@
 
                 <VBox spacing="10.0" VBox.vgrow="ALWAYS">
                     <padding><Insets top="40" /></padding>
-                    <Button maxWidth="Infinity" onAction="#handleGoToDashboard" prefHeight="45"
-                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Bảng điều khiển" />
+                    <Button maxWidth="Infinity" prefHeight="45" onAction="#handleGoToDashboard"
+                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-padding: 0 0 0 20; -fx-cursor: hand;" text="Bảng điều khiển" />
                     <Button maxWidth="Infinity" prefHeight="45"
-                            style="-fx-background-color: white; -fx-background-radius: 12; -fx-alignment: CENTER_LEFT; -fx-font-weight: bold; -fx-text-fill: #1A365D;" text="Người dùng" />
-                    <Button maxWidth="Infinity" onAction="#handleGoToInventory" prefHeight="45"
-                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Kho hàng" />
-                    <Button maxWidth="Infinity" onAction="#handleGoToHistory" prefHeight="45"
-                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Lịch sử" />
+                            style="-fx-background-color: white; -fx-background-radius: 12; -fx-alignment: CENTER_LEFT; -fx-font-weight: bold; -fx-text-fill: #1A365D; -fx-padding: 0 0 0 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);" text="Người dùng" />
+                    <Button maxWidth="Infinity" prefHeight="45" onAction="#handleGoToInventory"
+                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-padding: 0 0 0 20; -fx-cursor: hand;" text="Kho hàng" />
+                    <Button maxWidth="Infinity" prefHeight="45" onAction="#handleGoToHistory"
+                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-padding: 0 0 0 20; -fx-cursor: hand;" text="Lịch sử" />
                 </VBox>
             </children>
         </VBox>
     </left>
 
     <center>
-        <VBox spacing="25.0">
-            <padding><Insets bottom="30" left="40" right="40" top="30" /></padding>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <content>
+                <VBox spacing="25.0">
+                    <padding><Insets bottom="30" left="40" right="40" top="30" /></padding>
 
-            <HBox alignment="CENTER_LEFT">
-                <VBox>
-                    <Label style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #1A365D;" text="Quản lý Người dùng" />
-                    <Label style="-fx-text-fill: #718096; -fx-font-size: 14;" text="Danh sách tài khoản và quyền hạn." />
+                    <VBox>
+                        <Label style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #1A365D;" text="Quản lý Người dùng" />
+                        <Label style="-fx-text-fill: #718096; -fx-font-size: 14;" text="Danh sách tài khoản và giá trị tài sản ròng." />
+                    </VBox>
+
+                    <VBox spacing="15" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 15, 0, 0, 5);">
+                        <children>
+                            <TableView fx:id="userTable" prefHeight="550" styleClass="modern-table" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="colSTT" maxWidth="50.0" text="STT" />
+                                    <TableColumn fx:id="colID" maxWidth="80.0" text="ID" />
+                                    <TableColumn fx:id="colTen" minWidth="200.0" text="Tên người dùng" />
+                                    <TableColumn fx:id="colTrangThai" minWidth="150.0" text="Trạng thái" />
+                                    <TableColumn fx:id="colNgayDangKy" minWidth="150.0" text="Ngày đăng ký" />
+                                    <TableColumn fx:id="colTaiSan" minWidth="150.0" text="Tài sản" />
+                                </columns>
+                                <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                </columnResizePolicy>
+                            </TableView>
+                        </children>
+                    </VBox>
                 </VBox>
-                <Region HBox.hgrow="ALWAYS" />
-                <HBox spacing="15">
-                    <Button onAction="#handleBanUser" prefHeight="40" prefWidth="130"
-                            style="-fx-background-color: #E53E3E; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;" text="Khóa tài khoản" />
-                    <Button onAction="#handleUnbanUser" prefHeight="40" prefWidth="130"
-                            style="-fx-background-color: #38A169; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;" text="Mở khóa" />
-                </HBox>
-            </HBox>
-
-            <VBox spacing="15" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 15, 0, 0, 5);" VBox.vgrow="ALWAYS">
-                <children>
-                    <TableView fx:id="userTable" prefHeight="550" VBox.vgrow="ALWAYS">
-                        <columns>
-                            <TableColumn fx:id="colSTT" maxWidth="60.0" minWidth="50.0" text="STT" />
-                            <TableColumn fx:id="colID" maxWidth="100.0" minWidth="70.0" text="ID" />
-                            <TableColumn fx:id="colTen" minWidth="250.0" text="Tên người dùng" />
-                            <TableColumn fx:id="colNgayDangKy" minWidth="200.0" text="Ngày đăng ký" />
-                        </columns>
-                        <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                        </columnResizePolicy>
-                    </TableView>
-                </children>
-            </VBox>
-        </VBox>
+            </content>
+        </ScrollPane>
     </center>
 </BorderPane>
