@@ -52,6 +52,9 @@ public class Item_Card_Controller extends Base_Admin_Controller {
             btnDatGia.setManaged(false); // Ẩn nút đặt giá
             lblBadgeTrangThai.setText("SẢN PHẨM CỦA TÔI");
             lblBadgeTrangThai.setStyle(STYLE_OWNER_BADGE);
+            lblBadgeTrangThai.setVisible(true);
+        } else {
+            lblBadgeTrangThai.setVisible(false);
         }
     }
 
@@ -61,6 +64,8 @@ public class Item_Card_Controller extends Base_Admin_Controller {
 
         populateTextData(item);
         populateImageData(item);
+
+        lblBadgeTrangThai.setVisible(this.isOwnerView);
 
         imgSanPham.setEffect(null);
         startCountdown();
@@ -123,10 +128,9 @@ public class Item_Card_Controller extends Base_Admin_Controller {
         updateUIState("ĐANG DIỄN RA", COLOR_ONGOING);
         long sec = Duration.between(now, end).toSeconds();
         lblThoiGian.setText(formatDuration(sec));
-        lblBadgeTrangThai.setVisible(true);
 
         if (!isOwnerView) {
-            updateButtonState("ĐẶT GIÁ", false);
+            updateButtonState("XEM CHI TIẾT", false);
         }
     }
 

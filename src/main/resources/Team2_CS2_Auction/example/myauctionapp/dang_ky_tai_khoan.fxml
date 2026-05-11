@@ -15,7 +15,6 @@
     <children>
         <HBox alignment="CENTER" maxHeight="520.0" maxWidth="720.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 30, 0, 0, 15);">
             <children>
-
                 <VBox alignment="CENTER" minWidth="320.0" prefWidth="320.0" spacing="20.0" style="-fx-background-color: #20335e; -fx-background-radius: 20 0 0 20;">
                     <children>
                         <Label text="Đại học Công Nghệ - ĐHQGHN" textFill="WHITE">
@@ -91,7 +90,7 @@
                                     </children>
                                 </VBox>
 
-                                <Button fx:id="Dang_ky" maxWidth="Infinity" mnemonicParsing="false" prefHeight="48.0" style="-fx-background-color: #20335e; -fx-background-radius: 10; -fx-cursor: hand;" text="Đăng Ký" textFill="WHITE">
+                                <Button fx:id="Dang_ky" onAction="#handleRegister" maxWidth="Infinity" mnemonicParsing="false" prefHeight="48.0" style="-fx-background-color: #20335e; -fx-background-radius: 10; -fx-cursor: hand;" text="Đăng Ký" textFill="WHITE">
                                     <font><Font name="System Bold" size="14.0" /></font>
                                     <VBox.margin>
                                         <Insets top="10.0" />

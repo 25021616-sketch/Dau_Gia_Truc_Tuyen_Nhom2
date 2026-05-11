@@ -1,67 +1,44 @@
 package Team2_CS2_Auction.Service;
 
-import Team2_CS2_Auction.Model.user.User;
+import Team2_CS2_Auction.Model.user.*;
 import Team2_CS2_Auction.Repository.UserRepository;
+import Team2_CS2_Auction.Session.Session;
 
 public class UserService {
-
     private UserRepository userRepository = new UserRepository();
 
-    public User login(String username, String password) {
+    public void handleRegisterLogic(String username, String phone, String password, String confirm) throws Exception {
+        // Logic kiểm tra khớp mật khẩu
+        if (!password.equals(confirm)) throw new Exception("Mật khẩu nhập lại không khớp.");
 
-        if(username == null || password == null){
-            return null;
+        if (userRepository.existsByPhone(phone)) throw new Exception("Số điện thoại đã tồn tại.");
+
+        // Khởi tạo Member mới (Role tự động được set trong Constructor của Member)
+        Member newMember = new Member(username, password);
+        newMember.setPhone(phone);
+
+        if (!userRepository.register(newMember)) {
+            throw new Exception("Đăng ký thất bại (Tên đăng nhập có thể đã tồn tại).");
         }
-
-        if(username.isEmpty() || password.isEmpty()){
-            return null;
-        }
-
-        return userRepository.login(username, password);
     }
 
-    public boolean existsByPhone(String phone){
-        return userRepository.existsByPhone(phone);
-    }
+    public User handleLoginLogic(String username, String password, boolean isAdminLogin) throws Exception {
+        User user = userRepository.login(username, password);
 
-    public boolean register(User user) {
+        if (user == null) throw new Exception("Sai tên đăng nhập hoặc mật khẩu.");
 
-        // 1. Kiểm tra tên đăng nhập trống
-        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
-            return false;
+        // Kiểm tra quyền Admin dựa trên Role Enum từ Model
+        if (isAdminLogin && user.getRole() != UserRole.ADMIN) {
+            throw new Exception("Bạn không có quyền quản trị viên.");
         }
 
-        // 2. Kiểm tra độ dài tên đăng nhập
-        if (user.getUsername().length() < 4) {
-            return false;
+        // Ép kiểu và Inject Service cho Member
+        if (user instanceof Member member) {
+            member.setAuctionService(new AuctionServiceImpl());
+            Session.currentUser = member;
+        } else {
+            Session.currentUser = user;
         }
-
-        // 3. Kiểm tra mật khẩu trống
-        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
-            return false;
-        }
-
-        // 4. Kiểm tra mật khẩu tối thiểu 6 ký tự
-        if (user.getPassword().length() < 6) {
-            return false;
-        }
-
-        // 5. Kiểm tra số điện thoại trống
-        if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
-            return false;
-        }
-
-        // 6. Kiểm tra định dạng số điện thoại Việt Nam (10 số, bắt đầu bằng 0)
-        if (!user.getPhone().matches("0\\d{9}")) {
-            return false;
-        }
-
-        // 7. Kiểm tra số điện thoại đã tồn tại chưa
-        if (userRepository.existsByPhone(user.getPhone())) {
-            return false;
-        }
-
-        // 8. Nếu hợp lệ thì lưu vào database
-        return userRepository.register(user);
+        return user;
     }
 }
