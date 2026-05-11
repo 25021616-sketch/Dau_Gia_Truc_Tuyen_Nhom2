@@ -21,6 +21,9 @@ public interface AuctionService {
     // Đặt giá thầu
     void placeBid(Member bidder, String auctionId, double bidAmount) throws Exception;
 
+   // Admin duyệt
     List<Auction> getPendingAuctions() throws Exception;
     void approveAuction(String auctionId) throws Exception;
+    // Admin từ chối
+    void rejectAuction(String auctionId) throws Exception;
 }

@@ -7,6 +7,10 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import java.io.IOException;
 import java.net.URL;
 
@@ -62,5 +66,73 @@ public abstract class Base_Admin_Controller {
             System.err.println("❌ Lỗi nạp giao diện: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    protected void showAlert(Alert.AlertType type,
+                             String title,
+                             String message) {
+
+        Alert alert = new Alert(type);
+
+        alert.setTitle(title);
+
+        alert.setHeaderText(null);
+
+        alert.setContentText(message);
+
+        // Làm đẹp Dialog
+        DialogPane dialogPane = alert.getDialogPane();
+
+        dialogPane.setPrefWidth(420);
+
+        dialogPane.setStyle("""
+        -fx-background-color: #ffffff;
+        -fx-font-size: 14px;
+        -fx-font-family: "Segoe UI";
+        -fx-border-color: #dcdcdc;
+        -fx-border-radius: 10;
+        -fx-background-radius: 10;
+    """);
+
+        // Style nút OK
+        Button okButton =
+                (Button) dialogPane.lookupButton(ButtonType.OK);
+
+        okButton.setStyle("""
+        -fx-background-color: #4CAF50;
+        -fx-text-fill: white;
+        -fx-font-weight: bold;
+        -fx-background-radius: 8;
+        -fx-cursor: hand;
+    """);
+
+        // Đổi màu theo loại alert
+        switch (type) {
+
+            case ERROR -> okButton.setStyle("""
+            -fx-background-color: #e53935;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-background-radius: 8;
+            -fx-cursor: hand;
+        """);
+
+            case WARNING -> okButton.setStyle("""
+            -fx-background-color: #fb8c00;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-background-radius: 8;
+            -fx-cursor: hand;
+        """);
+
+            case INFORMATION -> okButton.setStyle("""
+            -fx-background-color: #1e88e5;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-background-radius: 8;
+            -fx-cursor: hand;
+        """);
+        }
+
+        alert.showAndWait();
     }
 }

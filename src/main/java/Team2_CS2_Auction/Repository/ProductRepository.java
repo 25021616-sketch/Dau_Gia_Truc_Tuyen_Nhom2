@@ -132,4 +132,65 @@ public class ProductRepository {
 
         return auction;
     }
+    /**
+     * Admin duyệt sản phẩm
+     * status: PENDING -> OPENING
+     */
+    public boolean approveProduct(int productId) {
+
+        String sql =
+                "UPDATE products " +
+                        "SET status = 'OPENING' " +
+                        "WHERE id = ?";
+
+        try (
+                Connection conn =
+                        DBConnection.getConnection();
+
+                PreparedStatement ps =
+                        conn.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, productId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Admin từ chối sản phẩm
+     * status: PENDING -> REJECTED
+     */
+    public boolean rejectProduct(int productId) {
+
+        String sql =
+                "UPDATE products " +
+                        "SET status = 'REJECTED' " +
+                        "WHERE id = ?";
+
+        try (
+                Connection conn =
+                        DBConnection.getConnection();
+
+                PreparedStatement ps =
+                        conn.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, productId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }
