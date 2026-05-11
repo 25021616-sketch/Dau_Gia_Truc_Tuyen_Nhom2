@@ -12,32 +12,46 @@ import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
-import java.time.LocalDateTime;
+
 import java.text.DecimalFormat;
 import java.time.Duration;
-
+import java.time.LocalDateTime;
 
 public class Item_Card_Controller extends Base_Admin_Controller {
 
-    @FXML private ImageView imgSanPham;
-    @FXML private Label lblLoaiSP;
-    @FXML private Label lblTenSP;
-    @FXML private Label lblThoiGian; // Sử dụng lblThoiGian thay vì lblTime
-    @FXML private Label lblGiaHienTai;
-    @FXML private Label lblBadgeTrangThai;
-    @FXML private Button btnDatGia;
+    @FXML
+    private ImageView imgSanPham;
+    @FXML
+    private Label lblLoaiSP;
+    @FXML
+    private Label lblTenSP;
+    @FXML
+    private Label lblThoiGian;
+    @FXML
+    private Label lblGiaHienTai;
+    @FXML
+    private Label lblBadgeTrangThai;
+    @FXML
+    private Button btnDatGia;
 
     private Timeline timeline;
     private Auction auction;
     private boolean isOwnerView = false;
 
+    // Các hằng số (Constants) để dễ quản lý style
+    private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("$#,###");
+    private static final String COLOR_UPCOMING = "#F39C12";
+    private static final String COLOR_ONGOING = "#D32F2F";
+    private static final String STYLE_ENDED = "-fx-text-fill: #7F8C8D; -fx-font-weight: bold;";
+    private static final String STYLE_OWNER_BADGE = "-fx-background-color: #27ae60; -fx-text-fill: white;";
+
     public void setOwnerView(boolean isOwner) {
         this.isOwnerView = isOwner;
-        if (isOwnerView) {
-            btnDatGia.setVisible(false);
-            btnDatGia.setManaged(false);
+        if (this.isOwnerView) {
+            btnDatGia.setVisible(false); // Ẩn nút đặt giá
+            btnDatGia.setManaged(false); // Ẩn nút đặt giá
             lblBadgeTrangThai.setText("SẢN PHẨM CỦA TÔI");
-            lblBadgeTrangThai.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white;");
+            lblBadgeTrangThai.setStyle(STYLE_OWNER_BADGE);
         }
     }
 
@@ -45,80 +59,98 @@ public class Item_Card_Controller extends Base_Admin_Controller {
         this.auction = auction;
         Item item = auction.getItem();
 
-        // 1. Dữ liệu văn bản
-        lblTenSP.setText(item.getTenSanPham());
-        lblLoaiSP.setText(item.getLoaiSanPham().toUpperCase());
-
-        DecimalFormat df = new DecimalFormat("$#,###");
-        lblGiaHienTai.setText(df.format(auction.getCurrentPrice()));
-
-        // 2. Xử lý ảnh
-        String path = item.getImagePath();
-        if (path != null && !path.isEmpty()) {
-            try {
-                imgSanPham.setImage(new Image(path, true));
-                Rectangle clip = new Rectangle(imgSanPham.getFitWidth(), imgSanPham.getFitHeight());
-                clip.setArcWidth(30);
-                clip.setArcHeight(30);
-                imgSanPham.setClip(clip);
-            } catch (Exception e) {
-                System.out.println("Lỗi nạp ảnh: " + e.getMessage());
-            }
-        }
+        populateTextData(item);
+        populateImageData(item);
 
         imgSanPham.setEffect(null);
-        startCountdown(); // Chỉ cần gọi 1 hàm này để xử lý thời gian
+        startCountdown();
+    }
+
+    private void populateTextData(Item item) {
+        lblTenSP.setText(item.getTenSanPham());
+        lblLoaiSP.setText(item.getLoaiSanPham().toUpperCase());
+        lblGiaHienTai.setText(PRICE_FORMAT.format(auction.getCurrentPrice()));
+    }
+
+    private void populateImageData(Item item) {
+        String path = item.getImagePath();
+        if (path == null || path.isEmpty()) return;
+
+        try {
+            imgSanPham.setImage(new Image(path, true));
+            Rectangle clip = new Rectangle(imgSanPham.getFitWidth(), imgSanPham.getFitHeight());
+            clip.setArcWidth(30);
+            clip.setArcHeight(30);
+            imgSanPham.setClip(clip);
+        } catch (Exception e) {
+            System.err.println("Lỗi nạp ảnh: " + e.getMessage());
+        }
     }
 
     private void startCountdown() {
-        if (timeline != null) timeline.stop();
+        stopTimeline(); // Tái sử dụng method stopTimeline
 
-        // Sử dụng javafx.util.Duration cho KeyFrame
-        timeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), event -> {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime start = auction.getStartTime();
-            LocalDateTime end = auction.getEndTime();
-
-            if (now.isBefore(start)) {
-                // TRƯỚC KHI ĐẤU GIÁ
-                updateUIState("SẮP DIỄN RA", "#F39C12");
-                long sec = java.time.Duration.between(now, start).toSeconds();
-                lblThoiGian.setText(formatDuration(sec));
-
-                if (!isOwnerView) {
-                    btnDatGia.setText("CHỜ ĐỢI");
-                    btnDatGia.setDisable(true);
-                }
-            } else if (now.isBefore(end)) {
-                // TRONG KHI ĐẤU GIÁ
-                updateUIState("ĐANG DIỄN RA", "#D32F2F");
-                long sec = java.time.Duration.between(now, end).toSeconds();
-                lblThoiGian.setText(formatDuration(sec));
-
-                if (!isOwnerView) {
-                    btnDatGia.setText("ĐẶT GIÁ");
-                    btnDatGia.setDisable(false);
-                }
-                lblBadgeTrangThai.setVisible(true);
-            } else {
-                // KẾT THÚC
-                lblThoiGian.setText("HẾT GIỜ");
-                lblThoiGian.setStyle("-fx-text-fill: #7F8C8D; -fx-font-weight: bold;");
-
-                if (!isOwnerView) {
-                    btnDatGia.setText("KẾT THÚC");
-                    btnDatGia.setDisable(true);
-                }
-
-                ColorAdjust grayscale = new ColorAdjust();
-                grayscale.setSaturation(-1.0);
-                imgSanPham.setEffect(grayscale);
-                timeline.stop();
-            }
-        }));
-
+        timeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), event -> handleTimelineTick()));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
+    }
+
+    private void handleTimelineTick() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = auction.getStartTime();
+        LocalDateTime end = auction.getEndTime();
+
+        if (now.isBefore(start)) {
+            handleUpcomingState(now, start);
+        } else if (now.isBefore(end)) {
+            handleOngoingState(now, end);
+        } else {
+            handleEndedState();
+        }
+    }
+
+    private void handleUpcomingState(LocalDateTime now, LocalDateTime start) {
+        updateUIState("SẮP DIỄN RA", COLOR_UPCOMING);
+        long sec = Duration.between(now, start).toSeconds();
+        lblThoiGian.setText(formatDuration(sec));
+
+        if (!isOwnerView) {
+            updateButtonState("CHỜ ĐỢI", true);
+        }
+    }
+
+    private void handleOngoingState(LocalDateTime now, LocalDateTime end) {
+        updateUIState("ĐANG DIỄN RA", COLOR_ONGOING);
+        long sec = Duration.between(now, end).toSeconds();
+        lblThoiGian.setText(formatDuration(sec));
+        lblBadgeTrangThai.setVisible(true);
+
+        if (!isOwnerView) {
+            updateButtonState("ĐẶT GIÁ", false);
+        }
+    }
+
+    private void handleEndedState() {
+        lblThoiGian.setText("HẾT GIỜ");
+        lblThoiGian.setStyle(STYLE_ENDED);
+
+        if (!isOwnerView) {
+            updateButtonState("KẾT THÚC", true);
+        }
+
+        applyGrayscaleEffect();
+        stopTimeline();
+    }
+
+    private void updateButtonState(String text, boolean disable) {
+        btnDatGia.setText(text);
+        btnDatGia.setDisable(disable);
+    }
+
+    private void applyGrayscaleEffect() {
+        ColorAdjust grayscale = new ColorAdjust();
+        grayscale.setSaturation(-1.0);
+        imgSanPham.setEffect(grayscale);
     }
 
     private void updateUIState(String status, String color) {
@@ -126,7 +158,8 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     }
 
     private String formatDuration(long secondsTotal) {
-        if (secondsTotal < 0) return "00 : 00 : 00";
+        if (secondsTotal < 0)
+            return "00 : 00 : 00";
         long hours = secondsTotal / 3600;
         long minutes = (secondsTotal % 3600) / 60;
         long seconds = secondsTotal % 60;
@@ -134,12 +167,14 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     }
 
     public void stopTimeline() {
-        if (timeline != null) timeline.stop();
+        if (timeline != null)
+            timeline.stop();
     }
 
     @FXML
     private void handleDatGia(ActionEvent event) {
-        if (isOwnerView) return;
+        if (isOwnerView)
+            return;
 
         LocalDateTime now = LocalDateTime.now();
         if (now.isAfter(auction.getStartTime()) && now.isBefore(auction.getEndTime())) {

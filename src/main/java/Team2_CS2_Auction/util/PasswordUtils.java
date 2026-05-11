@@ -5,8 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public final class PasswordUtils {
-    private PasswordUtils() {
-    }
+    private PasswordUtils() {}
 
     public static String hashSha256(String rawPassword) {
         if (rawPassword == null) {
