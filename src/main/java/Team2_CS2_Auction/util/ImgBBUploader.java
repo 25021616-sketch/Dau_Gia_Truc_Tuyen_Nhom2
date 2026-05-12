@@ -16,11 +16,6 @@ public class ImgBBUploader {
     private static final String API_KEY = "c9f2fa5e2e9858fcca405f77d8e3d4b1";
     private static final String IMGBB_API_URL = "https://api.imgbb.com/1/upload";
 
-    /**
-     * Upload ảnh lên ImgBB và trả về một đường link public.
-     * @param file File ảnh ở dưới máy tính
-     * @return Link URL của ảnh (vd: https://i.ibb.co/xyz/image.png)
-     */
     public static String uploadImage(File file) {
         try {
             // 1. Đọc toàn bộ nội dung file ảnh thành mảng byte
@@ -35,7 +30,7 @@ public class ImgBBUploader {
             // 4. Cấu hình gói dữ liệu gửi đi
             String formData = "key=" + API_KEY + "&image=" + encodedImage;
 
-            // 5. Mở kết nối HttpClient (Chuẩn của Java 11+)
+            // 5. Mở kết nối HttpClient
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(IMGBB_API_URL))

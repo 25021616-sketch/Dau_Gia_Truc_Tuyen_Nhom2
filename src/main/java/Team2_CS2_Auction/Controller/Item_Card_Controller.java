@@ -34,28 +34,22 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     @FXML
     private Button btnDatGia;
 
+    @FXML
+    private Label lblTieuDeThoiGian;
+
     private Timeline timeline;
     private Auction auction;
     private boolean isOwnerView = false;
 
     // Các hằng số (Constants) để dễ quản lý style
     private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("$#,###");
-    private static final String COLOR_UPCOMING = "#F39C12";
-    private static final String COLOR_ONGOING = "#D32F2F";
-    private static final String STYLE_ENDED = "-fx-text-fill: #7F8C8D; -fx-font-weight: bold;";
-    private static final String STYLE_OWNER_BADGE = "-fx-background-color: #27ae60; -fx-text-fill: white;";
+    private static final String COLOR_UPCOMING = "#1976D2"; // Xanh dương đậm
+    private static final String COLOR_ONGOING = "#2E7D32";  // Xanh lá đậm
+    private static final String COLOR_ENDED = "#C62828";    // Đỏ đậm
+    private static final String STYLE_ENDED = "-fx-text-fill: " + COLOR_ENDED + "; -fx-font-weight: bold; -fx-font-size: 15px;";
 
     public void setOwnerView(boolean isOwner) {
         this.isOwnerView = isOwner;
-        if (this.isOwnerView) {
-            btnDatGia.setVisible(false); // Ẩn nút đặt giá
-            btnDatGia.setManaged(false); // Ẩn nút đặt giá
-            lblBadgeTrangThai.setText("SẢN PHẨM CỦA TÔI");
-            lblBadgeTrangThai.setStyle(STYLE_OWNER_BADGE);
-            lblBadgeTrangThai.setVisible(true);
-        } else {
-            lblBadgeTrangThai.setVisible(false);
-        }
     }
 
     public void setData(Auction auction) {
@@ -79,7 +73,8 @@ public class Item_Card_Controller extends Base_Admin_Controller {
 
     private void populateImageData(Item item) {
         String path = item.getImagePath();
-        if (path == null || path.isEmpty()) return;
+        if (path == null || path.isEmpty())
+            return;
 
         try {
             imgSanPham.setImage(new Image(path, true));
@@ -117,30 +112,47 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     private void handleUpcomingState(LocalDateTime now, LocalDateTime start) {
         updateUIState("SẮP DIỄN RA", COLOR_UPCOMING);
         long sec = Duration.between(now, start).toSeconds();
+
+        if (lblTieuDeThoiGian != null) {
+            lblTieuDeThoiGian.setVisible(true);
+            lblTieuDeThoiGian.setManaged(true);
+            lblTieuDeThoiGian.setText("Bắt đầu sau:");
+        }
+
+        lblThoiGian.setVisible(true);
         lblThoiGian.setText(formatDuration(sec));
 
-        if (!isOwnerView) {
-            updateButtonState("CHỜ ĐỢI", true);
-        }
+        updateButtonState("XEM CHI TIẾT", false); // Luôn bấm được
     }
 
     private void handleOngoingState(LocalDateTime now, LocalDateTime end) {
         updateUIState("ĐANG DIỄN RA", COLOR_ONGOING);
         long sec = Duration.between(now, end).toSeconds();
+
+        if (lblTieuDeThoiGian != null) {
+            lblTieuDeThoiGian.setVisible(true);
+            lblTieuDeThoiGian.setManaged(true);
+            lblTieuDeThoiGian.setText("Thời gian còn lại:");
+        }
+
+        lblThoiGian.setVisible(true);
         lblThoiGian.setText(formatDuration(sec));
 
-        if (!isOwnerView) {
-            updateButtonState("XEM CHI TIẾT", false);
-        }
+        updateButtonState("XEM CHI TIẾT", false); // Luôn bấm được
     }
 
     private void handleEndedState() {
-        lblThoiGian.setText("HẾT GIỜ");
+        updateUIState("KẾT THÚC", COLOR_ENDED);
+        if (lblTieuDeThoiGian != null) {
+            lblTieuDeThoiGian.setVisible(false);
+            lblTieuDeThoiGian.setManaged(false);
+        }
+
+        lblThoiGian.setVisible(true);
+        lblThoiGian.setText("KẾT THÚC");
         lblThoiGian.setStyle(STYLE_ENDED);
 
-        if (!isOwnerView) {
-            updateButtonState("KẾT THÚC", true);
-        }
+        updateButtonState("XEM CHI TIẾT", false); // Luôn bấm được
 
         applyGrayscaleEffect();
         stopTimeline();
@@ -158,7 +170,10 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     }
 
     private void updateUIState(String status, String color) {
-        lblThoiGian.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold;");
+        lblThoiGian.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold; -fx-font-size: 15px;");
+        lblBadgeTrangThai.setText(status);
+        lblBadgeTrangThai.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white; -fx-padding: 5 10; -fx-background-radius: 5; -fx-font-weight: bold; -fx-font-size: 10px;");
+        lblBadgeTrangThai.setVisible(true);
     }
 
     private String formatDuration(long secondsTotal) {
@@ -177,13 +192,7 @@ public class Item_Card_Controller extends Base_Admin_Controller {
 
     @FXML
     private void handleDatGia(ActionEvent event) {
-        if (isOwnerView)
-            return;
-
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isAfter(auction.getStartTime()) && now.isBefore(auction.getEndTime())) {
-            switchSceneWithData(event, "Phien_Dau_Gia.fxml",
-                    "Đấu giá: " + auction.getItem().getTenSanPham(), this.auction);
-        }
+        switchSceneWithData(event, "Phien_Dau_Gia.fxml",
+                "Chi tiết: " + auction.getItem().getTenSanPham(), this.auction);
     }
 }

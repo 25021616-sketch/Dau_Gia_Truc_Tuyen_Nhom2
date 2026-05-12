@@ -131,4 +131,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         // Quay về màn hình chính, nhớ stop bất kỳ luồng dữ liệu nào nếu có
         switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
     }
+
+    @FXML
+    private void handleActivateAutoBid(javafx.event.ActionEvent event) {
+        new Alert(Alert.AlertType.INFORMATION, "Tính năng ủy quyền đấu giá đang được phát triển!").show();
+    }
 }
