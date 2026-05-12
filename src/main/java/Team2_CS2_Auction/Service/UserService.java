@@ -27,6 +27,13 @@ public class UserService {
 
         if (user == null) throw new Exception("Sai tên đăng nhập hoặc mật khẩu.");
 
+        // --- LOGIC MỚI: KIỂM TRA TRẠNG THÁI KHÓA ---
+        // Kiểm tra nếu status của user là BANNED thì không cho vào
+        if (user.getStatus() != null && "BANNED".equalsIgnoreCase(user.getStatus())) {
+            throw new Exception("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin!");
+        }
+        // ------------------------------------------
+
         // Kiểm tra quyền Admin dựa trên Role Enum từ Model
         if (isAdminLogin && user.getRole() != UserRole.ADMIN) {
             throw new Exception("Bạn không có quyền quản trị viên.");

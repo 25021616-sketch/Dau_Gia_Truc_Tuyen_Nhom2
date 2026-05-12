@@ -4,10 +4,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * Lớp cơ sở trừu tượng đại diện cho người dùng trong hệ thống.
- * Không thể khởi tạo trực tiếp — phải dùng qua Admin hoặc Member.
- */
 public abstract class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -17,7 +13,8 @@ public abstract class User implements Serializable {
     private String password;
     private String phone;
     private final UserRole role;
-    private final LocalDateTime createdAt;
+    private LocalDateTime createdAt; // Bỏ final để có thể gán từ DB
+    private String status = "ACTIVE"; // THÊM DÒNG NÀY (Mặc định là ACTIVE)
 
     // ─── Constructors ────────────────────────────────────────────
 
@@ -37,6 +34,15 @@ public abstract class User implements Serializable {
 
     // ─── Getters / Setters ───────────────────────────────────────
 
+    // THÊM GETTER VÀ SETTER CHO STATUS TẠI ĐÂY
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public int getId() { return id; }
 
     public void setId(int id) {
@@ -52,16 +58,10 @@ public abstract class User implements Serializable {
 
     public String getPassword() { return password; }
 
-    /**
-     * Đặt mật khẩu mới dạng plain text.
-     */
     public void setPassword(String rawPassword) {
         this.password = validateNotBlank(rawPassword, "password");
     }
 
-    /**
-     * Kiểm tra mật khẩu người dùng nhập vào có khớp không.
-     */
     public boolean checkPassword(String rawPassword) {
         return this.password.equals(rawPassword);
     }
@@ -74,11 +74,13 @@ public abstract class User implements Serializable {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
+    // THÊM SETTER CHO CREATEDAT (để UserRepository có thể gán dữ liệu từ DB)
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     // ─── Abstract method ─────────────────────────────────────────
 
-    /**
-     * Mỗi loại user tự mô tả thông tin của mình.
-     */
     public abstract String getInfo();
 
     private static String validateNotBlank(String value, String fieldName) {
@@ -103,7 +105,7 @@ public abstract class User implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("User{id=%d, username='%s', role=%s, createdAt=%s}",
-                id, username, role, createdAt);
+        return String.format("User{id=%d, username='%s', role=%s, createdAt=%s, status=%s}",
+                id, username, role, createdAt, status);
     }
 }
