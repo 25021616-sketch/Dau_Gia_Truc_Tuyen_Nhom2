@@ -10,7 +10,8 @@ import java.util.List;
 public class UserRepository {
 
     public User login(String username, String password) {
-        String sql = "SELECT * FROM user WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))";
+        // 1. SỬA QUERY: Thêm cột 'status' vào câu lệnh SELECT
+        String sql = "SELECT id, username, password, phone, role, status FROM user WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -21,26 +22,37 @@ public class UserRepository {
                 String storedPassword = rs.getString("password").trim();
                 String hashedInput = PasswordUtils.hashSha256(password);
 
-                if (!storedPassword.equals(password) && !storedPassword.equals(hashedInput)) {
+                if (storedPassword.equals(password) || storedPassword.equals(hashedInput)) {
+                    int id = rs.getInt("id");
+                    String phone = rs.getString("phone");
+                    String roleRaw = rs.getString("role");
+                    String status = rs.getString("status"); // Lấy status từ DB
+
+                    User user;
+                    if ("ADMIN".equalsIgnoreCase(roleRaw)) {
+                        user = new Admin(id, username, storedPassword, phone);
+                    } else {
+                        user = new Member(id, username, storedPassword, phone);
+                    }
+
+                    // 2. QUAN TRỌNG: Gán status vào Object User
+                    user.setStatus(status != null ? status : "ACTIVE");
+
+                    return user;
+                } else {
+                    System.out.println("❌ Sai mật khẩu!");
                     return null;
                 }
-
-                int id = rs.getInt("id");
-                String phone = rs.getString("phone");
-                String roleRaw = rs.getString("role");
-
-                if ("ADMIN".equalsIgnoreCase(roleRaw)) {
-                    return new Admin(id, username, storedPassword, phone);
-                } else {
-                    return new Member(id, username, storedPassword, phone);
-                }
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     public boolean register(User user) {
-        String sql = "INSERT INTO user(username, password, phone, role) VALUES(?,?,?,?)";
+        // Mặc định đăng ký mới là ACTIVE
+        String sql = "INSERT INTO user(username, password, phone, role, status) VALUES(?,?,?,?,'ACTIVE')";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -63,14 +75,12 @@ public class UserRepository {
     }
 
     /**
-     * Lấy toàn bộ danh sách Member
+     * Lấy toàn bộ danh sách Member (Sửa để lấy thêm status hiển thị cho Admin)
      */
     public List<Member> findAllMembers() {
         List<Member> list = new ArrayList<>();
-
-        // 1. Lấy dữ liệu từ Database
-        // Lưu ý: Vẫn giữ 'balance' trong query để Object Member đủ dữ liệu, dù không hiện lên bảng
-        String sql = "SELECT id, username, password, phone, role, created_at, balance FROM auction_db.user WHERE role = 'MEMBER'";
+        // SỬA QUERY: Thêm status
+        String sql = "SELECT id, username, password, phone, role, created_at, balance, status FROM auction_db.user WHERE role = 'MEMBER'";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -84,8 +94,9 @@ public class UserRepository {
                         rs.getString("phone")
                 );
 
-                // QUAN TRỌNG: Dùng setBalance thay vì addBalance để không bị lỗi nạp tiền <= 0
                 m.setBalance(rs.getDouble("balance"));
+                // Gán status để Admin biết ai đang bị khóa
+                m.setStatus(rs.getString("status"));
 
                 Timestamp ts = rs.getTimestamp("created_at");
                 if (ts != null) {
@@ -98,7 +109,6 @@ public class UserRepository {
 
         } catch (Exception e) {
             System.err.println("❌ [DEBUG] Lỗi SQL: " + e.getMessage());
-            e.printStackTrace();
         }
 
         return list;
@@ -108,7 +118,6 @@ public class UserRepository {
      * Cập nhật trạng thái Ban/Unban
      */
     public boolean updateStatus(int userId, String newStatus) {
-        // Đảm bảo bảng user tồn tại trong auction_db
         String sql = "UPDATE auction_db.user SET status = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

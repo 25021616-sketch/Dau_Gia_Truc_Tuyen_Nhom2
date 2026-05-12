@@ -44,7 +44,9 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     @Override
     public List<Auction> findPendingAuctions() {
         List<Auction> list = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE status = 'PENDING' ORDER BY start_time DESC";
+        String sql = "SELECT p.*, u.username FROM products p " +
+                "LEFT JOIN user u ON p.seller_id = u.id " + // Giả sử bảng của bạn tên là 'user'
+                "WHERE p.status = 'PENDING' ORDER BY p.start_time DESC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -88,6 +90,7 @@ public class AuctionRepositoryImpl implements AuctionRepository {
         int idInt = rs.getInt("id");
         String idStr = String.valueOf(idInt);
 
+
         Item item = ItemFactory.createItem(
                 idStr,
                 rs.getString("name"),
@@ -97,19 +100,21 @@ public class AuctionRepositoryImpl implements AuctionRepository {
         );
 
         int sellerId = rs.getInt("seller_id");
-        Member seller = new Member(sellerId, "Unknown", "Unknown", "Unknown");
+        String sellerName = rs.getString("username");
+        if (sellerName == null) sellerName = "N/A";
+        Member seller = new Member(sellerId, sellerName, "Unknown", "Unknown");
 
         LocalDateTime startTime = rs.getTimestamp("start_time").toLocalDateTime();
         LocalDateTime endTime = rs.getTimestamp("end_time").toLocalDateTime();
 
         Auction auction = new Auction(
-                "AUC_" + idStr,
+                "AUC_" + rs.getInt("id"),
                 item,
                 seller,
                 rs.getDouble("start_price"),
-                rs.getDouble("step_price"),
-                startTime,
-                endTime
+                rs.getDouble("step_price"),  // Truyền vào constructor
+                rs.getTimestamp("start_time").toLocalDateTime(),
+                rs.getTimestamp("end_time").toLocalDateTime()   // Truyền vào constructor
         );
 
         auction.setCurrentPrice(rs.getDouble("current_price"));

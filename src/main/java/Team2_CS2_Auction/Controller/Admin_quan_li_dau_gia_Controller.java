@@ -41,7 +41,7 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
     }
 
     private void setupTableColumns() {
-        // STT tự động
+        // 1. STT tự động (Giữ nguyên)
         colSTT.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(Void item, boolean empty) {
@@ -50,21 +50,58 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
             }
         });
 
-        // Ánh xạ các cột (Nếu Model của bạn là getId() thì sửa "auctionId" thành "id")
-        colID.setCellValueFactory(new PropertyValueFactory<>("auctionId"));
-        colTen.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getItem().getTenSanPham()));
-        colChuSoHuu.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSeller().getUsername()));
-        colLoai.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getItem().getLoaiSanPham()));
+        // 2. ID Sản phẩm (Lấy từ Auction.getAuctionId())
+        colID.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(
+                        cellData.getValue().getAuctionId()
+                )
+        );
 
-        // Định dạng giá và ngày
-        colGia.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
+        // 3. Tên vật phẩm (Lấy từ Item)
+        colTen.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getItem().getTenSanPham()));
+
+        // 4. Người đăng (Lấy từ Member seller)
+        colChuSoHuu.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSeller().getUsername()));
+
+        // 5. Loại (Lấy từ Item)
+        colLoai.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getItem().getLoaiSanPham()));
+
+        // 6. Giá khởi điểm (Lấy từ biến currentPrice trong Auction)
+        // Vì trong AuctionRepositoryImpl bạn gán: auction.setCurrentPrice(rs.getDouble("start_price"))
+        colGia.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleObjectProperty<>(
+                        cellData.getValue().getCurrentPrice()
+                )
+        );
         formatPriceColumn(colGia);
-        colBuocGia.setCellValueFactory(new PropertyValueFactory<>("stepPrice"));
+
+        // 7. Bước giá (Lấy từ biến stepPrice trong Auction)
+        colBuocGia.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleObjectProperty<>(
+                        cellData.getValue().getStepPrice()
+                )
+        );
         formatPriceColumn(colBuocGia);
 
-        colBatDau.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+        // 8. Ngày bắt đầu (Lấy từ Auction)
+        colBatDau.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleObjectProperty<>(
+                        cellData.getValue().getStartTime()
+                )
+        );
+
         formatDateColumn(colBatDau);
-        colKetThuc.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+
+        // 9. Ngày kết thúc (Lấy từ Auction)
+        colKetThuc.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleObjectProperty<>(
+                        cellData.getValue().getEndTime()
+                )
+        );
+
         formatDateColumn(colKetThuc);
     }
     private void setupActionButtons() {

@@ -83,8 +83,12 @@ public class AuctionServiceImpl implements AuctionService {
     }
     @Override
     public List<Auction> getPendingAuctions() throws Exception {
-        // Gọi sang AuctionRepositoryImpl để lấy danh sách status = 'PENDING'
-        return auctionRepo.findPendingAuctions();
+        List<Auction> list = auctionRepo.findPendingAuctions();
+        for (Auction a : list) {
+            // In ra console để xem Service đã nhận được giá chưa
+            System.out.println("Service nhận - ID: " + a.getAuctionId() + " | Giá: " + a.getCurrentPrice());
+        }
+        return list;
     }
 
     @Override
