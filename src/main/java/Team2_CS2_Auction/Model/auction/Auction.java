@@ -81,4 +81,7 @@ public class Auction implements Serializable {
     public synchronized void setWinner(Member winner) {
         this.winner = winner;
     }
+    public synchronized int getCurrentBidderId() {
+        return (winner != null) ? winner.getId() : -1;
+    }
 }

@@ -4,7 +4,6 @@ import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Service.AdminService;
 import Team2_CS2_Auction.Service.AdminServiceImpl;
 import Team2_CS2_Auction.Repository.AuctionRepositoryImpl;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -21,6 +20,7 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
     @FXML private TableColumn<Member, Number> colSTT;
     @FXML private TableColumn<Member, Integer> colID;
     @FXML private TableColumn<Member, String> colTen;
+    @FXML private TableColumn<Member, Double> colTaiSan; // Cột mới
     @FXML private TableColumn<Member, String> colNgayDangKy;
 
     private AdminService adminService = new AdminServiceImpl(new AuctionRepositoryImpl());
@@ -33,17 +33,36 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
     }
 
     private void setupTable() {
-        // SỬA TẠI ĐÂY: Sử dụng Lambda thay vì PropertyValueFactory để chắc chắn lấy được dữ liệu từ lớp cha User
+        // 1. Số thứ tự (STT)
+        colSTT.setCellValueFactory(column ->
+                new ReadOnlyObjectWrapper<>(userTable.getItems().indexOf(column.getValue()) + 1));
 
-        // 1. Kết nối cột ID
+        // 2. ID Người dùng
         colID.setCellValueFactory(cellData ->
                 new ReadOnlyObjectWrapper<>(cellData.getValue().getId()));
 
-        // 2. Kết nối cột Tên người dùng
+        // 3. Tên người dùng
         colTen.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getUsername()));
 
-        // 3. Định dạng ngày đăng ký (Giữ nguyên vì phần này của bạn đã chạy tốt)
+        // 4. TÀI SẢN (SỐ DƯ) - Đã format hiển thị tiền tệ
+        colTaiSan.setCellValueFactory(cellData ->
+                new ReadOnlyObjectWrapper<>(cellData.getValue().getBalance()));
+
+        colTaiSan.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double balance, boolean empty) {
+                super.updateItem(balance, empty);
+                if (empty || balance == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", balance));
+                    setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;"); // Chữ xanh đậm cho tài sản
+                }
+            }
+        });
+
+        // 5. Ngày đăng ký
         colNgayDangKy.setCellValueFactory(cellData -> {
             if (cellData.getValue().getCreatedAt() != null) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -51,10 +70,6 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
             }
             return new SimpleStringProperty("N/A");
         });
-
-        // 4. Tạo số thứ tự (STT) tự động
-        colSTT.setCellValueFactory(column ->
-                new ReadOnlyObjectWrapper<>(userTable.getItems().indexOf(column.getValue()) + 1));
 
         userTable.setItems(masterData);
     }
@@ -65,14 +80,11 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
             List<Member> members = adminService.getMemberList();
             if (members != null && !members.isEmpty()) {
                 masterData.addAll(members);
-                System.out.println("✅ Đã load " + members.size() + " thành viên vào TableView.");
-            } else {
-                System.out.println("⚠️ Không có thành viên nào để hiển thị.");
+                System.out.println("✅ Đã load " + members.size() + " thành viên.");
             }
             userTable.refresh();
         } catch (Exception e) {
             System.err.println("❌ Lỗi load dữ liệu: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -82,13 +94,11 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
         if (selected != null) {
             try {
                 adminService.banMember(selected.getId());
-                showAlert("Thành công", "Đã khóa tài khoản: " + selected.getUsername(), Alert.AlertType.INFORMATION);
+                new Alert(Alert.AlertType.INFORMATION, "Đã khóa tài khoản: " + selected.getUsername()).show();
                 loadData();
             } catch (Exception e) {
-                showAlert("Lỗi", e.getMessage(), Alert.AlertType.ERROR);
+                new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
             }
-        } else {
-            showAlert("Cảnh báo", "Vui lòng chọn một người dùng từ bảng!", Alert.AlertType.WARNING);
         }
     }
 
@@ -98,24 +108,15 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
         if (selected != null) {
             try {
                 adminService.unbanMember(selected.getId());
-                showAlert("Thành công", "Đã mở khóa tài khoản: " + selected.getUsername(), Alert.AlertType.INFORMATION);
+                new Alert(Alert.AlertType.INFORMATION, "Đã mở khóa tài khoản: " + selected.getUsername()).show();
                 loadData();
             } catch (Exception e) {
-                showAlert("Lỗi", e.getMessage(), Alert.AlertType.ERROR);
+                new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
             }
-        } else {
-            showAlert("Cảnh báo", "Vui lòng chọn một người dùng!", Alert.AlertType.WARNING);
         }
     }
 
-    private void showAlert(String title, String content, Alert.AlertType type) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
-    }
-
+    // Các hàm chuyển Scene
     @FXML public void handleGoToInventory(ActionEvent event) { switchScene(event, "Admin_quan_li_dau_gia.fxml", "Quản lý đấu giá"); }
     @FXML public void handleGoToHistory(ActionEvent event) { switchScene(event, "Admin_quan_li_lich_su.fxml", "Lịch sử đấu giá"); }
     @FXML public void handleGoToDashboard(ActionEvent event) { switchScene(event, "Trang_chu_Admin.fxml", "Trang chủ Admin"); }

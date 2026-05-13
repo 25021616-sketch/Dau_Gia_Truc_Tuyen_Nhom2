@@ -62,8 +62,9 @@
                         <columns>
                             <TableColumn fx:id="colSTT" maxWidth="60.0" minWidth="50.0" text="STT" />
                             <TableColumn fx:id="colID" maxWidth="100.0" minWidth="70.0" text="ID" />
-                            <TableColumn fx:id="colTen" minWidth="250.0" text="Tên người dùng" />
-                            <TableColumn fx:id="colNgayDangKy" minWidth="200.0" text="Ngày đăng ký" />
+                            <TableColumn fx:id="colTen" minWidth="200.0" text="Tên người dùng" />
+                            <TableColumn fx:id="colTaiSan" minWidth="150.0" text="Tài sản (Số dư)" />
+                            <TableColumn fx:id="colNgayDangKy" minWidth="180.0" text="Ngày đăng ký" />
                         </columns>
                         <columnResizePolicy>
                             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

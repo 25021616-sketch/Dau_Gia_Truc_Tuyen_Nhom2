@@ -10,4 +10,12 @@ public interface AuctionRepository {
     List<Auction> findPendingAuctions() throws Exception;
 
     void updateStatus(String id, String status) throws Exception;
+
+    boolean updateBidPrice(String auctionId, double price, int bidderId) throws Exception;
+
+    /**
+     * Lấy danh sách các phiên đấu giá mà người dùng đã từng tham gia đặt giá.
+     * Tên hàm phải khớp với AuctionServiceImpl đang gọi.
+     */
+    List<Auction> findAuctionsByBidderId(int bidderId) throws Exception;
 }
