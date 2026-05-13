@@ -13,8 +13,13 @@ public abstract class User implements Serializable {
     private String password;
     private String phone;
     private final UserRole role;
-    private LocalDateTime createdAt; // Bỏ final để có thể gán từ DB
-    private String status = "ACTIVE"; // THÊM DÒNG NÀY (Mặc định là ACTIVE)
+    private LocalDateTime createdAt;
+    private String status = "ACTIVE";
+
+    // ==========================================
+    // THÊM THUỘC TÍNH SỐ DƯ (BALANCE) TẠI ĐÂY
+    // ==========================================
+    private double balance = 0.0;
 
     // ─── Constructors ────────────────────────────────────────────
 
@@ -26,15 +31,24 @@ public abstract class User implements Serializable {
         this.phone     = phone;
         this.role      = role;
         this.createdAt = LocalDateTime.now();
+        this.balance   = 0.0; // Mặc định khi tạo mới là 0
     }
 
     protected User(String username, String password, UserRole role) {
         this(0, username, password, null, role);
     }
 
-    // ─── Getters / Setters ───────────────────────────────────────
+    // ─── Getters / Setters (Cập nhật mới) ─────────────────────────
 
-    // THÊM GETTER VÀ SETTER CHO STATUS TẠI ĐÂY
+    // Getter và Setter cho Balance để nạp tiền và hiển thị
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -74,7 +88,6 @@ public abstract class User implements Serializable {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
-    // THÊM SETTER CHO CREATEDAT (để UserRepository có thể gán dữ liệu từ DB)
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -105,7 +118,7 @@ public abstract class User implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("User{id=%d, username='%s', role=%s, createdAt=%s, status=%s}",
-                id, username, role, createdAt, status);
+        return String.format("User{id=%d, username='%s', role=%s, createdAt=%s, status=%s, balance=%.2f}",
+                id, username, role, createdAt, status, balance);
     }
 }

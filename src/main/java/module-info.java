@@ -18,4 +18,6 @@ module Team2_CS2_Auction {
     exports Team2_CS2_Auction;
     exports Team2_CS2_Auction.Controller;
     exports Team2_CS2_Auction.Model.item;
+    exports Team2_CS2_Auction.Service;
+    opens Team2_CS2_Auction.Service to javafx.fxml;
 }

@@ -129,4 +129,42 @@ public class UserRepository {
             return false;
         }
     }
+    public boolean depositMoney(int userId, double amount) {
+        // Truy vấn cộng dồn tiền vào số dư (balance) hiện tại
+        String sql = "UPDATE user SET balance = balance + ? WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDouble(1, amount);
+            ps.setInt(2, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi SQL tại UserRepository.depositMoney: " + e.getMessage());
+            return false;
+        }
+    }
+    public double getBalance(int userId) {
+        String sql = "SELECT balance FROM user WHERE id = ?";
+        try (Connection conn = Team2_CS2_Auction.util.DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getDouble("balance");
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0.0;
+    }
+
+    public boolean updateBalance(int userId, double newBalance) {
+        String sql = "UPDATE user SET balance = ? WHERE id = ?";
+        try (Connection conn = Team2_CS2_Auction.util.DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, newBalance);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
 }

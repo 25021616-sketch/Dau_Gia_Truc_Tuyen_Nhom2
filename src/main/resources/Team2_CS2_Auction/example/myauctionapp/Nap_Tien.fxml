@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="TOP_CENTER" prefHeight="350.0" prefWidth="400.0" spacing="15.0"
+      style="-fx-background-color: white; -fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #1A237E; -fx-border-width: 2;"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="Team2_CS2_Auction.Controller.Nap_Tien_Controller">
+    <padding><Insets bottom="25.0" left="30.0" right="30.0" top="20.0" /></padding>
+    <children>
+        <HBox alignment="CENTER_RIGHT">
+            <children>
+                <Label text="NẠP TIỀN VÀO VÍ" textFill="#1a237e">
+                    <font><Font name="System Bold" size="18.0" /></font>
+                    <HBox.margin><Insets right="65.0" /></HBox.margin>
+                </Label>
+                <Button onAction="#handleClose" style="-fx-background-color: transparent; -fx-cursor: hand;" text="✕" textFill="#9e9e9e">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Button>
+            </children>
+        </HBox>
+
+        <Separator />
+
+        <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #F8F9FA; -fx-background-radius: 10; -fx-padding: 10;">
+            <children>
+                <Label text="Số dư hiện có:" textFill="#616161">
+                    <font><Font size="14.0" /></font>
+                </Label>
+                <Label fx:id="lblCurrentBalance" text="0.00 $" textFill="#1A237E">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Label>
+            </children>
+        </HBox>
+
+        <VBox spacing="8.0">
+            <children>
+                <Label text="Số tiền muốn nạp ($)" textFill="#757575">
+                    <font><Font name="System Bold" size="13.0" /></font>
+                </Label>
+                <TextField fx:id="txtAmount" prefHeight="45.0" promptText="Ví dụ: 500"
+                           style="-fx-background-radius: 10; -fx-border-color: #E0E0E0; -fx-border-radius: 10;" />
+                <Label fx:id="lblMessage" textFill="#d32f2f" wrapText="true" />
+            </children>
+        </VBox>
+
+        <Button maxWidth="Infinity" onAction="#handleConfirmDeposit" prefHeight="45.0"
+                style="-fx-background-color: #1A237E; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;"
+                text="XÁC NHẬN NẠP" />
+    </children>
+</VBox>

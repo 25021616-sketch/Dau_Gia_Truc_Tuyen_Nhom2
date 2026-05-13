@@ -8,7 +8,12 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.FlowPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.scene.Node;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,93 +31,89 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         loadDataFromServer();
     }
 
-    /**
-     * Lấy dữ liệu từ Service và hiển thị
-     */
     private void loadDataFromServer() {
         try {
-            // Lấy toàn bộ sản phẩm đang đấu giá
             List<Auction> list = auctionService.getActiveAuctions();
-
-            // Render lên giao diện (false vì đây là trang chủ, cần hiện nút Đặt giá)
             renderAuctionList(list, false);
-
         } catch (Exception e) {
             System.err.println("Lỗi load dữ liệu: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    /**
-     * LOGIC DÙNG CHUNG: Nạp card vào FlowPane
-     * @param auctions: Danh sách sản phẩm
-     * @param isOwnerView: true nếu là trang "Của tôi" (ẩn nút đặt giá)
-     */
     public void renderAuctionList(List<Auction> auctions, boolean isOwnerView) {
         if (pnlItems == null) return;
 
-        // 1. Dọn dẹp card cũ & dừng timeline để tránh tốn RAM
-        for (Item_Card_Controller ctrl : activeControllers) {
-            if (ctrl != null) ctrl.stopTimeline();
-        }
+        activeControllers.forEach(ctrl -> { if(ctrl != null) ctrl.stopTimeline(); });
         activeControllers.clear();
         pnlItems.getChildren().clear();
 
-        // 2. Duyệt danh sách để nạp Card
         for (Auction auction : auctions) {
             try {
-                FXMLLoader loader = new FXMLLoader(
-                        getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml")
-                );
-
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
                 Parent card = loader.load();
                 Item_Card_Controller cardController = loader.getController();
-
-                // Đổ dữ liệu vào card
                 cardController.setData(auction);
-
-                // GỌI HÀM NÀY: Để ẩn nút đặt giá nếu là chủ sở hữu
                 cardController.setOwnerView(isOwnerView);
-
                 activeControllers.add(cardController);
                 pnlItems.getChildren().add(card);
-
             } catch (Exception e) {
-                String name = (auction.getItem() != null) ? auction.getItem().getTenSanPham() : "Unknown";
-                System.err.println("Lỗi nạp card [" + name + "]: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
 
+    // =========================================================
+    // HÀM MỞ POPUP NẠP TIỀN (CHỈNH SỬA TẠI ĐÂY)
+    // =========================================================
     @FXML
-    private void handleFilterAll(ActionEvent event) {
-        loadDataFromServer();
+    public void handleOpenNapTienPopup(ActionEvent event) {
+        System.out.println("===> DEBUG: Đang mở file Nap_Tien.fxml...");
+
+        try {
+            // 1. Sửa đường dẫn đúng tên file của bạn là Nap_Tien.fxml
+            URL fxmlLocation = getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Nap_Tien.fxml");
+
+            if (fxmlLocation == null) {
+                System.err.println("===> LỖI: Không tìm thấy file Nap_Tien.fxml. Kiểm tra lại thư mục resources!");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            Parent root = loader.load();
+
+            // 2. LẤY CONTROLLER VÀ TRUYỀN USER (Để hết lỗi Null User)
+            Nap_Tien_Controller controller = loader.getController();
+
+            // Lấy user từ Session mà bạn đã lưu lúc đăng nhập
+            if (Team2_CS2_Auction.Session.Session.currentUser != null) {
+                controller.setUserData(Team2_CS2_Auction.Session.Session.currentUser);
+                System.out.println("===> DEBUG: Đã truyền User: " + Team2_CS2_Auction.Session.Session.currentUser.getUsername());
+            } else {
+                System.err.println("===> LỖI: Chưa có User trong Session!");
+            }
+
+            // 3. Hiển thị Popup
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initOwner(((Node) event.getSource()).getScene().getWindow());
+            popupStage.setTitle("Nạp Tiền");
+
+            Scene scene = new Scene(root);
+            popupStage.setScene(scene);
+            popupStage.showAndWait();
+
+            // 4. Cập nhật lại giao diện màn hình chính sau khi đóng popup
+            loadDataFromServer();
+
+        } catch (Exception e) {
+            System.err.println("===> LỖI KHI MỞ POPUP: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    // ================== ĐIỀU HƯỚNG MÀN HÌNH ==================
-
-    @FXML
-    public void handleGoTothemsanpham(ActionEvent event) {
-        switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm");
-    }
-
-    @FXML
-    public void handleGoToSanPhamCuaToi(ActionEvent event) {
-        switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi");
-    }
-
-    @FXML
-    public void chuyenSangdanhsachtheodoi(ActionEvent event) {
-        switchScene(event, "danh_sach_theo_doi_San_Pham.fxml", "Danh sách theo dõi");
-    }
-
-    @FXML
-    public void handleGoToLichSu(ActionEvent event) {
-        switchScene(event, "Lich_su_giao_dich.fxml", "Lịch sử giao dịch");
-    }
-
-    @FXML
-    public void handleGoToDangNhap(ActionEvent event) {
-        switchScene(event, "dang_nhap.fxml", "Đăng nhập");
-    }
+    // ================== CÁC HÀM ĐIỀU HƯỚNG KHÁC ==================
+    @FXML public void handleGoTothemsanpham(ActionEvent event) { switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
+    @FXML public void handleGoToSanPhamCuaToi(ActionEvent event) { switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
+    @FXML public void handleGoToLichSu(ActionEvent event) { switchScene(event, "Phien_Da_Tham_Gia.fxml", "Lịch sử giao dịch"); }
+    @FXML public void handleGoToDangNhap(ActionEvent event) { switchScene(event, "dang_nhap.fxml", "Đăng nhập"); }
 }

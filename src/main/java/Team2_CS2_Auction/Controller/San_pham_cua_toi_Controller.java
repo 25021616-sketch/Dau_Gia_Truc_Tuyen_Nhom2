@@ -9,8 +9,13 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.FlowPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +23,7 @@ import java.util.ResourceBundle;
 
 public class San_pham_cua_toi_Controller extends Base_Admin_Controller implements Initializable {
 
-    @FXML private FlowPane pnlMyItems; // Phải khớp với fx:id trong file san_pham_cua_toi.fxml
+    @FXML private FlowPane pnlMyItems;
 
     private final AuctionService auctionService = new AuctionServiceImpl();
     private List<Item_Card_Controller> activeControllers = new ArrayList<>();
@@ -28,67 +33,80 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
         loadMyProducts();
     }
 
-    /**
-     * Lấy danh sách sản phẩm do chính người dùng hiện tại đăng
-     */
     private void loadMyProducts() {
         try {
-            // 1. Lấy thông tin người dùng hiện tại từ Session
             Member currentUser = (Member) Session.currentUser;
-
             if (currentUser != null) {
-                // 2. Gọi Service để lấy danh sách sản phẩm của riêng User này
-                // Hàm này lấy dữ liệu từ Repository (đã bao gồm giá hiện tại mới nhất)
                 List<Auction> myAuctions = auctionService.getAuctionsBySeller(currentUser.getId());
-
-                // 3. Hiển thị lên giao diện
                 hienThiDanhSach(myAuctions);
             } else {
-                System.err.println("Chưa đăng nhập, không thể tải sản phẩm cá nhân!");
+                System.err.println("Chưa đăng nhập!");
             }
-
         } catch (Exception e) {
-            System.err.println("Lỗi khi load sản phẩm cá nhân: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    /**
-     * Render các card sản phẩm và ẨN nút đặt giá
-     */
-
     private void hienThiDanhSach(List<Auction> auctions) {
         if (pnlMyItems == null) return;
 
-        // Dọn dẹp card cũ
         for (Item_Card_Controller ctrl : activeControllers) {
             if (ctrl != null) ctrl.stopTimeline();
         }
         activeControllers.clear();
         pnlMyItems.getChildren().clear();
 
-        // Nạp card mới
         for (Auction auction : auctions) {
             try {
-                FXMLLoader loader = new FXMLLoader(
-                        getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml")
-                );
-
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
                 Parent card = loader.load();
                 Item_Card_Controller cardController = loader.getController();
 
-                // Đổ dữ liệu sản phẩm (Giá sẽ được cập nhật mới nhất từ Database)
                 cardController.setData(auction);
-
-                // QUAN TRỌNG: Kích hoạt chế độ "Chủ sở hữu" để ẩn nút Đặt giá
                 cardController.setOwnerView(true);
 
                 activeControllers.add(cardController);
                 pnlMyItems.getChildren().add(card);
-
             } catch (Exception e) {
-                System.err.println("Lỗi nạp card: " + e.getMessage());
+                e.printStackTrace();
             }
+        }
+    }
+
+    // =========================================================
+    // HÀM MỞ POPUP NẠP TIỀN (MỚI THÊM)
+    // =========================================================
+    @FXML
+    public void handleOpenNapTienPopup(ActionEvent event) {
+        try {
+            URL fxmlLocation = getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Nap_Tien.fxml");
+            if (fxmlLocation == null) {
+                System.err.println("Không tìm thấy file Nap_Tien.fxml");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            Parent root = loader.load();
+
+            // Truyền dữ liệu User sang màn hình nạp tiền
+            Nap_Tien_Controller controller = loader.getController();
+            if (Session.currentUser != null) {
+                controller.setUserData(Session.currentUser);
+            }
+
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initOwner(((Node) event.getSource()).getScene().getWindow());
+            popupStage.setTitle("Nạp Tiền");
+
+            popupStage.setScene(new Scene(root));
+            popupStage.showAndWait();
+
+            // Sau khi nạp xong, có thể load lại danh sách nếu cần cập nhật hiển thị liên quan đến ví
+            loadMyProducts();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -96,22 +114,23 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
 
     @FXML
     public void handleQuayLaiTrangChu(ActionEvent event) {
-        switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ Đấu giá");
+        switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
     }
 
     @FXML
     public void handleGoTothemsanpham(ActionEvent event) {
-        switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm mới");
+        switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm");
     }
 
     @FXML
     public void chuyenSangdanhsachtheodoi(ActionEvent event) {
-        switchScene(event, "danh_sach_theo_doi_San_Pham.fxml", "Danh sách theo dõi");
+        // Bạn có thể dùng hàm popup ở trên hoặc chuyển cảnh tùy ý
+        handleOpenNapTienPopup(event);
     }
 
     @FXML
     public void handleGoToLichSu(ActionEvent event) {
-        switchScene(event, "Lich_su_giao_dich.fxml", "Lịch sử giao dịch");
+        switchScene(event, "Phien_Da_Tham_Gia.fxml", "Lịch sử");
     }
 
     @FXML
