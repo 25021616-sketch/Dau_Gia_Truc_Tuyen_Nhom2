@@ -22,6 +22,15 @@
                                 <Insets left="15.0" top="15.0" />
                             </StackPane.margin>
                         </Label>
+
+                        <Label fx:id="lblThongBaoVịThe" visible="false" style="-fx-background-color: #f1c40f; -fx-text-fill: #2c3e50; -fx-padding: 5 10; -fx-background-radius: 5;" text="BẠN ĐANG DẪN ĐẦU" StackPane.alignment="TOP_RIGHT">
+                            <font>
+                                <Font name="System Bold" size="10.0" />
+                            </font>
+                            <StackPane.margin>
+                                <Insets right="15.0" top="15.0" />
+                            </StackPane.margin>
+                        </Label>
                     </children>
                 </StackPane>
 
