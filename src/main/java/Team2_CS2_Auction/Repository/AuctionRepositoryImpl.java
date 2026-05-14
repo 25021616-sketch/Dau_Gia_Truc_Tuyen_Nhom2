@@ -84,40 +84,42 @@ public class AuctionRepositoryImpl implements AuctionRepository {
      */
     private Auction mapResultSetToAuction(ResultSet rs) throws Exception {
         int idInt = rs.getInt("id");
-        String idStr = String.valueOf(idInt);
-
-        // 1. Map thông tin Item
         Item item = ItemFactory.createItem(
-                idStr,
+                String.valueOf(idInt),
                 rs.getString("name"),
                 rs.getString("category"),
                 rs.getString("description"),
                 rs.getString("image_path")
         );
 
-        // 2. Lấy seller_id quan trọng nhất để so sánh "Sản phẩm của tôi"
-        int sellerId = rs.getInt("seller_id");
+        // Thông tin Seller (Đã có pass mặc định)
+        Member seller = new Member(rs.getInt("seller_id"), "User_" + rs.getInt("seller_id"), "123456", "000000");
 
-        // Tạo đối tượng Member với ID thật từ DB
-        // Các thông tin khác có thể để mặc định, nhưng ID phải chuẩn
-        Member seller = new Member(sellerId, "User_" + sellerId, "password", "000000");
-
-        // 3. Map thời gian
-        LocalDateTime startTime = rs.getTimestamp("start_time").toLocalDateTime();
-        LocalDateTime endTime = rs.getTimestamp("end_time").toLocalDateTime();
-
-        // 4. Tạo đối tượng Auction
         Auction auction = new Auction(
                 "AUC_" + idInt,
                 item,
-                seller, // Đã có ID thật bên trong
+                seller,
                 rs.getDouble("start_price"),
                 rs.getDouble("step_price"),
-                startTime,
-                endTime
+                rs.getTimestamp("start_time").toLocalDateTime(),
+                rs.getTimestamp("end_time").toLocalDateTime()
         );
 
         auction.setCurrentPrice(rs.getDouble("current_price"));
+
+        // --- PHẦN FIX LỖI PASSWORD TẠI ĐÂY ---
+        int lastBidderId = rs.getInt("last_bidder_id");
+        if (lastBidderId > 0) {
+            // Cần truyền "123456" (hoặc pass bất kỳ) thay vì để trống ""
+            Member winner = new Member(lastBidderId, "Bidder_" + lastBidderId, "123456", "000000");
+            auction.setWinner(winner);
+        }
+        // -------------------------------------
+
+        String dbStatus = rs.getString("status");
+        if ("OPENING".equals(dbStatus) || "OPEN".equals(dbStatus)) {
+            auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.OPEN);
+        }
 
         return auction;
     }
@@ -128,63 +130,73 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     @Override
     public boolean updateBidPrice(String auctionId, double price, int bidderId) throws Exception {
         String numericId = auctionId.replace("AUC_", "");
-        // SQL: Chỉ cập nhật nếu giá mới (price) > giá hiện tại (current_price)
-        String sql = "UPDATE products SET current_price = ?, last_bidder_id = ? WHERE id = ? AND ? > current_price";
+        // 1. SQL cập nhật giá hiện tại của sản phẩm
+        String sqlUpdateProduct = "UPDATE products SET current_price = ?, last_bidder_id = ? WHERE id = ? AND ? > current_price";
+        // 2. SQL ghi lại lịch sử đặt giá (Để hàm lấy lịch sử có dữ liệu mà JOIN)
+        String sqlInsertBid = "INSERT INTO bid (user_id, product_id, bid_amount, bid_time) VALUES (?, ?, ?, NOW())";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false); // Bật transaction để đảm bảo lưu cả 2 hoặc không gì cả
 
-            ps.setDouble(1, price);
-            ps.setInt(2, bidderId);
-            ps.setInt(3, Integer.parseInt(numericId));
-            ps.setDouble(4, price);
+            // Thực hiện Update Product
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateProduct)) {
+                psUpdate.setDouble(1, price);
+                psUpdate.setInt(2, bidderId);
+                psUpdate.setInt(3, Integer.parseInt(numericId));
+                psUpdate.setDouble(4, price);
 
-            return ps.executeUpdate() > 0;
+                if (psUpdate.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            // Thực hiện Insert vào bảng bid
+            try (PreparedStatement psInsert = conn.prepareStatement(sqlInsertBid)) {
+                psInsert.setInt(1, bidderId);
+                psInsert.setInt(2, Integer.parseInt(numericId));
+                psInsert.setDouble(3, price);
+                psInsert.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
         } catch (Exception e) {
+            if (conn != null) conn.rollback();
             e.printStackTrace();
             return false;
+        } finally {
+            if (conn != null) conn.close();
         }
-    }
-    public List<Auction> getAuctionsUserHasParticipatedIn(int userId) {
-        List<Auction> auctions = new ArrayList<>();
-        // SQL lấy DISTINCT để một phiên chỉ hiện 1 lần dù bạn đặt giá nhiều lần
-        String sql = "SELECT DISTINCT p.* FROM products p " +
-                "INNER JOIN bids b ON p.id = b.product_id " +
-                "WHERE b.user_id = ?";
-
-        // Thực thi query tương tự như các hàm getAll khác của bạn...
-        // Nhớ nạp dữ liệu vào đối tượng Auction (id, tên, giá hiện tại, image...)
-        return auctions;
     }
     @Override
     public List<Auction> findAuctionsByBidderId(int userId) throws Exception {
         List<Auction> results = new ArrayList<>();
-        // Kiểm tra xem bảng của bạn là 'bid' hay 'bids' trong DB rồi sửa ở đây nhé
+        // SQL: Sử dụng bảng 'bid' và cột 'user_id' như trong ảnh cấu trúc DB của bạn
         String sql = "SELECT DISTINCT p.* FROM products p " +
-                "INNER JOIN bids b ON p.id = b.product_id " +
+                "INNER JOIN bid b ON p.id = b.product_id " +
                 "WHERE b.user_id = ?";
 
         System.out.println("DEBUG REPO: Đang chạy SQL tìm phiên cho User ID: " + userId);
 
         try (Connection conn = Team2_CS2_Auction.util.DBConnection.getConnection()) {
-            if (conn == null) {
-                System.err.println("DEBUG REPO: Kết nối DB thất bại (NULL)!");
-                return results;
-            }
+            if (conn == null) return results;
 
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setInt(1, userId);
-                ResultSet rs = pstmt.executeQuery();
-
-                while (rs.next()) {
-                    Auction auction = mapResultSetToAuction(rs);
-                    results.add(auction);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        // Gọi hàm mapping để chuyển ResultSet thành Object Auction
+                        results.add(mapResultSetToAuction(rs));
+                    }
                 }
                 System.out.println("DEBUG REPO: SQL hoàn tất. Tìm thấy: " + results.size() + " phiên.");
             }
         } catch (Exception e) {
-            System.err.println("DEBUG REPO: Lỗi truy vấn: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("DEBUG REPO: Lỗi SQL: " + e.getMessage());
+            throw e;
         }
         return results;
     }

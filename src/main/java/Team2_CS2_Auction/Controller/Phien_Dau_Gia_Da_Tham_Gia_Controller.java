@@ -14,7 +14,6 @@ import javafx.scene.Scene;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,41 +36,35 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
         try {
             if (Session.currentUser != null) {
                 int currentUserId = Session.currentUser.getId();
-                System.out.println("DEBUG CTRL: Bắt đầu tải dữ liệu cho User ID: " + currentUserId);
+                System.out.println("DEBUG CTRL: Đang tải phiên cho User ID: " + currentUserId);
 
                 List<Auction> list = auctionService.getAuctionsByBidder(currentUserId);
 
                 System.out.println("DEBUG CTRL: Service trả về " + (list != null ? list.size() : "NULL") + " phiên.");
                 renderAuctionList(list);
             } else {
-                System.err.println("DEBUG CTRL: Session.currentUser đang bị NULL! Bạn cần đăng nhập trước.");
+                System.err.println("DEBUG CTRL: Session.currentUser bị NULL!");
             }
         } catch (Exception e) {
-            System.err.println("DEBUG CTRL: Lỗi loadData: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     private void renderAuctionList(List<Auction> auctions) {
-        if (pnlJoinedItems == null) {
-            System.err.println("DEBUG UI: pnlJoinedItems bị NULL! Kiểm tra fx:id trong FXML.");
-            return;
-        }
+        if (pnlJoinedItems == null) return;
 
-        // Dọn dẹp card cũ
+        // Dọn dẹp card cũ để giải phóng bộ nhớ
         activeControllers.forEach(ctrl -> { if(ctrl != null) ctrl.stopTimeline(); });
         activeControllers.clear();
         pnlJoinedItems.getChildren().clear();
 
         if (auctions == null || auctions.isEmpty()) {
-            System.out.println("DEBUG UI: Danh sách rỗng, không có card nào để vẽ.");
+            System.out.println("DEBUG UI: Không có dữ liệu để hiển thị.");
             return;
         }
 
         for (Auction auction : auctions) {
             try {
-                System.out.println("DEBUG UI: Đang tạo Card cho Auction ID: " + auction.getAuctionId());
-
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
                 Parent card = loader.load();
 
@@ -80,54 +73,27 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
                     cardController.setData(auction);
                     activeControllers.add(cardController);
                     pnlJoinedItems.getChildren().add(card);
-                    System.out.println("DEBUG UI: Đã thêm Card thành công.");
                 }
             } catch (Exception e) {
-                System.err.println("DEBUG UI: Lỗi load Card FXML: " + e.getMessage());
-                e.printStackTrace();
+                System.err.println("DEBUG UI: Lỗi nạp Card: " + e.getMessage());
             }
         }
     }
 
-    @FXML
-    public void handleQuayLaiTrangChu(ActionEvent event) {
-        switchScene(event, "Man_hinh_chinh_Users.fxml", "Màn hình chính");
-    }
-
-    @FXML
-    public void handleGoTothemsanpham(ActionEvent event) {
-        switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm");
-    }
-
-    @FXML
-    public void handleGoToSanPhamCuaToi(ActionEvent event) {
-        switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi");
-    }
+    @FXML public void handleQuayLaiTrangChu(ActionEvent event) { switchScene(event, "Man_hinh_chinh_Users.fxml", "Màn hình chính"); }
+    @FXML public void handleGoTothemsanpham(ActionEvent event) { switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
+    @FXML public void handleGoToSanPhamCuaToi(ActionEvent event) { switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
 
     @FXML
     public void handleOpenNapTienPopup(ActionEvent event) {
         try {
-            URL fxmlLocation = getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Nap_Tien.fxml");
-            if (fxmlLocation == null) return;
-
-            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Nap_Tien.fxml"));
             Parent root = loader.load();
-
-            Nap_Tien_Controller controller = loader.getController();
-            if (Session.currentUser != null) {
-                controller.setUserData(Session.currentUser);
-            }
-
             Stage popupStage = new Stage();
             popupStage.initModality(Modality.APPLICATION_MODAL);
-            popupStage.initOwner(((Node) event.getSource()).getScene().getWindow());
-            popupStage.setTitle("Nạp Tiền");
             popupStage.setScene(new Scene(root));
             popupStage.showAndWait();
-
-            loadDataPhienDaThamGia();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            loadDataPhienDaThamGia(); // Load lại sau khi nạp tiền
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }
