@@ -3,9 +3,14 @@ package Team2_CS2_Auction.Controller;
 import Team2_CS2_Auction.Model.auction.Auction;
 import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.user.Member;
-import Team2_CS2_Auction.Service.AuctionService;
-import Team2_CS2_Auction.Service.AuctionServiceImpl;
+import Team2_CS2_Auction.Networking.NetworkManager;
+import Team2_CS2_Auction.Networking.NetworkMessage;
+import Team2_CS2_Auction.Networking.NetworkListener;
+import Team2_CS2_Auction.Networking.GsonUtil;
 import Team2_CS2_Auction.Session.Session;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -30,8 +35,8 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     private double currentPrice;
     private final DecimalFormat formatter = new DecimalFormat("#,###");
 
-    // THỐNG NHẤT DÙNG AUCTION SERVICE
-    private final AuctionService auctionService = new AuctionServiceImpl();
+    private NetworkListener networkListener;
+    private final NetworkManager nm = NetworkManager.getInstance();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -40,6 +45,47 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         stepSpinner.setValueFactory(valueFactory);
 
         stepSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTargetPrice());
+
+        // Thiết lập Listener để nhận tin nhắn Broadcast từ Server
+        setupNetworkListener();
+    }
+
+    private void setupNetworkListener() {
+        networkListener = new NetworkListener() {
+            @Override
+            public void onMessageReceived(NetworkMessage message) {
+                Platform.runLater(() -> {
+                    if ("NEW_BID".equals(message.getAction())) {
+                        try {
+                            Gson gson = GsonUtil.getGson();
+                            JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
+                            String rcvAuctionId = payload.get("auctionId").getAsString();
+                            
+                            // Chỉ cập nhật nếu tin nhắn thuộc về món hàng đang xem
+                            if (currentAuction != null && currentAuction.getAuctionId().equals(rcvAuctionId)) {
+                                double newPrice = payload.get("newPrice").getAsDouble();
+                                
+                                // Cập nhật UI
+                                currentAuction.setCurrentPrice(newPrice);
+                                currentPrice = newPrice;
+                                currentBidLabel.setText(formatter.format(newPrice));
+                                updateTargetPrice();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else if ("BID_FAILED".equals(message.getAction())) {
+                        new Alert(Alert.AlertType.ERROR, message.getPayload()).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onConnectionError() {
+                // Ignore connection errors here, main listener handles it
+            }
+        };
+        nm.addListener(networkListener);
     }
 
     public void setAuctionData(Auction auction) {
@@ -85,19 +131,25 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
     @FXML
     private void handlePlaceBid() {
+        if (currentAuction == null) return;
         try {
             Member currentUser = (Member) Team2_CS2_Auction.Session.Session.currentUser;
             double finalPrice = Double.parseDouble(targetPriceLabel.getText().replaceAll("[^\\d]", "")); // Lấy số sạch
 
-            auctionService.placeBid(currentUser, currentAuction.getAuctionId(), finalPrice);
+            // GỬI LỆNH LÊN SERVER QUA SOCKET, KHÔNG CHẠY DATABASE Ở ĐÂY NỮA
+            JsonObject payload = new JsonObject();
+            payload.addProperty("auctionId", currentAuction.getAuctionId());
+            payload.addProperty("bidAmount", finalPrice);
+            payload.addProperty("userId", currentUser.getId());
 
-            // ĐỒNG BỘ LẠI DỮ LIỆU ĐỂ ĐẶT TIẾP LẦN SAU
-            this.currentAuction.setCurrentPrice(finalPrice);
-            this.currentPrice = finalPrice;
-            currentBidLabel.setText(formatter.format(finalPrice));
-            updateTargetPrice();
-
-            new Alert(Alert.AlertType.INFORMATION, "✅ Đặt giá thành công!").show();
+            if (!nm.isConnected()) {
+                new Alert(Alert.AlertType.ERROR, "Mất kết nối tới Server!").show();
+                return;
+            }
+            
+            nm.send("PLACE_BID", payload);
+            // Không cập nhật UI ngay lập tức. Đợi Server Broadcast NEW_BID về thì UI mới cập nhật!
+            
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         }
@@ -105,6 +157,10 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
     @FXML
     private void handleClose(javafx.event.ActionEvent event) {
+        // Gỡ bỏ Listener khi thoát khỏi trang này để tránh rác bộ nhớ
+        if (networkListener != null) {
+            nm.removeListener(networkListener);
+        }
         switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
     }
 

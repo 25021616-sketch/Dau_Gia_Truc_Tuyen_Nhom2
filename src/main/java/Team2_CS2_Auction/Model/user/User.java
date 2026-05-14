@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public abstract class User implements Serializable {
+public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -94,7 +94,9 @@ public abstract class User implements Serializable {
 
     // ─── Abstract method ─────────────────────────────────────────
 
-    public abstract String getInfo();
+    public String getInfo() {
+        return null;
+    }
 
     private static String validateNotBlank(String value, String fieldName) {
         if (value == null || value.isBlank())

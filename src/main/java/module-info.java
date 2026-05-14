@@ -6,6 +6,7 @@ module Team2_CS2_Auction {
     requires java.base;
     requires java.sql;
     requires java.net.http;
+    requires com.google.gson;
 
     // 2. Cho phép JavaFX (FXML) truy cập vào Controller để bắt sự kiện (Button click,...)
     opens Team2_CS2_Auction.Controller to javafx.fxml;
@@ -19,5 +20,9 @@ module Team2_CS2_Auction {
     exports Team2_CS2_Auction.Controller;
     exports Team2_CS2_Auction.Model.item;
     exports Team2_CS2_Auction.Service;
-    opens Team2_CS2_Auction.Service to javafx.fxml;
+    
+    opens Team2_CS2_Auction.Service to javafx.fxml, com.google.gson;
+    opens Team2_CS2_Auction.Model.user to com.google.gson, javafx.base;
+    opens Team2_CS2_Auction.Model.auction to com.google.gson, javafx.base;
+    opens Team2_CS2_Auction.Networking to com.google.gson;
 }

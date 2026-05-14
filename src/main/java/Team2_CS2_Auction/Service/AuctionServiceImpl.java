@@ -17,6 +17,13 @@ public class AuctionServiceImpl implements AuctionService {
     private final AuctionRepository auctionRepo = new AuctionRepositoryImpl();
     private final UserRepository userRepo = new UserRepository(); // Thêm để check số dư chuẩn
 
+    public AuctionServiceImpl(AuctionRepositoryImpl auctionRepo) {
+    }
+
+    public AuctionServiceImpl() {
+
+    }
+
     @Override
     public void createAuction(Member seller, String name, String category, String description,
                               String imagePath, String startPrice, String stepPrice,

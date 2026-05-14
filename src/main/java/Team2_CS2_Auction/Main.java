@@ -1,5 +1,6 @@
 package Team2_CS2_Auction;
 
+import Team2_CS2_Auction.Networking.NetworkManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -10,26 +11,23 @@ import java.io.IOException;
 public class Main extends Application {
     @Override
     public void start(Stage stage) {
+        // =========================================================
+        // 1. KẾT NỐI SERVER NGAY KHI MỞ APP
+        // Thay "127.0.0.1" và 8080 bằng đúng IP/Port Server của bạn
+        // =========================================================
+        NetworkManager.getInstance().connect("127.0.0.1", 8080);
+
         try {
-            // 1. Tải file FXML
-            // Lưu ý: Đảm bảo đường dẫn này khớp chính xác với cấu trúc trong thư mục src/main/resources
+            // 2. Tải file FXML
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/dang_nhap.fxml"));
             Parent root = fxmlLoader.load();
 
-            // 2. Tạo Scene
-            // Khi làm Full màn hình, bạn không cần truyền kích thước vào Scene(root, width, height)
+            // 3. Tạo Scene
             Scene scene = new Scene(root);
 
-            // 3. Thiết lập tiêu đề
+            // 4. Thiết lập tiêu đề và hiển thị
             stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - ĐHQGHN");
-
-            // 4. Kích hoạt chế độ phóng lớn toàn màn hình (vẫn thấy thanh Taskbar)
             stage.setMaximized(true);
-
-            // TÙY CHỌN: Nếu bạn muốn mất luôn cả thanh Taskbar (Full Screen thực thụ)
-            // stage.setFullScreen(true);
-
-            // 5. Gắn scene vào stage và hiển thị
             stage.setScene(scene);
             stage.show();
 
@@ -39,6 +37,12 @@ public class Main extends Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void stop() {
+        // Ngắt kết nối khi đóng ứng dụng để giải phóng tài nguyên
+        NetworkManager.getInstance().disconnect();
     }
 
     public static void main(String[] args) {
