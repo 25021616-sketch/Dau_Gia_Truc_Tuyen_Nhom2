@@ -91,7 +91,7 @@
                                     </children>
                                 </VBox>
 
-                                <Button fx:id="Dang_ky" maxWidth="Infinity" mnemonicParsing="false" prefHeight="48.0" style="-fx-background-color: #20335e; -fx-background-radius: 10; -fx-cursor: hand;" text="Đăng Ký" textFill="WHITE">
+                                <Button fx:id="Dang_ky" maxWidth="Infinity" mnemonicParsing="false" prefHeight="48.0" style="-fx-background-color: #20335e; -fx-background-radius: 10; -fx-cursor: hand;" text="Đăng Ký" onAction="#handleRegister" textFill="WHITE">
                                     <font><Font name="System Bold" size="14.0" /></font>
                                     <VBox.margin>
                                         <Insets top="10.0" />

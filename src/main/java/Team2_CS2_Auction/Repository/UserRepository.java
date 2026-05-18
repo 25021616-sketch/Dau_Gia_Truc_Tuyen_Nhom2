@@ -167,4 +167,77 @@ public class UserRepository {
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); return false; }
     }
+    // =========================
+    // KIỂM TRA USERNAME TỒN TẠI
+    // =========================
+    public boolean isUsernameExists(String username) {
+
+        String sql =
+                "SELECT 1 FROM user " +
+                        "WHERE LOWER(TRIM(username)) = LOWER(TRIM(?)) " +
+                        "LIMIT 1";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // =========================
+// ALIAS KIỂM TRA PHONE
+// =========================
+    public boolean isPhoneExists(String phone) {
+
+        return existsByPhone(phone);
+    }
+
+    // =========================
+// ALIAS ĐĂNG KÝ USER
+// =========================
+    public boolean registerUser(User user) {
+
+        String sql =
+                "INSERT INTO user(username,password,phone,role,status) " +
+                        "VALUES(?,?,?,?,?)";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setString(1, user.getUsername());
+
+            ps.setString(
+                    2,
+                    PasswordUtils.hashSha256(user.getPassword())
+            );
+
+            ps.setString(3, user.getPhone());
+
+            ps.setString(4, user.getRole().name());
+
+            ps.setString(5, "ACTIVE");
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

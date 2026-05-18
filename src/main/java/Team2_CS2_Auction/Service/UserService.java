@@ -10,19 +10,111 @@ public class UserService {
     /**
      * Logic Đăng ký tài khoản
      */
-    public void handleRegisterLogic(String username, String phone, String password, String confirm) throws Exception {
-        if (!password.equals(confirm)) {
-            throw new Exception("Mật khẩu nhập lại không khớp.");
-        }
-        if (userRepository.existsByPhone(phone)) {
-            throw new Exception("Số điện thoại đã tồn tại.");
+    public void handleRegisterLogic(
+            String username,
+            String phone,
+            String password,
+            String confirmPassword
+    ) throws Exception {
+
+        // ===== USERNAME =====
+        if (username.isEmpty()) {
+
+            throw new Exception(
+                    "Vui lòng nhập tên đăng nhập."
+            );
         }
 
-        Member newMember = new Member(username, password);
-        newMember.setPhone(phone);
+        if (username.length() < 4) {
 
-        if (!userRepository.register(newMember)) {
-            throw new Exception("Đăng ký thất bại (Tên đăng nhập có thể đã tồn tại).");
+            throw new Exception(
+                    "Tên đăng nhập phải từ 4 ký tự trở lên."
+            );
+        }
+
+        if (!username.matches("^[a-zA-Z0-9_]+$")) {
+
+            throw new Exception(
+                    "Tên đăng nhập không được chứa ký tự đặc biệt."
+            );
+        }
+
+        // ===== PHONE =====
+        if (phone.isEmpty()) {
+
+            throw new Exception(
+                    "Vui lòng nhập số điện thoại."
+            );
+        }
+
+        if (!phone.matches("^0\\d{9}$")) {
+
+            throw new Exception(
+                    "Số điện thoại phải gồm 10 số và bắt đầu bằng số 0."
+            );
+        }
+
+        if (userRepository.isPhoneExists(phone)) {
+
+            throw new Exception(
+                    "Số điện thoại đã được sử dụng."
+            );
+        }
+
+        // ===== PASSWORD =====
+        if (password.isEmpty()) {
+
+            throw new Exception(
+                    "Vui lòng nhập mật khẩu."
+            );
+        }
+
+        if (password.length() < 6) {
+
+            throw new Exception(
+                    "Mật khẩu phải có ít nhất 6 ký tự."
+            );
+        }
+
+        if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d).+$")) {
+
+            throw new Exception(
+                    "Mật khẩu phải chứa cả chữ và số."
+            );
+        }
+
+        // ===== CONFIRM PASSWORD =====
+        if (!password.equals(confirmPassword)) {
+
+            throw new Exception(
+                    "Mật khẩu nhập lại không khớp."
+            );
+        }
+
+        // ===== USERNAME EXISTS =====
+        if (userRepository.isUsernameExists(username)) {
+
+            throw new Exception(
+                    "Tên đăng nhập đã tồn tại."
+            );
+        }
+
+        // ===== CREATE ACCOUNT =====
+        Member user = new Member(username, password);
+
+        user.setPhone(phone);
+
+        boolean success = userRepository.registerUser(user);
+
+        if (success) {
+
+            System.out.println("Đăng ký thành công");
+
+        } else {
+
+            throw new Exception(
+                    "Đăng ký thất bại. Có thể tài khoản đã tồn tại."
+            );
         }
     }
 
