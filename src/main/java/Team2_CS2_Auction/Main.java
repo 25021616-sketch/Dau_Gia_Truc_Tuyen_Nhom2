@@ -21,18 +21,32 @@ public class Main extends Application {
         //   - IP thường:  192.168.1.10
         //   - ngrok:      0.tcp.ngrok.io:12345
         // =========================================================
-        TextInputDialog dialog = new TextInputDialog("127.0.0.1");
-        dialog.setTitle("Kết nối đến Máy Chủ");
-        dialog.setHeaderText("Hệ Thống Đấu Giá Trực Tuyến");
-        dialog.setContentText("Nhập IP hoặc địa chỉ Server\n(VD: 192.168.1.5  hoặc  0.tcp.ngrok.io:12345):");
+        // =========================================================
+        // Tự động tìm kiếm Server trong mạng LAN bằng UDP Discovery
+        // =========================================================
+        System.out.println("[Discovery] Đang tìm kiếm Server tự động trong mạng LAN...");
+        String discoveredIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
+        String input = "";
 
-        Optional<String> result = dialog.showAndWait();
-        if (result.isEmpty()) {
-            stage.close();
-            return;
+        if (discoveredIp != null && !discoveredIp.trim().isEmpty()) {
+            System.out.println("[Discovery] Tìm thấy Server tại IP: " + discoveredIp + "! Đang tự động kết nối...");
+            input = discoveredIp;
+        } else {
+            System.out.println("[Discovery] Không tìm thấy Server tự động. Hiển thị hộp thoại nhập thủ công.");
+            
+            TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+            dialog.setTitle("Kết nối đến Máy Chủ");
+            dialog.setHeaderText("Hệ Thống Đấu Giá Trực Tuyến");
+            dialog.setContentText("Không tìm thấy Server tự động.\nNhập IP hoặc địa chỉ Server\n(VD: 192.168.1.5 hoặc 0.tcp.ngrok.io:12345):");
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isEmpty()) {
+                stage.close();
+                return;
+            }
+            input = result.get().trim();
         }
 
-        String input = result.get().trim();
         if (input.isEmpty()) input = "127.0.0.1";
 
         // Tách host và port nếu người dùng nhập dạng host:port
