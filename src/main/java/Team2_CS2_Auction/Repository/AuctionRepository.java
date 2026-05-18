@@ -1,6 +1,7 @@
 package Team2_CS2_Auction.Repository;
 
 import Team2_CS2_Auction.Model.auction.Auction;
+import Team2_CS2_Auction.Model.auction.Bid;
 import java.util.List;
 
 public interface AuctionRepository {
@@ -18,4 +19,6 @@ public interface AuctionRepository {
      * Tên hàm phải khớp với AuctionServiceImpl đang gọi.
      */
     List<Auction> findAuctionsByBidderId(int bidderId) throws Exception;
+
+    List<Bid> getBidHistory(String auctionId) throws Exception;
 }

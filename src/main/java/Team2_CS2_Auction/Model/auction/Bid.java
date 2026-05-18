@@ -19,6 +19,13 @@ public class Bid implements Serializable {
         this.time = LocalDateTime.now();
     }
 
+    public Bid(String id, Member bidder, double amount, LocalDateTime time) {
+        this.id = id;
+        this.bidder = bidder;
+        this.amount = amount;
+        this.time = time;
+    }
+
     public String getId() {
         return id;
     }
