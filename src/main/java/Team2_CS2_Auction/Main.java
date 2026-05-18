@@ -5,50 +5,66 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
 import javafx.scene.control.TextInputDialog;
-import java.util.Optional;
+import javafx.stage.Stage;
 import java.io.IOException;
+import java.util.Optional;
 
 public class Main extends Application {
+
     @Override
     public void start(Stage stage) {
-        // =========================================================
-        // 1. KẾT NỐI SERVER NGAY KHI MỞ APP
-        // =========================================================
-        System.out.println("Đang tìm kiếm Server trong mạng LAN...");
-        String serverIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
 
-        if (serverIp == null) {
-            TextInputDialog dialog = new TextInputDialog("127.0.0.1");
-            dialog.setTitle("Cấu hình kết nối");
-            dialog.setHeaderText("Không tìm thấy Server tự động");
-            dialog.setContentText("Nhập IP Server (Ví dụ: 192.168.1.10):");
+        // =========================================================
+        // Hỏi địa chỉ Server khi khởi động
+        // Hỗ trợ 2 dạng:
+        //   - IP thường:  192.168.1.10
+        //   - ngrok:      0.tcp.ngrok.io:12345
+        // =========================================================
+        TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+        dialog.setTitle("Kết nối đến Máy Chủ");
+        dialog.setHeaderText("Hệ Thống Đấu Giá Trực Tuyến");
+        dialog.setContentText("Nhập IP hoặc địa chỉ Server\n(VD: 192.168.1.5  hoặc  0.tcp.ngrok.io:12345):");
 
-            Optional<String> result = dialog.showAndWait();
-            serverIp = result.orElse("127.0.0.1");
-        } else {
-            System.out.println("Đã tự động tìm thấy Server tại: " + serverIp);
+        Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty()) {
+            stage.close();
+            return;
         }
 
-        NetworkManager.getInstance().connect(serverIp, 8080);
+        String input = result.get().trim();
+        if (input.isEmpty()) input = "127.0.0.1";
 
+        // Tách host và port nếu người dùng nhập dạng host:port
+        String serverHost;
+        int serverPort = 8080;
+        if (input.contains(":")) {
+            String[] parts = input.split(":");
+            serverHost = parts[0].trim();
+            try { serverPort = Integer.parseInt(parts[1].trim()); } catch (Exception ignored) {}
+        } else {
+            serverHost = input;
+        }
+
+        System.out.println("Đang kết nối tới: " + serverHost + ":" + serverPort + " ...");
+        NetworkManager.getInstance().connect(serverHost, serverPort);
+
+        // =========================================================
+        // Mở giao diện chính
+        // =========================================================
         try {
-            // 2. Tải file FXML
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/dang_nhap.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(
+                getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/dang_nhap.fxml"));
             Parent root = fxmlLoader.load();
 
-            // 3. Tạo Scene
             Scene scene = new Scene(root);
-
-            // 4. Thiết lập tiêu đề và hiển thị
             stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - ĐHQGHN");
             stage.setMaximized(true);
             stage.setScene(scene);
             stage.show();
 
         } catch (IOException e) {
-            System.err.println("Lỗi: Không tìm thấy file FXML. Hãy kiểm tra lại đường dẫn!");
+            System.err.println("Lỗi: Không tìm thấy file FXML!");
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,7 +73,6 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-        // Ngắt kết nối khi đóng ứng dụng để giải phóng tài nguyên
         NetworkManager.getInstance().disconnect();
     }
 
