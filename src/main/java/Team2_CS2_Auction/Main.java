@@ -16,13 +16,20 @@ public class Main extends Application {
         // =========================================================
         // 1. KẾT NỐI SERVER NGAY KHI MỞ APP
         // =========================================================
-        TextInputDialog dialog = new TextInputDialog("127.0.0.1");
-        dialog.setTitle("Cấu hình kết nối");
-        dialog.setHeaderText("Kết nối đến Server");
-        dialog.setContentText("Nhập IP Server (Ví dụ: 192.168.1.10):");
+        System.out.println("Đang tìm kiếm Server trong mạng LAN...");
+        String serverIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
 
-        Optional<String> result = dialog.showAndWait();
-        String serverIp = result.orElse("127.0.0.1");
+        if (serverIp == null) {
+            TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+            dialog.setTitle("Cấu hình kết nối");
+            dialog.setHeaderText("Không tìm thấy Server tự động");
+            dialog.setContentText("Nhập IP Server (Ví dụ: 192.168.1.10):");
+
+            Optional<String> result = dialog.showAndWait();
+            serverIp = result.orElse("127.0.0.1");
+        } else {
+            System.out.println("Đã tự động tìm thấy Server tại: " + serverIp);
+        }
 
         NetworkManager.getInstance().connect(serverIp, 8080);
 

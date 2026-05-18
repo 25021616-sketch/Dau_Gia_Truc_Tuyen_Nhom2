@@ -21,15 +21,42 @@ public class AuctionServer {
 
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Client mới kết nối: " + clientSocket.getInetAddress().getHostAddress());
+                String clientIp = clientSocket.getInetAddress().getHostAddress();
+                System.out.println("Phát hiện kết nối mới từ: " + clientIp);
 
-                ClientHandler handler = new ClientHandler(clientSocket, this);
-                synchronized (clients) {
-                    clients.add(handler);
-                }
-                
-                Thread clientThread = new Thread(handler);
-                clientThread.start();
+                // Chạy một luồng riêng để hỏi cấp phép (không làm đơ Server)
+                new Thread(() -> {
+                    // Nếu là 127.0.0.1 (chính máy Server) thì tự động cho phép, đỡ phải hỏi nhiều
+                    boolean isLocal = clientIp.equals("127.0.0.1") || clientIp.equals("localhost");
+                    int dialogResult = javax.swing.JOptionPane.YES_OPTION;
+                    
+                    if (!isLocal) {
+                        // Hiển thị Popup Swing tại màn hình Server
+                        dialogResult = javax.swing.JOptionPane.showConfirmDialog(
+                                null,
+                                "Máy tính có IP: " + clientIp + " đang muốn kết nối vào hệ thống Đấu Giá.\nBạn có cho phép không?",
+                                "Yêu cầu kết nối từ Client",
+                                javax.swing.JOptionPane.YES_NO_OPTION,
+                                javax.swing.JOptionPane.WARNING_MESSAGE
+                        );
+                    }
+
+                    if (dialogResult == javax.swing.JOptionPane.YES_OPTION) {
+                        System.out.println("-> Đã CẤP PHÉP cho IP: " + clientIp);
+                        ClientHandler handler = new ClientHandler(clientSocket, this);
+                        synchronized (clients) {
+                            clients.add(handler);
+                        }
+                        
+                        Thread clientThread = new Thread(handler);
+                        clientThread.start();
+                    } else {
+                        System.out.println("-> TỪ CHỐI kết nối từ IP: " + clientIp);
+                        try {
+                            clientSocket.close();
+                        } catch (IOException e) { }
+                    }
+                }).start();
             }
         } catch (IOException e) {
             if (isRunning) {
