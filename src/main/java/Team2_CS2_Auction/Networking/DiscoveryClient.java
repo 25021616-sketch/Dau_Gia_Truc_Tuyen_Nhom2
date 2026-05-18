@@ -7,58 +7,67 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+/**
+ * UDP Discovery Client - chạy ở máy Client khi khởi động.
+ * Tự động broadcast để tìm IP của Server trong mạng LAN.
+ * Trả về null nếu không tìm thấy (client sẽ fallback nhập tay).
+ */
 public class DiscoveryClient {
+
+    private static final int DISCOVERY_PORT = 8888;
+    private static final String REQUEST_MSG  = "DISCOVER_AUCTION_SERVER_REQUEST";
+    private static final String RESPONSE_PREFIX = "DISCOVER_AUCTION_SERVER_RESPONSE:";
+    private static final int TIMEOUT_MS = 3000; // Đợi tối đa 3 giây
+
     public static String discoverServerIp() {
-        DatagramSocket c = null;
-        try {
-            c = new DatagramSocket();
-            c.setBroadcast(true);
-            c.setSoTimeout(3000); // Đợi tối đa 3 giây
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.setBroadcast(true);
+            socket.setSoTimeout(TIMEOUT_MS);
 
-            byte[] sendData = "DISCOVER_AUCTION_SERVER_REQUEST".getBytes();
+            byte[] sendData = REQUEST_MSG.getBytes();
 
-            // Thử gửi broadcast tới địa chỉ 255.255.255.255
-            try {
-                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("255.255.255.255"), 8888);
-                c.send(sendPacket);
-            } catch (Exception e) {}
+            // 1. Broadcast tới 255.255.255.255
+            sendBroadcast(socket, sendData, "255.255.255.255");
 
-            // Thử gửi broadcast tới tất cả các network interfaces
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface networkInterface = interfaces.nextElement();
-                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
-                    continue;
-                }
-                for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
-                    InetAddress broadcast = interfaceAddress.getBroadcast();
-                    if (broadcast == null) {
-                        continue;
+            // 2. Broadcast tới tất cả broadcast address của các interface
+            Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
+            while (ifaces != null && ifaces.hasMoreElements()) {
+                NetworkInterface iface = ifaces.nextElement();
+                if (!iface.isUp() || iface.isLoopback()) continue;
+                for (InterfaceAddress ifAddr : iface.getInterfaceAddresses()) {
+                    InetAddress broadcast = ifAddr.getBroadcast();
+                    if (broadcast != null) {
+                        sendBroadcast(socket, sendData, broadcast.getHostAddress());
                     }
-                    try {
-                        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, 8888);
-                        c.send(sendPacket);
-                    } catch (Exception e) {}
                 }
             }
 
-            // Lắng nghe phản hồi
-            byte[] recvBuf = new byte[15000];
-            DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
-            c.receive(receivePacket); // Chờ phản hồi từ server
+            // 3. Lắng nghe phản hồi
+            byte[] recvBuf = new byte[256];
+            DatagramPacket response = new DatagramPacket(recvBuf, recvBuf.length);
+            socket.receive(response);
 
-            String message = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
-            if (message.equals("DISCOVER_AUCTION_SERVER_RESPONSE")) {
-                return receivePacket.getAddress().getHostAddress();
+            String msg = new String(response.getData(), 0, response.getLength()).trim();
+            if (msg.startsWith(RESPONSE_PREFIX)) {
+                // Lấy IP thực mà Server gửi về (độ tin cậy cao hơn lấy source IP của packet)
+                String ip = msg.substring(RESPONSE_PREFIX.length()).trim();
+                System.out.println("[Discovery] Tìm thấy Server tại: " + ip);
+                return ip;
             }
 
-        } catch (Exception ex) {
-            System.out.println("Không tìm thấy Server tự động: " + ex.getMessage());
-        } finally {
-            if (c != null) {
-                c.close();
-            }
+        } catch (java.net.SocketTimeoutException e) {
+            System.out.println("[Discovery] Hết thời gian chờ - không tìm thấy Server tự động.");
+        } catch (Exception e) {
+            System.out.println("[Discovery] Lỗi khi tìm Server: " + e.getMessage());
         }
-        return null;
+        return null; // Không tìm thấy
+    }
+
+    private static void sendBroadcast(DatagramSocket socket, byte[] data, String broadcastAddr) {
+        try {
+            InetAddress addr = InetAddress.getByName(broadcastAddr);
+            DatagramPacket packet = new DatagramPacket(data, data.length, addr, DISCOVERY_PORT);
+            socket.send(packet);
+        } catch (Exception ignored) {}
     }
 }

@@ -17,46 +17,24 @@ public class AuctionServer {
         try {
             serverSocket = new ServerSocket(port);
             isRunning = true;
-            System.out.println("Server Đấu Giá đang chạy tại cổng " + port + "...");
+            System.out.println("=================================================");
+            System.out.println("  SERVER ĐẤU GIÁ ĐÃ KHỞI ĐỘNG - CỔNG " + port);
+            System.out.println("  Đang chờ Client kết nối...");
+            System.out.println("=================================================");
 
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
                 String clientIp = clientSocket.getInetAddress().getHostAddress();
-                System.out.println("Phát hiện kết nối mới từ: " + clientIp);
 
-                // Chạy một luồng riêng để hỏi cấp phép (không làm đơ Server)
-                new Thread(() -> {
-                    // Nếu là 127.0.0.1 (chính máy Server) thì tự động cho phép, đỡ phải hỏi nhiều
-                    boolean isLocal = clientIp.equals("127.0.0.1") || clientIp.equals("localhost");
-                    int dialogResult = javax.swing.JOptionPane.YES_OPTION;
-                    
-                    if (!isLocal) {
-                        // Hiển thị Popup Swing tại màn hình Server
-                        dialogResult = javax.swing.JOptionPane.showConfirmDialog(
-                                null,
-                                "Máy tính có IP: " + clientIp + " đang muốn kết nối vào hệ thống Đấu Giá.\nBạn có cho phép không?",
-                                "Yêu cầu kết nối từ Client",
-                                javax.swing.JOptionPane.YES_NO_OPTION,
-                                javax.swing.JOptionPane.WARNING_MESSAGE
-                        );
-                    }
+                // Tự động chấp nhận, in log ra Terminal
+                System.out.println("[+] Client kết nối: " + clientIp
+                        + " | Tổng: " + (clients.size() + 1));
 
-                    if (dialogResult == javax.swing.JOptionPane.YES_OPTION) {
-                        System.out.println("-> Đã CẤP PHÉP cho IP: " + clientIp);
-                        ClientHandler handler = new ClientHandler(clientSocket, this);
-                        synchronized (clients) {
-                            clients.add(handler);
-                        }
-                        
-                        Thread clientThread = new Thread(handler);
-                        clientThread.start();
-                    } else {
-                        System.out.println("-> TỪ CHỐI kết nối từ IP: " + clientIp);
-                        try {
-                            clientSocket.close();
-                        } catch (IOException e) { }
-                    }
-                }).start();
+                ClientHandler handler = new ClientHandler(clientSocket, this);
+                synchronized (clients) {
+                    clients.add(handler);
+                }
+                new Thread(handler).start();
             }
         } catch (IOException e) {
             if (isRunning) {
@@ -73,7 +51,6 @@ public class AuctionServer {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }
-            
             synchronized (clients) {
                 for (ClientHandler handler : clients) {
                     handler.closeConnection();
@@ -94,7 +71,7 @@ public class AuctionServer {
             }
         }
     }
-    
+
     public void broadcast(String action, Object payloadObj) {
         String payloadJson = gson.toJson(payloadObj);
         NetworkMessage msg = new NetworkMessage(action, payloadJson);
@@ -104,7 +81,7 @@ public class AuctionServer {
     public void removeClient(ClientHandler handler) {
         synchronized (clients) {
             clients.remove(handler);
-            System.out.println("Đã đóng kết nối với một Client. Tổng số Client hiện tại: " + clients.size());
+            System.out.println("[-] Client ngắt kết nối. Còn lại: " + clients.size() + " client(s).");
         }
     }
 }

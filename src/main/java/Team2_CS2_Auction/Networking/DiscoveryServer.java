@@ -2,15 +2,34 @@ package Team2_CS2_Auction.Networking;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 
+/**
+ * UDP Discovery Server - chạy ngầm ở máy chủ.
+ * Khi client broadcast hỏi "Server ở đâu?", lớp này phản hồi IP LAN của máy chủ.
+ */
 public class DiscoveryServer implements Runnable {
+    private static final int DISCOVERY_PORT = 8888;
+    private static final String REQUEST_MSG  = "DISCOVER_AUCTION_SERVER_REQUEST";
+    private static final String RESPONSE_MSG = "DISCOVER_AUCTION_SERVER_RESPONSE";
+
     private DatagramSocket socket;
     private boolean isRunning;
 
     public void start() {
         isRunning = true;
-        new Thread(this).start();
+        String ip = getLanIp();
+        System.out.println("=================================================");
+        System.out.println("  IP CỦA MÁY CHỦ (LAN): " + ip);
+        System.out.println("  Các máy Client sẽ tự tìm IP này qua UDP.");
+        System.out.println("  Nếu không tự tìm được, nhập tay: " + ip);
+        System.out.println("=================================================");
+        Thread t = new Thread(this);
+        t.setDaemon(true);
+        t.start();
     }
 
     public void stop() {
@@ -23,33 +42,53 @@ public class DiscoveryServer implements Runnable {
     @Override
     public void run() {
         try {
-            // Lắng nghe trên cổng 8888 cho gói tin UDP
-            socket = new DatagramSocket(8888);
+            socket = new DatagramSocket(DISCOVERY_PORT);
             socket.setBroadcast(true);
-            System.out.println("UDP Discovery Server đang chạy trên cổng 8888...");
+            System.out.println("[Discovery] Đang lắng nghe yêu cầu tìm Server trên cổng " + DISCOVERY_PORT + "...");
 
             while (isRunning) {
-                byte[] recvBuf = new byte[15000];
-                DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
-                socket.receive(packet);
+                byte[] buf = new byte[256];
+                DatagramPacket request = new DatagramPacket(buf, buf.length);
+                socket.receive(request);
 
-                String message = new String(packet.getData(), 0, packet.getLength()).trim();
-                
-                if (message.equals("DISCOVER_AUCTION_SERVER_REQUEST")) {
-                    System.out.println("Nhận được yêu cầu tìm Server từ: " + packet.getAddress().getHostAddress());
-                    
-                    // Phản hồi lại Client
-                    byte[] sendData = "DISCOVER_AUCTION_SERVER_RESPONSE".getBytes();
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
-                    socket.send(sendPacket);
+                String msg = new String(request.getData(), 0, request.getLength()).trim();
+                if (!REQUEST_MSG.equals(msg)) continue;
+
+                System.out.println("[Discovery] Client " + request.getAddress().getHostAddress() + " đang tìm Server...");
+
+                // Phản hồi IP LAN thực của Server
+                String response = RESPONSE_MSG + ":" + getLanIp();
+                byte[] respData = response.getBytes();
+                DatagramPacket reply = new DatagramPacket(
+                        respData, respData.length, request.getAddress(), request.getPort());
+                socket.send(reply);
+            }
+        } catch (Exception e) {
+            if (isRunning) {
+                System.err.println("[Discovery] Lỗi: " + e.getMessage());
+            }
+        }
+    }
+
+    /** Lấy địa chỉ IPv4 LAN thực (bỏ qua loopback, mạng ảo) */
+    public static String getLanIp() {
+        try {
+            Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
+            while (ifaces.hasMoreElements()) {
+                NetworkInterface iface = ifaces.nextElement();
+                if (!iface.isUp() || iface.isLoopback() || iface.isVirtual()) continue;
+                String name = iface.getName().toLowerCase();
+                if (name.contains("vbox") || name.contains("vmware") || name.contains("wsl")) continue;
+
+                Enumeration<InetAddress> addrs = iface.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    InetAddress addr = addrs.nextElement();
+                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
+                        return addr.getHostAddress();
+                    }
                 }
             }
-        } catch (Exception ex) {
-            if (isRunning) {
-                System.out.println("Lỗi DiscoveryServer: " + ex.getMessage());
-            }
-        } finally {
-            stop();
-        }
+        } catch (Exception ignored) {}
+        return "127.0.0.1";
     }
 }

@@ -2,13 +2,14 @@ package Team2_CS2_Auction.Networking;
 
 public class ServerMain {
     public static void main(String[] args) {
-        int port = 8080;
-        
-        // Chạy dịch vụ tự động phát IP
+        int tcpPort = 8080;
+
+        // 1. Khởi động UDP Discovery để Client tự tìm IP
         DiscoveryServer discoveryServer = new DiscoveryServer();
-        discoveryServer.start();
-        
+        discoveryServer.start(); // In IP LAN ra Terminal, lắng nghe yêu cầu tìm Server
+
+        // 2. Khởi động TCP Auction Server (chấp nhận đặt giá)
         AuctionServer server = new AuctionServer();
-        server.start(port);
+        server.start(tcpPort);
     }
 }
