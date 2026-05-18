@@ -2,6 +2,7 @@ package Team2_CS2_Auction.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import org.flywaydb.core.Flyway;
 
 public class DBConnection {
 
@@ -23,6 +24,24 @@ public class DBConnection {
             System.out.println("Kết nối database thất bại!");
             e.printStackTrace();
             return null;
+        }
+    }
+
+    /**
+     * Chạy Flyway migration tự động để đồng bộ cấu trúc database
+     */
+    public static void runFlywayMigration() {
+        try {
+            System.out.println("[Flyway] Bắt đầu kiểm tra và cập nhật cấu trúc database...");
+            Flyway flyway = Flyway.configure()
+                    .dataSource(URL, USER, PASSWORD)
+                    .baselineOnMigrate(true)
+                    .load();
+            flyway.migrate();
+            System.out.println("[Flyway] Cập nhật database thành công!");
+        } catch (Exception e) {
+            System.err.println("[Flyway] Lỗi khi chạy migration: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
