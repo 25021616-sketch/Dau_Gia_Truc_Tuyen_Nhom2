@@ -26,6 +26,7 @@ module Team2_CS2_Auction {
     opens Team2_CS2_Auction.Service to javafx.fxml, com.google.gson;
     opens Team2_CS2_Auction.Model.user to com.google.gson, javafx.base;
     opens Team2_CS2_Auction.Model.auction to com.google.gson, javafx.base;
-    opens Team2_CS2_Auction.Networking to com.google.gson;
     opens db.migration to org.flywaydb.core;
+    exports Team2_CS2_Auction.Networking;
+    opens Team2_CS2_Auction.Networking to com.google.gson, javafx.fxml;
 }
