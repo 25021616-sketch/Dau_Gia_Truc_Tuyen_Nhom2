@@ -13,9 +13,18 @@ public class ServerMain {
         System.out.println("  HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN - MÁY CHỦ");
         System.out.println("=================================================");
         System.out.println("  IP LAN CỦA MÁY NÀY: " + getServerIp());
-        System.out.println("  => Hãy dùng IP trên để kết nối từ máy khác.");
+        System.out.println("  => Các máy Client sẽ tự động kết nối qua IP LAN này.");
         System.out.println("=================================================");
 
+        // 1. Chạy Flyway Migration để chuẩn hóa cơ sở dữ liệu
+        Team2_CS2_Auction.util.DBConnection.runFlywayMigration();
+
+        // 2. Khởi động UDP Discovery Server giúp các máy khách tìm thấy tự động
+        System.out.println("[Discovery] Đang khởi động UDP Discovery Server...");
+        DiscoveryServer discoveryServer = new DiscoveryServer();
+        discoveryServer.start();
+
+        // 3. Khởi động TCP Auction Server
         AuctionServer server = new AuctionServer();
         server.start(port);
     }
