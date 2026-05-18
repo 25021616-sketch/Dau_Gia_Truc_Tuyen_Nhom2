@@ -1,6 +1,7 @@
 package Team2_CS2_Auction.Service;
 
 import Team2_CS2_Auction.Model.auction.Auction;
+import Team2_CS2_Auction.Model.auction.Bid;
 import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.item.ItemFactory;
 import Team2_CS2_Auction.Model.user.Member;
@@ -118,5 +119,10 @@ public class AuctionServiceImpl implements AuctionService {
     public List<Auction> getAuctionsByBidder(int bidderId) throws Exception {
         System.out.println("DEBUG SERVICE: Đang gọi Repo lấy danh sách cho bidder: " + bidderId);
         return auctionRepo.findAuctionsByBidderId(bidderId);
+    }
+
+    @Override
+    public List<Bid> getBidHistory(String auctionId) throws Exception {
+        return auctionRepo.getBidHistory(auctionId);
     }
 }

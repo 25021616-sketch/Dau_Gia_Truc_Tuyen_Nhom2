@@ -2,6 +2,7 @@ package Team2_CS2_Auction.Service;
 
 import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.auction.Auction;
+import Team2_CS2_Auction.Model.auction.Bid;
 import Team2_CS2_Auction.Model.user.Member;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,4 +27,6 @@ public interface AuctionService {
     // Admin từ chối
     void rejectAuction(String auctionId) throws Exception;
     List<Auction> getAuctionsByBidder(int bidderId) throws Exception;
+
+    List<Bid> getBidHistory(String auctionId) throws Exception;
 }

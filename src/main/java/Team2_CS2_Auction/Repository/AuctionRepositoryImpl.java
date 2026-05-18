@@ -1,6 +1,7 @@
 package Team2_CS2_Auction.Repository;
 
 import Team2_CS2_Auction.Model.auction.Auction;
+import Team2_CS2_Auction.Model.auction.Bid;
 import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.item.ItemFactory;
 import Team2_CS2_Auction.Model.user.Member;
@@ -199,5 +200,30 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             throw e;
         }
         return results;
+    }
+
+    @Override
+    public List<Bid> getBidHistory(String auctionId) throws Exception {
+        String numericId = auctionId.replace("AUC_", "");
+        List<Bid> history = new ArrayList<>();
+        String sql = "SELECT * FROM bid WHERE product_id = ? ORDER BY bid_time ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, Integer.parseInt(numericId));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int userId = rs.getInt("user_id");
+                    double amount = rs.getDouble("bid_amount");
+                    LocalDateTime time = rs.getTimestamp("bid_time").toLocalDateTime();
+
+                    Member dummyBidder = new Member(userId, "User_" + userId, "123456", "000");
+                    Bid bid = new Bid("BID_" + rs.getInt("id"), dummyBidder, amount, time);
+                    history.add(bid);
+                }
+            }
+        }
+        return history;
     }
 }
