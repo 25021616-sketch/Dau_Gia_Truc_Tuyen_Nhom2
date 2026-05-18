@@ -16,6 +16,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ResourceBundle;
@@ -30,6 +32,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     @FXML private Label lblThoiGian;
     @FXML private Spinner<Integer> stepSpinner;
     @FXML private ComboBox<String> bidStepCombo;
+    @FXML private LineChart<String, Number> bidHistoryChart;
+
+    private XYChart.Series<String, Number> bidSeries;
 
     private Auction currentAuction;
     private double currentPrice;
@@ -45,6 +50,13 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         stepSpinner.setValueFactory(valueFactory);
 
         stepSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTargetPrice());
+
+        // Khởi tạo đồ thị
+        bidSeries = new XYChart.Series<>();
+        bidSeries.setName("Giá ($)");
+        if (bidHistoryChart != null) {
+            bidHistoryChart.getData().add(bidSeries);
+        }
 
         // Thiết lập Listener để nhận tin nhắn Broadcast từ Server
         setupNetworkListener();
@@ -70,6 +82,16 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                                 currentPrice = newPrice;
                                 currentBidLabel.setText(formatter.format(newPrice));
                                 updateTargetPrice();
+
+                                // Cập nhật đồ thị Realtime
+                                if (bidSeries != null) {
+                                    String timeNow = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+                                    bidSeries.getData().add(new XYChart.Data<>(timeNow, newPrice));
+                                    // Giới hạn hiển thị 20 điểm gần nhất cho đỡ rối
+                                    if (bidSeries.getData().size() > 20) {
+                                        bidSeries.getData().remove(0);
+                                    }
+                                }
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -113,6 +135,13 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         bidStepCombo.getItems().add(formatter.format(buocGiaTuAuction));
         bidStepCombo.getSelectionModel().selectFirst();
         bidStepCombo.setDisable(true);
+
+        // Vẽ điểm xuất phát lên đồ thị lúc mới mở
+        if (bidSeries != null) {
+            bidSeries.getData().clear();
+            String timeNow = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+            bidSeries.getData().add(new XYChart.Data<>(timeNow, currentPrice));
+        }
 
         updateTargetPrice();
     }
