@@ -79,40 +79,11 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
     }
 
     // =========================================================
-    // HÀM MỞ POPUP NẠP TIỀN (MỚI THÊM)
+    // HÀM MỞ POPUP NẠP TIỀN (SỬ DỤNG HÀM CHUẨN TỪ BASE)
     // =========================================================
-    @FXML
-    public void handleOpenNapTienPopup(ActionEvent event) {
-        try {
-            URL fxmlLocation = getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Nap_Tien.fxml");
-            if (fxmlLocation == null) {
-                System.err.println("Không tìm thấy file Nap_Tien.fxml");
-                return;
-            }
-
-            FXMLLoader loader = new FXMLLoader(fxmlLocation);
-            Parent root = loader.load();
-
-            // Truyền dữ liệu User sang màn hình nạp tiền
-            Nap_Tien_Controller controller = loader.getController();
-            if (Session.currentUser != null) {
-                controller.setUserData(Session.currentUser);
-            }
-
-            Stage popupStage = new Stage();
-            popupStage.initModality(Modality.APPLICATION_MODAL);
-            popupStage.initOwner(((Node) event.getSource()).getScene().getWindow());
-            popupStage.setTitle("Nạp Tiền");
-
-            popupStage.setScene(new Scene(root));
-            popupStage.showAndWait();
-
-            // Sau khi nạp xong, có thể load lại danh sách nếu cần cập nhật hiển thị liên quan đến ví
-            loadMyProducts();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    @Override
+    protected void onNapTienSuccess() {
+        loadMyProducts();
     }
 
     // ================== NAVIGATION (Điều hướng) ==================

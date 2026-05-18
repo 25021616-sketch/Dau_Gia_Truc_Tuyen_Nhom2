@@ -89,16 +89,8 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
     @FXML public void handleGoTothemsanpham(ActionEvent event) { switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
     @FXML public void handleGoToSanPhamCuaToi(ActionEvent event) { switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
 
-    @FXML
-    public void handleOpenNapTienPopup(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/Nap_Tien.fxml"));
-            Parent root = loader.load();
-            Stage popupStage = new Stage();
-            popupStage.initModality(Modality.APPLICATION_MODAL);
-            popupStage.setScene(new Scene(root));
-            popupStage.showAndWait();
-            loadDataPhienDaThamGia(); // Load lại sau khi nạp tiền
-        } catch (Exception e) { e.printStackTrace(); }
+    @Override
+    protected void onNapTienSuccess() {
+        loadDataPhienDaThamGia();
     }
 }
