@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
+<?import javafx.scene.text.Font?>
 
 <BorderPane prefHeight="850.0" prefWidth="1300.0"
             style="-fx-background-color: #F4F7FE; -fx-font-family: 'Segoe UI', sans-serif;"
@@ -12,28 +13,53 @@
             fx:controller="Team2_CS2_Auction.Controller.Admin_quan_li_User_Controller">
 
     <left>
-        <VBox prefWidth="260.0" style="-fx-background-color: #E2E8F0;">
-            <padding><Insets bottom="20" left="20" right="20" top="30" /></padding>
+        <VBox prefWidth="240.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 1 0 0;" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="30.0" left="20.0" right="20.0" top="30.0" />
+            </padding>
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="12">
-                    <Circle fill="#1A365D" radius="18" />
+                    <Circle fill="#1A237E" radius="18" />
                     <VBox>
-                        <Label style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #1A365D;" text="The Curator" />
-                        <Label style="-fx-font-size: 10; -fx-text-fill: #718096; -fx-text-transform: uppercase;" text="Giám sát hệ thống" />
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #1A237E;" text="The Curator" />
+                        <Label style="-fx-font-size: 10; -fx-text-fill: #6C757D; -fx-text-transform: uppercase;" text="Giám sát hệ thống" />
                     </VBox>
                 </HBox>
 
                 <VBox spacing="10.0" VBox.vgrow="ALWAYS">
                     <padding><Insets top="40" /></padding>
-                    <Button maxWidth="Infinity" onAction="#handleGoToDashboard" prefHeight="45"
-                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Bảng điều khiển" />
-                    <Button maxWidth="Infinity" prefHeight="45"
-                            style="-fx-background-color: white; -fx-background-radius: 12; -fx-alignment: CENTER_LEFT; -fx-font-weight: bold; -fx-text-fill: #1A365D;" text="Người dùng" />
-                    <Button maxWidth="Infinity" onAction="#handleGoToInventory" prefHeight="45"
-                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Kho hàng" />
-                    <Button maxWidth="Infinity" onAction="#handleGoToHistory" prefHeight="45"
-                            style="-fx-background-color: transparent; -fx-alignment: CENTER_LEFT; -fx-text-fill: #4A5568; -fx-cursor: hand;" text="Lịch sử" />
+                    <Button alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToDashboard"
+                            style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="BẢNG ĐIỀU KHIỂN">
+                        <font><Font name="System Bold" size="11.0" /></font>
+                        <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
+                    </Button>
+                    
+                    <Button alignment="BASELINE_LEFT" maxWidth="Infinity"
+                            style="-fx-background-color: #1A237E; -fx-text-fill: white; -fx-background-radius: 20;" text="NGƯỜI DÙNG">
+                        <font><Font name="System Bold" size="11.0" /></font>
+                        <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
+                    </Button>
+                    
+                    <Button alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToInventory"
+                            style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="KHO HÀNG">
+                        <font><Font name="System Bold" size="11.0" /></font>
+                        <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
+                    </Button>
+                    
+                    <Button alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToHistory"
+                            style="-fx-background-color: transparent; -fx-text-fill: #495057; -fx-cursor: hand;" text="LỊCH SỬ">
+                        <font><Font name="System Bold" size="11.0" /></font>
+                        <padding><Insets bottom="12.0" left="15.0" right="15.0" top="12.0" /></padding>
+                    </Button>
                 </VBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #F8F9FA; -fx-background-radius: 12; -fx-padding: 12;">
+                    <Circle fill="#6C757D" radius="15" />
+                    <VBox>
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 12; -fx-text-fill: #495057;" text="Quản trị viên" />
+                        <Label style="-fx-font-size: 10; -fx-text-fill: #ADB5BD;" text="QUYỀN TỐI CAO" />
+                    </VBox>
+                </HBox>
             </children>
         </VBox>
     </left>

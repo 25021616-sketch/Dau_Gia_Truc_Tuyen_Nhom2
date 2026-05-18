@@ -34,17 +34,22 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
     }
 
     private void loadMyProducts() {
-        try {
-            Member currentUser = (Member) Session.currentUser;
-            if (currentUser != null) {
-                List<Auction> myAuctions = auctionService.getAuctionsBySeller(currentUser.getId());
-                hienThiDanhSach(myAuctions);
-            } else {
-                System.err.println("Chưa đăng nhập!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        Member currentUser = (Member) Session.currentUser;
+        if (currentUser == null) {
+            System.err.println("Chưa đăng nhập!");
+            return;
         }
+
+        // Chạy ngầm (Background Thread) để không làm đơ nút bấm
+        new Thread(() -> {
+            try {
+                List<Auction> myAuctions = auctionService.getAuctionsBySeller(currentUser.getId());
+                // Cập nhật UI phải được đẩy về JavaFX Thread
+                javafx.application.Platform.runLater(() -> hienThiDanhSach(myAuctions));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void hienThiDanhSach(List<Auction> auctions) {

@@ -33,21 +33,26 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
     }
 
     private void loadDataPhienDaThamGia() {
-        try {
-            if (Session.currentUser != null) {
-                int currentUserId = Session.currentUser.getId();
-                System.out.println("DEBUG CTRL: Đang tải phiên cho User ID: " + currentUserId);
-
-                List<Auction> list = auctionService.getAuctionsByBidder(currentUserId);
-
-                System.out.println("DEBUG CTRL: Service trả về " + (list != null ? list.size() : "NULL") + " phiên.");
-                renderAuctionList(list);
-            } else {
-                System.err.println("DEBUG CTRL: Session.currentUser bị NULL!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (Session.currentUser == null) {
+            System.err.println("DEBUG CTRL: Session.currentUser bị NULL!");
+            return;
         }
+        
+        int currentUserId = Session.currentUser.getId();
+        System.out.println("DEBUG CTRL: Đang tải phiên cho User ID: " + currentUserId);
+
+        // Chạy ngầm (Background Thread) để không làm đơ nút bấm
+        new Thread(() -> {
+            try {
+                List<Auction> list = auctionService.getAuctionsByBidder(currentUserId);
+                System.out.println("DEBUG CTRL: Service trả về " + (list != null ? list.size() : "NULL") + " phiên.");
+                
+                // Cập nhật UI phải được đẩy về JavaFX Thread
+                javafx.application.Platform.runLater(() -> renderAuctionList(list));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void renderAuctionList(List<Auction> auctions) {

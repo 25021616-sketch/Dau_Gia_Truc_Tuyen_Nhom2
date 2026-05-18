@@ -74,4 +74,52 @@ public abstract class Base_Admin_Controller {
         Node sourceNode = (Node) event.getSource();
         return (Stage) sourceNode.getScene().getWindow();
     }
+
+    // ================== CÁC HÀM XỬ LÝ THANH ĐIỀU HƯỚNG (SIDEBAR & NAVBAR) CHUNG ==================
+    @javafx.fxml.FXML
+    public void handleQuayLaiTrangChu(ActionEvent event) { switchScene(event, "Man_hinh_chinh_Users.fxml", "Màn hình chính"); }
+
+    @javafx.fxml.FXML
+    public void handleGoTothemsanpham(ActionEvent event) { switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
+
+    @javafx.fxml.FXML
+    public void handleGoToSanPhamCuaToi(ActionEvent event) { switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
+
+    @javafx.fxml.FXML
+    public void handleGoToLichSu(ActionEvent event) { switchScene(event, "Phien_Da_Tham_Gia.fxml", "Lịch sử giao dịch"); }
+
+    @javafx.fxml.FXML
+    public void handleGoToDangNhap(ActionEvent event) { switchScene(event, "dang_nhap.fxml", "Đăng nhập"); }
+
+    @javafx.fxml.FXML
+    public void handleOpenNapTienPopup(ActionEvent event) {
+        try {
+            FXMLLoader loader = getFXMLLoader("Nap_Tien.fxml");
+            if (loader == null) return;
+            Parent root = loader.load();
+            
+            Nap_Tien_Controller controller = loader.getController();
+            if (Team2_CS2_Auction.Session.Session.currentUser != null) {
+                controller.setUserData(Team2_CS2_Auction.Session.Session.currentUser);
+            }
+
+            Stage popupStage = new Stage();
+            popupStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            if (event != null && event.getSource() instanceof Node) {
+                popupStage.initOwner(((Node) event.getSource()).getScene().getWindow());
+            }
+            popupStage.setTitle("Nạp Tiền");
+            popupStage.setScene(new Scene(root));
+            popupStage.showAndWait();
+            
+            // Hàm load lại dữ liệu nếu có, các lớp con có thể override
+            onNapTienSuccess();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Hàm ảo để các lớp con override nếu muốn load lại data sau khi nạp tiền
+    protected void onNapTienSuccess() {}
 }

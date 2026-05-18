@@ -6,6 +6,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.control.TextInputDialog;
+import java.util.Optional;
 import java.io.IOException;
 
 public class Main extends Application {
@@ -13,9 +15,16 @@ public class Main extends Application {
     public void start(Stage stage) {
         // =========================================================
         // 1. KẾT NỐI SERVER NGAY KHI MỞ APP
-        // Thay "127.0.0.1" và 8080 bằng đúng IP/Port Server của bạn
         // =========================================================
-        NetworkManager.getInstance().connect("127.0.0.1", 8080);
+        TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+        dialog.setTitle("Cấu hình kết nối");
+        dialog.setHeaderText("Kết nối đến Server");
+        dialog.setContentText("Nhập IP Server (Ví dụ: 192.168.1.10):");
+
+        Optional<String> result = dialog.showAndWait();
+        String serverIp = result.orElse("127.0.0.1");
+
+        NetworkManager.getInstance().connect(serverIp, 8080);
 
         try {
             // 2. Tải file FXML

@@ -184,4 +184,17 @@ public class Item_Card_Controller extends Base_Admin_Controller {
             switchSceneWithData(event, "Phien_Dau_Gia.fxml", "Đấu giá", this.auction);
         }
     }
+
+    public Auction getAuction() {
+        return this.auction;
+    }
+
+    public void updatePrice(double newPrice) {
+        if (this.auction != null) {
+            this.auction.setCurrentPrice(newPrice);
+            lblGiaHienTai.setText(PRICE_FORMAT.format(newPrice));
+            // updatePositionLabel(); // Nếu cần kiểm tra lại người dẫn đầu thì gọi ở đây, 
+            // nhưng hiện tại server chỉ trả về newPrice.
+        }
+    }
 }
