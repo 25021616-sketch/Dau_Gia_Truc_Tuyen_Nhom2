@@ -37,11 +37,31 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         }
 
         NetworkManager nm = NetworkManager.getInstance();
+
+// Nếu chưa connect thì tự connect
         if (!nm.isConnected()) {
-            showStyledAlert("Lỗi kết nối", "Chưa kết nối được tới máy chủ. Vui lòng kiểm tra ServerMain!", Alert.AlertType.ERROR);
-            return;
+
+            nm.connect("localhost", 8080);
+
+            // chờ connect một chút
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
+// kiểm tra lại lần nữa
+        if (!nm.isConnected()) {
+
+            showStyledAlert(
+                    "Lỗi kết nối",
+                    "Không thể kết nối tới Server!",
+                    Alert.AlertType.ERROR
+            );
+
+            return;
+        }
         NetworkListener listener = new NetworkListener() {
             @Override
             public void onMessageReceived(NetworkMessage message) {

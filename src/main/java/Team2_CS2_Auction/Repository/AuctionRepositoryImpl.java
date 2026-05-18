@@ -5,6 +5,7 @@ import Team2_CS2_Auction.Model.auction.Bid;
 import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.item.ItemFactory;
 import Team2_CS2_Auction.Model.user.Member;
+import Team2_CS2_Auction.Model.auction.BidHistory;
 import Team2_CS2_Auction.util.DBConnection;
 
 import java.sql.Connection;
@@ -132,7 +133,13 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     public boolean updateBidPrice(String auctionId, double price, int bidderId) throws Exception {
         String numericId = auctionId.replace("AUC_", "");
         // 1. SQL cập nhật giá hiện tại của sản phẩm
-        String sqlUpdateProduct = "UPDATE products SET current_price = ?, last_bidder_id = ? WHERE id = ? AND ? > current_price";
+        String sqlUpdateProduct =
+                "UPDATE products " +
+                        "SET current_price = ?, last_bidder_id = ? " +
+                        "WHERE id = ? " +
+                        "AND ? > current_price " +
+                        "AND status = 'OPENING' " +
+                        "AND end_time > NOW()";
         // 2. SQL ghi lại lịch sử đặt giá (Để hàm lấy lịch sử có dữ liệu mà JOIN)
         String sqlInsertBid = "INSERT INTO bid (user_id, product_id, bid_amount, bid_time) VALUES (?, ?, ?, NOW())";
 
@@ -225,5 +232,242 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             }
         }
         return history;
+    }
+    public List<BidHistory> getBidHistory() throws Exception {
+
+        List<BidHistory> list = new ArrayList<>();
+
+        // ✅ FIX: Thêm khoảng trắng phía sau "transaction` t" → trước "’JOIN"
+        // Lỗi cũ: cầu SQL bị tạo thành "...`transaction` tJOIN products..." (thiếu space)
+        String sql =
+                "SELECT " +
+                        "t.id, " +
+                        "p.name AS product_name, " +
+                        "u.username AS winner_name, " +
+                        "t.final_price, " +
+                        "p.end_time " +
+                        "FROM `transaction` t " +
+                        "JOIN products p ON t.product_id = p.id " +
+                        "JOIN user u ON t.winner_id = u.id " +
+                        "ORDER BY p.end_time DESC";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+
+                PreparedStatement ps = conn.prepareStatement(sql);
+
+                ResultSet rs = ps.executeQuery()
+        ) {
+
+            int stt = 1;
+
+            while (rs.next()) {
+
+                BidHistory history = new BidHistory(
+
+                        stt++,
+
+                        "TRANS_" + rs.getInt("id"),
+
+                        rs.getString("product_name"),
+
+                        rs.getString("winner_name"),
+
+                        rs.getDouble("final_price"),
+
+                        rs.getTimestamp("end_time").toString()
+                );
+
+                list.add(history);
+            }
+        }
+
+        return list;
+    }
+
+    public void createTransaction(
+            int productId,
+            int winnerId,
+            double finalPrice
+    ) throws Exception {
+
+        // Kiểm tra transaction đã tồn tại chưa
+        String checkSql =
+                "SELECT id FROM `transaction` WHERE product_id = ?";
+
+        // Insert transaction
+        String insertSql =
+                "INSERT INTO `transaction`(product_id, winner_id, final_price) " +
+                        "VALUES (?, ?, ?)";
+
+        // Update trạng thái sản phẩm
+        String updateProduct =
+                "UPDATE products SET status = 'FINISHED' WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            // CHECK TRÙNG
+            try (PreparedStatement checkPs =
+                         conn.prepareStatement(checkSql)) {
+
+                checkPs.setInt(1, productId);
+
+                ResultSet rs = checkPs.executeQuery();
+
+                // Nếu đã tồn tại transaction thì bỏ qua
+                if (rs.next()) {
+
+                    System.out.println(
+                            "Transaction đã tồn tại!"
+                    );
+
+                    return;
+                }
+            }
+
+            // INSERT TRANSACTION
+            try (PreparedStatement ps =
+                         conn.prepareStatement(insertSql)) {
+
+                ps.setInt(1, productId);
+
+                ps.setInt(2, winnerId);
+
+                ps.setDouble(3, finalPrice);
+
+                ps.executeUpdate();
+
+                System.out.println(
+                        "Đã tạo transaction!"
+                );
+            }
+
+            // UPDATE STATUS
+            try (PreparedStatement ps =
+                         conn.prepareStatement(updateProduct)) {
+
+                ps.setInt(1, productId);
+
+                ps.executeUpdate();
+
+                System.out.println(
+                        "Đã cập nhật FINISHED!"
+                );
+            }
+        }
+    }
+
+    public void finishAuction(int productId) throws Exception {
+
+        Connection conn = null;
+
+        try {
+            conn = DBConnection.getConnection();
+
+            // ✅ FIX: Bật transaction để đảm bảo toàn vẹn dữ liệu
+            // Nếu không dùng transaction, UPDATE products có thể thành công
+            // nhưng INSERT `transaction` lại thất bại => dữ liệu bị mất
+            conn.setAutoCommit(false);
+
+            // 1. Kiểm tra đã FINISHED chưa
+            String checkSql = "SELECT status FROM products WHERE id = ?";
+            try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
+                checkPs.setInt(1, productId);
+                try (ResultSet checkRs = checkPs.executeQuery()) {
+                    if (checkRs.next()) {
+                        String status = checkRs.getString("status");
+                        if ("FINISHED".equals(status)) {
+                            System.out.println("[SCHEDULER] Product " + productId + " đã kết thúc trước đó.");
+                            conn.rollback();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 2. Tìm người thắng (giá đặt cao nhất trong bảng bid)
+            String findWinnerSql =
+                    "SELECT user_id, bid_amount FROM bid " +
+                    "WHERE product_id = ? " +
+                    "ORDER BY bid_amount DESC " +
+                    "LIMIT 1";
+
+            int winnerId;
+            double finalPrice;
+
+            try (PreparedStatement psWinner = conn.prepareStatement(findWinnerSql)) {
+                psWinner.setInt(1, productId);
+                try (ResultSet rs = psWinner.executeQuery()) {
+                    // Không có ai bid => chỉ đủi cập nhật status
+                    if (!rs.next()) {
+                        String updateSql = "UPDATE products SET status = 'FINISHED' WHERE id = ?";
+                        try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                            psUpdate.setInt(1, productId);
+                            psUpdate.executeUpdate();
+                        }
+                        conn.commit();
+                        System.out.println("[SCHEDULER] Product " + productId + ": không có người tham gia => FINISHED.");
+                        return;
+                    }
+                    winnerId = rs.getInt("user_id");
+                    finalPrice = rs.getDouble("bid_amount");
+                }
+            }
+
+            System.out.println("[SCHEDULER] Product " + productId + " | Winner ID=" + winnerId + " | Final Price=" + finalPrice);
+
+            // 3. Kiểm tra `transaction` đã tồn tại chưa
+            String checkTransactionSql = "SELECT id FROM `transaction` WHERE product_id = ?";
+            try (PreparedStatement psCheck = conn.prepareStatement(checkTransactionSql)) {
+                psCheck.setInt(1, productId);
+                try (ResultSet rsCheck = psCheck.executeQuery()) {
+                    if (rsCheck.next()) {
+                        // Transaction đã tồn tại, chỉ cần đảm bảo status đúng
+                        System.out.println("[SCHEDULER] Transaction đã tồn tại cho product " + productId);
+                        conn.rollback();
+                        return;
+                    }
+                }
+            }
+
+            // 4. INSERT vào bảng `transaction`
+            String insertTransactionSql =
+                    "INSERT INTO `transaction` (product_id, winner_id, final_price) VALUES (?, ?, ?)";
+            try (PreparedStatement psInsert = conn.prepareStatement(insertTransactionSql)) {
+                psInsert.setInt(1, productId);
+                psInsert.setInt(2, winnerId);
+                psInsert.setDouble(3, finalPrice);
+                psInsert.executeUpdate();
+                System.out.println("[SCHEDULER] Đã INSERT transaction cho product " + productId);
+            }
+
+            // 5. UPDATE last_bidder_id và status trên bảng products
+            // ✅ FIX QUAN TRỌNG: dùng 'last_bidder_id' (đúng tên cột trong DB),
+            //    KHÔNG dùng 'winner_id' (cột không tồn tại => SQL exception => rollback!)
+            String updateWinnerSql =
+                    "UPDATE products SET last_bidder_id = ?, status = 'FINISHED' WHERE id = ?";
+            try (PreparedStatement psWinnerUpdate = conn.prepareStatement(updateWinnerSql)) {
+                psWinnerUpdate.setInt(1, winnerId);
+                psWinnerUpdate.setInt(2, productId);
+                psWinnerUpdate.executeUpdate();
+                System.out.println("[SCHEDULER] Đã UPDATE products => FINISHED cho product " + productId);
+            }
+
+            // Tất cả thành công => commit
+            conn.commit();
+            System.out.println("[SCHEDULER] ✅ finish auction thành công cho product " + productId);
+
+        } catch (Exception e) {
+            System.err.println("[SCHEDULER] ❌ Lỗi finish auction (product " + productId + "): " + e.getMessage());
+            if (conn != null) {
+                try { conn.rollback(); } catch (Exception rollbackEx) { rollbackEx.printStackTrace(); }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (Exception ex) { ex.printStackTrace(); }
+                conn.close();
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package Team2_CS2_Auction.Controller;
 
 import Team2_CS2_Auction.Model.user.Member;
+import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Service.AuctionService;
 import Team2_CS2_Auction.Service.AuctionServiceImpl;
 import Team2_CS2_Auction.Session.Session;
@@ -15,6 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
@@ -45,7 +47,7 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     @FXML
     private void handleDangSanPham(ActionEvent event) {
         try {
-            Member seller = getCurrentUser();
+            User seller = getCurrentUser();
 
             validateInputFields();
 
@@ -57,6 +59,21 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
             LocalDateTime start = parseDateTime(ngayBatDauPicker, gioBatDau, phutBatDau);
             LocalDateTime end = parseDateTime(ngayKetThucPicker, gioKetThuc, phutKetThuc);
+
+            // kiểm tra thời gian hợp lệ
+            if (start.isBefore(LocalDateTime.now())) {
+
+                throw new Exception(
+                        "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!"
+                );
+            }
+
+            if (end.isBefore(start)) {
+
+                throw new Exception(
+                        "Thời gian kết thúc phải sau thời gian bắt đầu!"
+                );
+            }
 
             String finalImagePath = uploadSelectedImage();
 
@@ -72,11 +89,14 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         }
     }
 
-    private Member getCurrentUser() throws Exception {
+    private User getCurrentUser() throws Exception {
+
         if (Session.currentUser == null) {
+
             throw new Exception("Vui lòng đăng nhập lại!");
         }
-        return (Member) Session.currentUser;
+
+        return Session.currentUser;
     }
 
     private void validateInputFields() throws Exception {
@@ -91,10 +111,39 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         }
     }
 
-    private LocalDateTime parseDateTime(DatePicker datePicker, TextField hourField, TextField minuteField) {
-        int hour = Integer.parseInt(hourField.getText().trim());
-        int minute = Integer.parseInt(minuteField.getText().trim());
-        return datePicker.getValue().atTime(hour, minute);
+    private LocalDateTime parseDateTime(
+            DatePicker datePicker,
+            TextField hourField,
+            TextField minuteField
+    ) throws Exception {
+
+        int hour =
+                Integer.parseInt(
+                        hourField.getText().trim()
+                );
+
+        int minute =
+                Integer.parseInt(
+                        minuteField.getText().trim()
+                );
+
+        if (hour < 0 || hour > 23) {
+
+            throw new Exception(
+                    "Giờ phải từ 0 -> 23"
+            );
+        }
+
+        if (minute < 0 || minute > 59) {
+
+            throw new Exception(
+                    "Phút phải từ 0 -> 59"
+            );
+        }
+
+        return datePicker
+                .getValue()
+                .atTime(hour, minute);
     }
 
     private String uploadSelectedImage() throws Exception {
@@ -123,19 +172,59 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     @FXML
     private void handleChooseImage() {
+
         FileChooser fileChooser = new FileChooser();
+
         fileChooser.setTitle("Chọn ảnh sản phẩm");
+
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
+                new FileChooser.ExtensionFilter(
+                        "Image Files",
+                        "*.png",
+                        "*.jpg",
+                        "*.jpeg"
+                )
         );
+
         File file = fileChooser.showOpenDialog(null);
-        if (file != null) {
+
+        if (file == null) {
+            return;
+        }
+
+        try {
+
+            String mimeType = Files.probeContentType(file.toPath());
+
+            if (mimeType == null || !mimeType.startsWith("image")) {
+
+                showErrorAlert("File không phải ảnh hợp lệ!");
+                return;
+            }
+
+            long fileSizeMB = file.length() / (1024 * 1024);
+
+            if (fileSizeMB > 5) {
+
+                showErrorAlert("Ảnh vượt quá 5MB!");
+                return;
+            }
+
             selectedFile = file;
+
             selectedImagePath = file.toURI().toString();
+
             imgPreview.setImage(new Image(selectedImagePath));
+
             imgPreview.setVisible(true);
+
             vboxPlaceholder.setVisible(false);
+
             btnDeleteImage.setVisible(true);
+
+        } catch (Exception e) {
+
+            showErrorAlert("Không thể đọc file ảnh!");
         }
     }
 
