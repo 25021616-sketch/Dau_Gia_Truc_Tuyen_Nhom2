@@ -6,30 +6,31 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane prefHeight="420.0" prefWidth="280.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-border-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5); -fx-border-color: #E0E0E0; -fx-border-width: 1;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Item_Card_Controller">
+<AnchorPane prefHeight="440.0" prefWidth="280.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-border-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5); -fx-border-color: #E0E0E0; -fx-border-width: 1;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Item_Card_Controller">
     <children>
         <VBox alignment="TOP_CENTER" layoutX="1.0" layoutY="1.0" prefWidth="278.0" spacing="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
-                <StackPane prefHeight="180.0" style="-fx-background-color: #F8F9FA; -fx-background-radius: 15 15 0 0;">
+                <StackPane prefHeight="180.0" prefWidth="278.0" style="-fx-background-color: #F8F9FA; -fx-background-radius: 15 15 0 0;">
                     <children>
                         <ImageView fx:id="imgSanPham" fitHeight="150.0" fitWidth="220.0" pickOnBounds="true" preserveRatio="true" />
 
-                        <Label fx:id="lblBadgeTrangThai" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 5 10; -fx-background-radius: 5;" text="ĐANG DIỄN RA" StackPane.alignment="TOP_LEFT">
-                            <font>
-                                <Font name="System Bold" size="10.0" />
-                            </font>
-                            <StackPane.margin>
-                                <Insets left="15.0" top="15.0" />
-                            </StackPane.margin>
+                        <!-- Badge góc TRÊN TRÁI: CHỜ ĐỢI / ĐANG DIỄN RA / KẾT THÚC -->
+                        <Label fx:id="lblBadgeTrangThai"
+                               text="ĐANG DIỄN RA"
+                               style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 4 8; -fx-background-radius: 5; -fx-font-weight: bold;"
+                               StackPane.alignment="TOP_LEFT">
+                            <font><Font name="System Bold" size="10.0" /></font>
+                            <StackPane.margin><Insets left="12.0" top="12.0" /></StackPane.margin>
                         </Label>
 
-                        <Label fx:id="lblThongBaoVịThe" visible="false" style="-fx-background-color: #f1c40f; -fx-text-fill: #2c3e50; -fx-padding: 5 10; -fx-background-radius: 5;" text="BẠN ĐANG DẪN ĐẦU" StackPane.alignment="TOP_RIGHT">
-                            <font>
-                                <Font name="System Bold" size="10.0" />
-                            </font>
-                            <StackPane.margin>
-                                <Insets right="15.0" top="15.0" />
-                            </StackPane.margin>
+                        <!-- Badge góc TRÊN PHẢI: SẢN PHẨM CỦA TÔI / DẪN ĐẦU / ĐÃ THẮNG -->
+                        <Label fx:id="lblThongBaoVịThe"
+                               text="SẢN PHẨM CỦA TÔI"
+                               visible="false"
+                               style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 4 8; -fx-background-radius: 5; -fx-font-weight: bold;"
+                               StackPane.alignment="TOP_RIGHT">
+                            <font><Font name="System Bold" size="10.0" /></font>
+                            <StackPane.margin><Insets right="12.0" top="12.0" /></StackPane.margin>
                         </Label>
                     </children>
                 </StackPane>
@@ -42,7 +43,7 @@
                             </font>
                         </Label>
 
-                        <Label fx:id="lblTenSP" minHeight="50.0" prefWidth="240.0" text="Đối xứng thanh tao II - Tác phẩm sơn dầu" textFill="#1a237e" wrapText="true">
+                        <Label fx:id="lblTenSP" minHeight="50.0" prefHeight="50.0" maxHeight="50.0" prefWidth="240.0" text="Đối xứng thanh tao II - Tác phẩm sơn dầu" textFill="#1a237e" wrapText="true">
                             <font>
                                 <Font name="System Bold" size="16.0" />
                             </font>
