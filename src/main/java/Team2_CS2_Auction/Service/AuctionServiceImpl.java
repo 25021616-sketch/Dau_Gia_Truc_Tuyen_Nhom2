@@ -4,7 +4,7 @@ import Team2_CS2_Auction.Model.auction.Auction;
 import Team2_CS2_Auction.Model.auction.Bid;
 import Team2_CS2_Auction.Model.item.Item;
 import Team2_CS2_Auction.Model.item.ItemFactory;
-import Team2_CS2_Auction.Model.user.Member;
+import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Repository.ProductRepository;
 import Team2_CS2_Auction.Repository.AuctionRepository;
 import Team2_CS2_Auction.Repository.AuctionRepositoryImpl;
@@ -26,7 +26,7 @@ public class AuctionServiceImpl implements AuctionService {
     }
 
     @Override
-    public void createAuction(Member seller, String name, String category, String description,
+    public void createAuction(User seller, String name, String category, String description,
                               String imagePath, String startPrice, String stepPrice,
                               LocalDateTime startTime, LocalDateTime endTime) throws Exception {
 
@@ -71,7 +71,7 @@ public class AuctionServiceImpl implements AuctionService {
      * HÀM ĐẶT GIÁ THỐNG NHẤT - ĐÃ SỬA LOGIC CHUẨN
      */
     @Override
-    public void placeBid(Member bidder, String auctionId, double bidAmount) throws Exception {
+    public void placeBid(User bidder, String auctionId, double bidAmount) throws Exception {
         // 1. Lấy thông tin phiên đấu giá từ Repo
         Auction currentAuction = auctionRepo.findById(auctionId);
         if (currentAuction == null) throw new Exception("Không tìm thấy phiên đấu giá!");
@@ -82,8 +82,16 @@ public class AuctionServiceImpl implements AuctionService {
         }
 
         // 3. GIỮ: Kiểm tra giá đặt phải cao hơn giá hiện tại
-        if (bidAmount <= currentAuction.getCurrentPrice()) {
-            throw new Exception("Giá đặt phải cao hơn giá hiện tại ($" + currentAuction.getCurrentPrice() + ")");
+        double minimumBid =
+                currentAuction.getCurrentPrice()
+                        + currentAuction.getStepPrice();
+
+        if (bidAmount < minimumBid) {
+
+            throw new Exception(
+                    "Giá tối thiểu phải là: "
+                            + minimumBid
+            );
         }
 
         // 4. CHỈ CẬP NHẬT GIÁ SẢN PHẨM TRONG DB

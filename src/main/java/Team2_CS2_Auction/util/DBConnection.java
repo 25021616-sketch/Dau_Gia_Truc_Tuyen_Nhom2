@@ -2,7 +2,6 @@ package Team2_CS2_Auction.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import org.flywaydb.core.Flyway;
 
 public class DBConnection {
 
@@ -14,34 +13,16 @@ public class DBConnection {
 
     private static final String PASSWORD = "wRUFbXdBBbdfWquOSqETKpVqzRzEYjEr";
 
-    public static Connection getConnection() {
+    public static Connection getConnection() throws Exception {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-
             return DriverManager.getConnection(URL, USER, PASSWORD);
-
         } catch (Exception e) {
-            System.out.println("Kết nối database thất bại!");
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Chạy Flyway migration tự động để đồng bộ cấu trúc database
-     */
-    public static void runFlywayMigration() {
-        try {
-            System.out.println("[Flyway] Bắt đầu kiểm tra và cập nhật cấu trúc database...");
-            Flyway flyway = Flyway.configure()
-                    .dataSource(URL, USER, PASSWORD)
-                    .baselineOnMigrate(true)
-                    .load();
-            flyway.migrate();
-            System.out.println("[Flyway] Cập nhật database thành công!");
-        } catch (Exception e) {
-            System.err.println("[Flyway] Lỗi khi chạy migration: " + e.getMessage());
-            e.printStackTrace();
+            // ✅ FIX: throw exception thay vì return null
+            // Trả về null khiến caller bị NullPointerException âm thầm,
+            // gây rollback mà không có log lỗi rõ ràng.
+            System.err.println("[DB] ❌ Kết nối database thất bại: " + e.getMessage());
+            throw new Exception("Không thể kết nối Database: " + e.getMessage(), e);
         }
     }
 }

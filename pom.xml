@@ -43,6 +43,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.11.0</version>
+            <scope>test</scope>
+        </dependency>
         <!-- Gson for JSON communication -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -77,7 +83,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>org.example.myauctionapp/Team2_CS2_Auction.example.myauctionapp.HelloApplication</mainClass>
+                            <mainClass>Team2_CS2_Auction/Team2_CS2_Auction.Main</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

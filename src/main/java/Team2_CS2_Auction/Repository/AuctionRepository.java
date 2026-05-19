@@ -20,5 +20,8 @@ public interface AuctionRepository {
      */
     List<Auction> findAuctionsByBidderId(int bidderId) throws Exception;
 
+    /**
+     * Lấy lịch sử đặt giá của một phiên đấu giá cụ thể.
+     */
     List<Bid> getBidHistory(String auctionId) throws Exception;
 }

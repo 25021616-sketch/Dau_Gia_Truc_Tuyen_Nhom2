@@ -72,7 +72,7 @@
 
                     <HBox alignment="CENTER_LEFT">
                         <VBox>
-                            <Label style="-fx-font-size: 26; -fx-font-weight: bold; -fx-text-fill: #1A365D;" text="Phê duyệt Đấu giá" />
+                            <Label style="-fx-font-size: 26; -fx-font-weight: bold; -fx-text-fill: #000000;" text="Phê duyệt Đấu giá" />
                             <Label style="-fx-text-fill: #718096; -fx-font-size: 14;" text="Danh sách các vật phẩm đang chờ quản trị viên phê duyệt." />
                         </VBox>
                         <Region HBox.hgrow="ALWAYS" />

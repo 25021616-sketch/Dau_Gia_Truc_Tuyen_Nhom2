@@ -77,12 +77,6 @@
     -fx-border-style: dashed;
     -fx-border-radius: 8;
 }
-Để tích hợp CSS cho file FXML này mà không làm lỗi diện tích (đảm bảo giao diện vẫn giữ đúng kích thước, lề lối và tỉ lệ như bạn đã thiết kế), chúng ta sẽ thực hiện phương pháp "Bóc tách kiểu dáng": Giữ các thông số về kích thước (Width, Height, Spacing, Padding) ở FXML và chuyển các thông số về màu sắc, font chữ, hiệu ứng vào file CSS.
-
-Dưới đây là cách triển khai:
-
-1. File CSS: style.css (Bản tích hợp cho Admin)
-Bạn hãy thêm các class này vào file style.css chung mà chúng ta đã làm ở các bước trước.
 
 CSS
 /* Màu sắc chủ đạo cho Admin */

@@ -27,6 +27,15 @@ public class Member extends User implements ISeller, IBidder {
         this.balance = 0.0;
     }
 
+    public Member(String username, String password, String phone) {
+
+        super(username, password, UserRole.MEMBER);
+
+        this.balance = 0.0;
+
+        setPhone(phone);
+    }
+
     // --- Service injection ---
     public void setAuctionService(AuctionService auctionService) {
         this.auctionService = Objects.requireNonNull(auctionService, "AuctionService không được null");
