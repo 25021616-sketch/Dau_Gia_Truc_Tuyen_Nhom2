@@ -23,19 +23,62 @@ public abstract class Base_Admin_Controller {
         navigate(event, fxmlFileName, title, data);
     }
 
+    // Bộ nhớ đệm lưu trữ các giao diện đã tải (Scene Caching)
+    private static final java.util.Map<String, Parent> sceneCache = new java.util.HashMap<>();
+    private static final java.util.Map<String, Object> controllerCache = new java.util.HashMap<>();
+
+    // Lưu lại controller hiện tại đang hiển thị để gọi hook
+    private static Object currentController = null;
+
     private void navigate(ActionEvent event, String fxmlFileName, String title, Object data) {
         try {
-            FXMLLoader loader = getFXMLLoader(fxmlFileName);
-            if (loader == null) return;
+            // 1. Gọi hook dọn dẹp (tạm dừng timer/socket) trước khi rời màn hình cũ
+            if (currentController instanceof Base_Admin_Controller) {
+                ((Base_Admin_Controller) currentController).cleanup();
+            }
 
-            Parent root = loader.load();
-            passDataToController(loader.getController(), data);
+            Parent root = sceneCache.get(fxmlFileName);
+            Object controller = controllerCache.get(fxmlFileName);
+
+            // 2. Nếu chưa có trong Cache thì tiến hành nạp từ file FXML
+            if (root == null) {
+                FXMLLoader loader = getFXMLLoader(fxmlFileName);
+                if (loader == null) return;
+                root = loader.load();
+                controller = loader.getController();
+
+                sceneCache.put(fxmlFileName, root);
+                controllerCache.put(fxmlFileName, controller);
+            }
+
+            // Cập nhật controller hiện tại
+            currentController = controller;
+
+            // 3. Chuyển dữ liệu và hiển thị màn hình (Lấy từ Cache nên tức thì 0 giây)
+            passDataToController(controller, data);
             displayScene(event, root, title);
 
-        } catch (IOException e) {
+            // 4. Gọi hook thức dậy (Resume) để fetch data ngầm sau khi màn hình đã hiện
+            if (controller instanceof Base_Admin_Controller) {
+                ((Base_Admin_Controller) controller).onResume();
+            }
+
+        } catch (java.io.IOException e) {
             System.err.println("Lỗi trong quá trình nạp giao diện (" + fxmlFileName + "): " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Hook gọi ngay trước khi rời màn hình (Tạm dừng tài nguyên)
+     */
+    protected void cleanup() {
+    }
+
+    /**
+     * Hook gọi ngay sau khi màn hình được hiển thị lại từ Cache (Cập nhật dữ liệu ngầm)
+     */
+    protected void onResume() {
     }
 
     private FXMLLoader getFXMLLoader(String fxmlFileName) {
@@ -97,7 +140,7 @@ public abstract class Base_Admin_Controller {
             FXMLLoader loader = getFXMLLoader("Nap_Tien.fxml");
             if (loader == null) return;
             Parent root = loader.load();
-            
+
             Nap_Tien_Controller controller = loader.getController();
             if (Team2_CS2_Auction.Session.Session.currentUser != null) {
                 controller.setUserData(Team2_CS2_Auction.Session.Session.currentUser);
@@ -111,10 +154,10 @@ public abstract class Base_Admin_Controller {
             popupStage.setTitle("Nạp Tiền");
             popupStage.setScene(new Scene(root));
             popupStage.showAndWait();
-            
+
             // Hàm load lại dữ liệu nếu có, các lớp con có thể override
             onNapTienSuccess();
-            
+
         } catch (IOException e) {
             e.printStackTrace();
         }
