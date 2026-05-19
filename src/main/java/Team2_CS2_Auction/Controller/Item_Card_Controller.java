@@ -17,6 +17,8 @@ import javafx.util.Duration;
 
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Item_Card_Controller extends Base_Admin_Controller {
 
@@ -41,13 +43,18 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     private static final String COLOR_ONGOING = "#27ae60"; // Xanh lá - đang diễn ra
     private static final String COLOR_ENDED   = "#7F8C8D"; // Xám - kết thúc
 
+    /** Cache ảnh theo URL/path — tải 1 lần, dùng mãi, không bao giờ chớp */
+    private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
+
     // ==================== LIFECYCLE ====================
 
     @FXML
     public void initialize() {
-        // Không dùng setManaged(false) — StackPane cần quản lý các badge
-        // để áp dụng đúng StackPane.alignment (TOP_LEFT / TOP_RIGHT).
-        // StackPane đã có prefHeight cố định nên badge ẩn/hiện không gây layout shift.
+        // Đặt clip 1 lần duy nhất — không cần tạo lại mỗi khi load ảnh
+        Rectangle clip = new Rectangle(220, 150);
+        clip.setArcWidth(20);
+        clip.setArcHeight(20);
+        imgSanPham.setClip(clip);
     }
 
     // ==================== ENTRY POINT ====================
@@ -299,27 +306,49 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     // ==================== ẢNH SẢN PHẨM ====================
 
     private void populateImageData(Item item) {
+        imgSanPham.setEffect(null); // xóa hiệu ứng xám nếu có từ trước
+
         if (item == null) {
             imgSanPham.setImage(null);
             return;
         }
         String path = item.getImagePath();
-        if (path != null && !path.isEmpty()) {
-            try {
-                imgSanPham.setImage(new Image(path, true));
-                Rectangle clip = new Rectangle(220, 150);
-                clip.setArcWidth(30);
-                clip.setArcHeight(30);
-                imgSanPham.setClip(clip);
-            } catch (Exception e) {
-                imgSanPham.setImage(null);
+        if (path == null || path.isEmpty()) {
+            imgSanPham.setImage(null);
+            return;
+        }
+
+        // Kiểm tra cache trước — nếu đã tải rồi thì hiện ngay, không chớp
+        Image cached = IMAGE_CACHE.get(path);
+        if (cached != null && !cached.isError()) {
+            imgSanPham.setImage(cached);
+            return;
+        }
+
+        // Chưa có trong cache — xoá ảnh cũ và tải mới
+        imgSanPham.setImage(null);
+        try {
+            Image img = new Image(path, true); // Tải nền
+
+            img.progressProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal.doubleValue() >= 1.0 && !img.isError()) {
+                    IMAGE_CACHE.put(path, img);   // Lưu vào cache
+                    javafx.application.Platform.runLater(() -> imgSanPham.setImage(img));
+                }
+            });
+
+            // Trường hợp ảnh có sẵn ngay (ví dụ: từ JVM cache bên trong)
+            if (img.getProgress() >= 1.0 && !img.isError()) {
+                IMAGE_CACHE.put(path, img);
+                imgSanPham.setImage(img);
             }
-        } else {
+        } catch (Exception e) {
             imgSanPham.setImage(null);
         }
     }
 
     // ==================== XỬ LÝ CLICK NÚT ====================
+
 
     @FXML
     private void handleDatGia(ActionEvent event) {
