@@ -36,6 +36,12 @@ public class Admin_quan_li_lich_su_Controller
     private Button users;
 
     @FXML
+    private javafx.scene.control.Label lblTotalRevenue;
+
+    @FXML
+    private javafx.scene.control.Label lblTotalSessions;
+
+    @FXML
     private TableView<BidHistory> historyTable;
 
     @FXML
@@ -92,8 +98,20 @@ public class Admin_quan_li_lich_su_Controller
                             repo.getBidHistory()
                     );
             System.out.println("SIZE = " + list.size());
-
             historyTable.setItems(list);
+
+            double totalRevenue = 0;
+            for (BidHistory b : list) {
+                totalRevenue += b.getBidAmount();
+            }
+            int totalSessions = list.size();
+
+            if (lblTotalSessions != null) {
+                lblTotalSessions.setText(String.format("%,d", totalSessions));
+            }
+            if (lblTotalRevenue != null) {
+                lblTotalRevenue.setText("$" + String.format("%,.0f", totalRevenue));
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
