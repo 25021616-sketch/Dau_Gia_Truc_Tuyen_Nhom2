@@ -119,8 +119,25 @@ public class AuctionRepositoryImpl implements AuctionRepository {
         // -------------------------------------
 
         String dbStatus = rs.getString("status");
-        if ("OPENING".equals(dbStatus) || "OPEN".equals(dbStatus)) {
-            auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.OPEN);
+        if (dbStatus != null) {
+            switch (dbStatus) {
+                case "PENDING":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.PENDING);
+                    break;
+                case "OPENING":
+                case "OPEN":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.OPEN);
+                    break;
+                case "REJECTED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.REJECTED);
+                    break;
+                case "CLOSED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.CLOSED);
+                    break;
+                case "CANCELLED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.CANCELLED);
+                    break;
+            }
         }
 
         return auction;
@@ -182,10 +199,17 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     @Override
     public List<Auction> findAuctionsByBidderId(int userId) throws Exception {
         List<Auction> results = new ArrayList<>();
-        // SQL: Sử dụng bảng 'bid' và cột 'user_id' như trong ảnh cấu trúc DB của bạn
+        // SQL: Ẩn phiên kết thúc quá 2 ngày và ưu tiên phiên Đang diễn ra
         String sql = "SELECT DISTINCT p.* FROM products p " +
-                "INNER JOIN bid b ON p.id = b.product_id " +
-                "WHERE b.user_id = ?";
+                     "INNER JOIN bid b ON p.id = b.product_id " +
+                     "WHERE b.user_id = ? " +
+                     "AND p.end_time >= DATE_SUB(NOW(), INTERVAL 2 DAY) " +
+                     "ORDER BY " +
+                     "  CASE " +
+                     "    WHEN p.start_time <= NOW() AND p.end_time > NOW() THEN 1 " +
+                     "    WHEN p.start_time > NOW() THEN 2 " +
+                     "    ELSE 3 " +
+                     "  END ASC, p.end_time ASC";
 
         System.out.println("DEBUG REPO: Đang chạy SQL tìm phiên cho User ID: " + userId);
 

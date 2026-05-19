@@ -41,19 +41,32 @@ public class ProductRepository {
 
     /**
      * Lấy sản phẩm hiển thị trên MÀN HÌNH CHÍNH
-     * Chỉ lấy những sản phẩm đã được Admin duyệt (status = 'OPENING')
+     * Tự động ẩn các phiên đã kết thúc quá 12h và ưu tiên phiên Đang diễn ra lên đầu.
      */
     public List<Auction> getAllActiveProducts() {
-        String sql = "SELECT * FROM products WHERE status = 'OPENING'";
+        String sql = "SELECT * FROM products WHERE status = 'OPENING' " +
+                     "AND end_time >= DATE_SUB(NOW(), INTERVAL 12 HOUR) " +
+                     "ORDER BY " +
+                     "  CASE " +
+                     "    WHEN start_time <= NOW() AND end_time > NOW() THEN 1 " + // Đang diễn ra
+                     "    WHEN start_time > NOW() THEN 2 " +                       // Sắp diễn ra
+                     "    ELSE 3 " +                                               // Đã kết thúc
+                     "  END ASC, end_time ASC";
         return getListFromQuery(sql, null);
     }
 
     /**
      * Lấy sản phẩm của RIÊNG TÔI
-     * Lấy tất cả trạng thái (PENDING, OPENING, FINISHED) để chủ sở hữu theo dõi
+     * Tự động ẩn các phiên đã kết thúc quá 12h và ưu tiên phiên Đang diễn ra lên đầu.
      */
     public List<Auction> getProductsBySellerId(int sellerId) {
-        String sql = "SELECT * FROM products WHERE seller_id = ?";
+        String sql = "SELECT * FROM products WHERE seller_id = ? " +
+                     "ORDER BY " +
+                     "  CASE " +
+                     "    WHEN start_time <= NOW() AND end_time > NOW() THEN 1 " +
+                     "    WHEN start_time > NOW() THEN 2 " +
+                     "    ELSE 3 " +
+                     "  END ASC, end_time ASC";
         return getListFromQuery(sql, sellerId);
     }
 
@@ -128,7 +141,27 @@ public class ProductRepository {
         );
 
         auction.setCurrentPrice(rs.getDouble("current_price"));
-        // Bạn có thể set thêm status vào Auction model nếu cần quản lý UI nâng cao
+        String dbStatus = rs.getString("status");
+        if (dbStatus != null) {
+            switch (dbStatus) {
+                case "PENDING":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.PENDING);
+                    break;
+                case "OPENING":
+                case "OPEN":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.OPEN);
+                    break;
+                case "REJECTED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.REJECTED);
+                    break;
+                case "CLOSED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.CLOSED);
+                    break;
+                case "CANCELLED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.CANCELLED);
+                    break;
+            }
+        }
 
         return auction;
     }
