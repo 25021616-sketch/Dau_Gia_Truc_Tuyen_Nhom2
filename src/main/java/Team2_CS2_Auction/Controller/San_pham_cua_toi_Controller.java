@@ -44,15 +44,29 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
         new Thread(() -> {
             try {
                 List<Auction> myAuctions = auctionService.getAuctionsBySeller(currentUser.getId());
-                // Cập nhật UI phải được đẩy về JavaFX Thread
-                javafx.application.Platform.runLater(() -> hienThiDanhSach(myAuctions));
+                
+                // Tải trước FXML trong Background Thread để không làm đơ UI
+                List<Parent> cards = new ArrayList<>();
+                List<Item_Card_Controller> controllers = new ArrayList<>();
+                
+                for (Auction auction : myAuctions) {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
+                    Parent card = loader.load(); // Load FXML tốn thời gian nên để ở thread ngoài
+                    Item_Card_Controller cardController = loader.getController();
+                    
+                    cards.add(card);
+                    controllers.add(cardController);
+                }
+
+                // Cập nhật UI và gán dữ liệu phải được đẩy về JavaFX Thread
+                javafx.application.Platform.runLater(() -> hienThiDanhSach(myAuctions, cards, controllers));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
 
-    private void hienThiDanhSach(List<Auction> auctions) {
+    private void hienThiDanhSach(List<Auction> auctions, List<Parent> cards, List<Item_Card_Controller> controllers) {
         if (pnlMyItems == null) return;
 
         for (Item_Card_Controller ctrl : activeControllers) {
@@ -61,13 +75,12 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
         activeControllers.clear();
         pnlMyItems.getChildren().clear();
 
-        for (Auction auction : auctions) {
+        for (int i = 0; i < auctions.size(); i++) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
-                Parent card = loader.load();
-                Item_Card_Controller cardController = loader.getController();
+                Parent card = cards.get(i);
+                Item_Card_Controller cardController = controllers.get(i);
 
-                cardController.setData(auction);
+                cardController.setData(auctions.get(i));
                 cardController.setOwnerView(true);
 
                 activeControllers.add(cardController);
@@ -84,6 +97,22 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
     @Override
     protected void onNapTienSuccess() {
         loadMyProducts();
+    }
+
+    // =========================================================
+    // DỌN DẸP TÀI NGUYÊN KHI ĐỔI MÀN HÌNH (Fix Memory/CPU Leak)
+    // =========================================================
+    @Override
+    protected void cleanup() {
+        activeControllers.forEach(ctrl -> {
+            if (ctrl != null) ctrl.stopTimeline();
+        });
+        // Không clear activeControllers ở đây để tránh lỗi đồng bộ khi tải lại/quay lại cache
+    }
+
+    @Override
+    protected void onResume() {
+        loadMyProducts(); // Cập nhật danh sách sản phẩm của tôi khi quay lại từ Cache
     }
 
     // ================== NAVIGATION (Điều hướng) ==================
