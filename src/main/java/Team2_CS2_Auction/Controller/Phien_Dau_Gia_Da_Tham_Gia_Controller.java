@@ -47,15 +47,29 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
                 List<Auction> list = auctionService.getAuctionsByBidder(currentUserId);
                 System.out.println("DEBUG CTRL: Service trả về " + (list != null ? list.size() : "NULL") + " phiên.");
                 
+                List<Parent> cards = new ArrayList<>();
+                List<Item_Card_Controller> controllers = new ArrayList<>();
+                
+                if (list != null) {
+                    for (Auction auction : list) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
+                        Parent card = loader.load();
+                        Item_Card_Controller cardController = loader.getController();
+                        
+                        cards.add(card);
+                        controllers.add(cardController);
+                    }
+                }
+                
                 // Cập nhật UI phải được đẩy về JavaFX Thread
-                javafx.application.Platform.runLater(() -> renderAuctionList(list));
+                javafx.application.Platform.runLater(() -> renderAuctionList(list, cards, controllers));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
 
-    private void renderAuctionList(List<Auction> auctions) {
+    private void renderAuctionList(List<Auction> auctions, List<Parent> cards, List<Item_Card_Controller> controllers) {
         if (pnlJoinedItems == null) return;
 
         // Dọn dẹp card cũ để giải phóng bộ nhớ
@@ -68,14 +82,13 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
             return;
         }
 
-        for (Auction auction : auctions) {
+        for (int i = 0; i < auctions.size(); i++) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
-                Parent card = loader.load();
-
-                Item_Card_Controller cardController = loader.getController();
+                Parent card = cards.get(i);
+                Item_Card_Controller cardController = controllers.get(i);
+                
                 if (cardController != null) {
-                    cardController.setData(auction);
+                    cardController.setData(auctions.get(i));
                     activeControllers.add(cardController);
                     pnlJoinedItems.getChildren().add(card);
                 }
@@ -83,6 +96,20 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
                 System.err.println("DEBUG UI: Lỗi nạp Card: " + e.getMessage());
             }
         }
+    }
+
+    // Dọn dẹp tài nguyên khi đổi màn hình (chặn CPU/Memory leak)
+    @Override
+    protected void cleanup() {
+        activeControllers.forEach(ctrl -> {
+            if (ctrl != null) ctrl.stopTimeline();
+        });
+        // Không clear activeControllers ở đây để tránh lỗi đồng bộ khi tải lại/quay lại cache
+    }
+
+    @Override
+    protected void onResume() {
+        loadDataPhienDaThamGia(); // Cập nhật danh sách phiên đấu giá đã tham gia khi quay lại từ Cache
     }
 
     @FXML public void handleQuayLaiTrangChu(ActionEvent event) { switchScene(event, "Man_hinh_chinh_Users.fxml", "Màn hình chính"); }
