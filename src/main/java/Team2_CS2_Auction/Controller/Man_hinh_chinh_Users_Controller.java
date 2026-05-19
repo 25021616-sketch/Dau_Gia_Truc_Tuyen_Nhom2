@@ -33,7 +33,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
 
     private final AuctionService auctionService = new AuctionServiceImpl();
     private List<Item_Card_Controller> activeControllers = new ArrayList<>();
-    
+
     private NetworkListener networkListener;
     private final NetworkManager nm = NetworkManager.getInstance();
 
@@ -54,7 +54,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                             JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
                             String rcvAuctionId = payload.get("auctionId").getAsString();
                             double newPrice = payload.get("newPrice").getAsDouble();
-                            
+
                             for (Item_Card_Controller ctrl : activeControllers) {
                                 if (ctrl != null && ctrl.getAuction() != null && ctrl.getAuction().getAuctionId().equals(rcvAuctionId)) {
                                     ctrl.updatePrice(newPrice);
@@ -75,10 +75,23 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         nm.addListener(networkListener);
     }
 
-    private void cleanup() {
+    @Override
+    protected void cleanup() {
         if (networkListener != null) {
             nm.removeListener(networkListener);
         }
+        // Phải dừng tất cả các đồng hồ đếm ngược của thẻ sản phẩm
+        activeControllers.forEach(ctrl -> {
+            if (ctrl != null) ctrl.stopTimeline();
+        });
+        // KHÔNG clear activeControllers nữa vì ta đang giữ lại Scene Cache
+    }
+
+    @Override
+    protected void onResume() {
+        // Gọi lại khi màn hình thức dậy từ Cache
+        setupNetworkListener(); // Mở lại kết nối Socket
+        loadDataFromServer();   // Chạy ngầm fetch data mới (nếu có SP mới) và cập nhật UI mượt mà
     }
 
     private void loadDataFromServer() {
@@ -86,28 +99,48 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         new Thread(() -> {
             try {
                 List<Auction> list = auctionService.getActiveAuctions();
+
+                // Tải trước FXML trong Background Thread để không làm đơ UI
+                List<Parent> cards = new ArrayList<>();
+                List<Item_Card_Controller> controllers = new ArrayList<>();
+
+                if (list != null) {
+                    for (Auction auction : list) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
+                        Parent card = loader.load();
+                        Item_Card_Controller cardController = loader.getController();
+
+                        cards.add(card);
+                        controllers.add(cardController);
+                    }
+                }
+
                 // Cập nhật UI phải được đẩy về JavaFX Thread
-                javafx.application.Platform.runLater(() -> renderAuctionList(list, false));
+                javafx.application.Platform.runLater(() -> renderAuctionList(list, cards, controllers));
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() -> System.err.println("Lỗi load dữ liệu: " + e.getMessage()));
             }
         }).start();
     }
 
-    public void renderAuctionList(List<Auction> auctions, boolean isOwnerView) {
+    public void renderAuctionList(List<Auction> auctions, List<Parent> cards, List<Item_Card_Controller> controllers) {
         if (pnlItems == null) return;
 
         activeControllers.forEach(ctrl -> { if(ctrl != null) ctrl.stopTimeline(); });
         activeControllers.clear();
         pnlItems.getChildren().clear();
 
-        for (Auction auction : auctions) {
+        if (auctions == null) return;
+
+        for (int i = 0; i < auctions.size(); i++) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/ItemCard.fxml"));
-                Parent card = loader.load();
-                Item_Card_Controller cardController = loader.getController();
-                cardController.setData(auction);
-                cardController.setOwnerView(isOwnerView);
+                Parent card = cards.get(i);
+                Item_Card_Controller cardController = controllers.get(i);
+
+                // setData() tự động phát hiện ownership qua checkOwnership() bên trong,
+                // KHÔNG cần gọi setOwnerView() từ ngoài nữa.
+                cardController.setData(auctions.get(i));
+
                 activeControllers.add(cardController);
                 pnlItems.getChildren().add(card);
             } catch (Exception e) {
@@ -125,8 +158,8 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
     }
 
     // ================== CÁC HÀM ĐIỀU HƯỚNG KHÁC ==================
-    @FXML public void handleGoTothemsanpham(ActionEvent event) { cleanup(); switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
-    @FXML public void handleGoToSanPhamCuaToi(ActionEvent event) { cleanup(); switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
-    @FXML public void handleGoToLichSu(ActionEvent event) { cleanup(); switchScene(event, "Phien_Da_Tham_Gia.fxml", "Lịch sử giao dịch"); }
-    @FXML public void handleGoToDangNhap(ActionEvent event) { cleanup(); switchScene(event, "dang_nhap.fxml", "Đăng nhập"); }
+    @FXML public void handleGoTothemsanpham(ActionEvent event) { switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
+    @FXML public void handleGoToSanPhamCuaToi(ActionEvent event) { switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
+    @FXML public void handleGoToLichSu(ActionEvent event) { switchScene(event, "Phien_Da_Tham_Gia.fxml", "Lịch sử giao dịch"); }
+    @FXML public void handleGoToDangNhap(ActionEvent event) { switchScene(event, "dang_nhap.fxml", "Đăng nhập"); }
 }
