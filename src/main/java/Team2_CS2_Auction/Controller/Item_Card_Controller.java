@@ -20,170 +20,318 @@ import java.time.LocalDateTime;
 
 public class Item_Card_Controller extends Base_Admin_Controller {
 
+    // ==================== FXML BINDINGS ====================
     @FXML private ImageView imgSanPham;
     @FXML private Label lblLoaiSP;
     @FXML private Label lblTenSP;
     @FXML private Label lblThoiGian;
     @FXML private Label lblGiaHienTai;
-    @FXML private Label lblBadgeTrangThai;
-    @FXML private Button btnDatGia;
+    @FXML private Label lblBadgeTrangThai;  // GÓC TRÁI: CHỜ ĐỢI / ĐANG DIỄN RA / KẾT THÚC
+    @FXML private Label lblThongBaoVịThe;   // GÓC PHẢI: SẢN PHẨM CỦA TÔI / DẪN ĐẦU / ĐÃ THẮNG
+    @FXML private Button btnDatGia;         // NÚT: ĐẶT GIÁ hoặc QUẢN LÝ
 
-    // Nhãn mới bạn vừa thêm vào FXML
-    @FXML private Label lblThongBaoVịThe;
-
+    // ==================== STATE ====================
     private Timeline timeline;
     private Auction auction;
     private boolean isOwnerView = false;
 
-    private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("$#,###");
+    // ==================== CONSTANTS ====================
+    private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("#,###");
+    private static final String COLOR_WAITING = "#F39C12"; // Cam - chờ đợi
+    private static final String COLOR_ONGOING = "#27ae60"; // Xanh lá - đang diễn ra
+    private static final String COLOR_ENDED   = "#7F8C8D"; // Xám - kết thúc
 
-    private static final String COLOR_WAITING = "#F39C12";
-    private static final String COLOR_ONGOING = "#27ae60";
-    private static final String COLOR_ENDED = "#7F8C8D";
+    // ==================== LIFECYCLE ====================
 
+    @FXML
+    public void initialize() {
+        // Không dùng setManaged(false) — StackPane cần quản lý các badge
+        // để áp dụng đúng StackPane.alignment (TOP_LEFT / TOP_RIGHT).
+        // StackPane đã có prefHeight cố định nên badge ẩn/hiện không gây layout shift.
+    }
+
+    // ==================== ENTRY POINT ====================
+
+    /**
+     * Nạp dữ liệu phiên đấu giá vào thẻ. Gọi từ màn hình chính và màn hình đã tham gia.
+     */
     public void setData(Auction auction) {
         if (auction == null) return;
 
         this.auction = auction;
         this.isOwnerView = false;
 
-        // Gán dữ liệu cơ bản
+        // Gán thông tin cơ bản
         lblTenSP.setText(auction.getItem().getTenSanPham());
         lblLoaiSP.setText(auction.getItem().getLoaiSanPham().toUpperCase());
-        lblGiaHienTai.setText(PRICE_FORMAT.format(auction.getCurrentPrice()));
+        lblGiaHienTai.setText(PRICE_FORMAT.format(auction.getCurrentPrice()) + " ₫");
 
         populateImageData(auction.getItem());
 
-        // Tự kiểm tra quyền sở hữu
-        checkOwnerShip();
+        // Kiểm tra người dùng có phải chủ sở hữu không
+        checkOwnership();
 
-        // Khởi động đồng hồ
+        // Bắt đầu đồng hồ đếm ngược (cũng cập nhật badge trái)
         startCountdown();
     }
 
-    /**
-     * HÀM 1: Fix lỗi đỏ "Cannot resolve method setOwnerView"
-     */
+    /** Đặt chế độ owner thủ công nếu cần (gọi từ bên ngoài) */
     public void setOwnerView(boolean isOwnerView) {
         this.isOwnerView = isOwnerView;
-        updatePositionLabel();
+        refreshRightBadge();
+        refreshButton();
     }
 
-    /**
-     * HÀM 2: Fix lỗi đỏ "Cannot resolve method stopTimeline"
-     */
     public void stopTimeline() {
-        if (timeline != null) {
-            timeline.stop();
-        }
+        if (timeline != null) timeline.stop();
     }
 
-    private void checkOwnerShip() {
-        if (Session.currentUser != null && auction != null && auction.getSeller() != null) {
-            if (Session.currentUser.getId() == auction.getSeller().getId()) {
-                this.isOwnerView = true;
-            }
+    // ==================== OWNERSHIP CHECK ====================
+
+    private void checkOwnership() {
+        if (Session.currentUser != null && auction.getSeller() != null) {
+            isOwnerView = (Session.currentUser.getId() == auction.getSeller().getId());
         }
-        updatePositionLabel();
+        refreshRightBadge();
+        refreshButton();
     }
 
-    private void updatePositionLabel() {
-        if (Session.currentUser == null || auction == null || lblThongBaoVịThe == null) return;
+    // ==================== BADGE PHẢI (góc trên bên phải) ====================
+    // Hiển thị: "SẢN PHẨM CỦA TÔI" | "BẠN ĐANG DẪN ĐẦU" | "BẠN ĐÃ THẮNG 🏆" | (ẩn)
 
-        int myId = Session.currentUser.getId();
+    private void refreshRightBadge() {
+        if (auction == null || lblThongBaoVịThe == null) return;
+
+        int myId     = (Session.currentUser != null) ? Session.currentUser.getId() : -1;
         int sellerId = auction.getSeller().getId();
         int leaderId = auction.getCurrentBidderId();
+        boolean ended = LocalDateTime.now().isAfter(auction.getEndTime());
 
         if (myId == sellerId) {
-            lblThongBaoVịThe.setText("SẢN PHẨM CỦA TÔI");
-            lblThongBaoVịThe.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;");
-            lblThongBaoVịThe.setVisible(true);
-            btnDatGia.setText("QUẢN LÝ");
+            // --- Chủ sở hữu ---
+            showRightBadge("SẢN PHẨM CỦA TÔI",
+                "#27ae60", "white");
+
         } else if (leaderId > 0 && myId == leaderId) {
-            lblThongBaoVịThe.setText("BẠN ĐANG DẪN ĐẦU");
-            lblThongBaoVịThe.setStyle("-fx-background-color: #f1c40f; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;");
-            lblThongBaoVịThe.setVisible(true);
-            btnDatGia.setText("GIỮ GIÁ");
+            // --- Đang dẫn đầu hoặc đã thắng ---
+            if (ended) {
+                showRightBadge("BẠN ĐÃ THẮNG 🏆", "#e67e22", "white");
+            } else {
+                showRightBadge("BẠN ĐANG DẪN ĐẦU", "#f1c40f", "#2c3e50");
+            }
+
         } else {
+            // --- Không liên quan ---
             lblThongBaoVịThe.setVisible(false);
-            btnDatGia.setText("XEM CHI TIẾT");
         }
     }
+
+    private void showRightBadge(String text, String bgColor, String textColor) {
+        lblThongBaoVịThe.setText(text);
+        lblThongBaoVịThe.setStyle(
+            "-fx-background-color: " + bgColor + ";" +
+            "-fx-text-fill: " + textColor + ";" +
+            "-fx-font-weight: bold;" +
+            "-fx-background-radius: 5;" +
+            "-fx-padding: 4 8;"
+        );
+        lblThongBaoVịThe.setVisible(true);
+    }
+
+    // ==================== NÚT BẤM ====================
+    // Chỉ 2 nhãn: "ĐẶT GIÁ" (người mua đang mở) hoặc "QUẢN LÝ" (chủ sở hữu)
+
+    private void refreshButton() {
+        if (btnDatGia == null || auction == null) return;
+
+        if (isOwnerView) {
+            btnDatGia.setText("QUẢN LÝ");
+            btnDatGia.setDisable(false);
+            applyButtonStyle("#1a237e");
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            boolean notStarted = now.isBefore(auction.getStartTime());
+            boolean ended      = now.isAfter(auction.getEndTime());
+
+            btnDatGia.setText("ĐẶT GIÁ");
+            // Chỉ enable khi phiên đang diễn ra
+            btnDatGia.setDisable(notStarted || ended);
+            applyButtonStyle(notStarted || ended ? "#9E9E9E" : "#1a237e");
+        }
+    }
+
+    private void applyButtonStyle(String bgColor) {
+        btnDatGia.setStyle(
+            "-fx-background-color: " + bgColor + ";" +
+            "-fx-text-fill: white;" +
+            "-fx-background-radius: 0 0 15 15;" +
+            "-fx-cursor: hand;"
+        );
+    }
+
+    // ==================== BADGE TRÁI + ĐẾM NGƯỢC ====================
+    // isOwnerView=false: CHỜ ĐỢI | ĐANG DIỄN RA | KẾT THÚC  (màn hình chính / đã tham gia)
+    // isOwnerView=true : CHỜ DUYỆT | ĐÃ DUYỆT | KHÔNG ĐƯỢC DUYỆT  (phiên của tôi)
 
     private void startCountdown() {
         stopTimeline();
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+        updateTimeLogic(); // Cập nhật ngay lần đầu không chờ 1 giây
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             updateTimeLogic();
-            updatePositionLabel();
+            refreshRightBadge();
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
 
     private void updateTimeLogic() {
-        LocalDateTime now = LocalDateTime.now();
+        if (auction == null) return;
+
+        // ---- CHẾ ĐỘ PHIÊN CỦA TÔI: badge = trạng thái duyệt của Admin ----
+        if (isOwnerView) {
+            updateOwnerLeftBadge();
+            // Vẫn hiện đồng hồ đếm ngược bình thường để chủ biết còn bao lâu
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isBefore(auction.getStartTime())) {
+                updateCountdownDisplay(now, auction.getStartTime(), COLOR_WAITING);
+            } else if (now.isBefore(auction.getEndTime())) {
+                updateCountdownDisplay(now, auction.getEndTime(), COLOR_ONGOING);
+            } else {
+                lblThoiGian.setText("HẾT GIỜ");
+                lblThoiGian.setStyle("-fx-text-fill: " + COLOR_ENDED + "; -fx-font-weight: bold;");
+                stopTimeline();
+            }
+            return;
+        }
+
+        // ---- CHẾ ĐỘ THƯỜNG: badge = trạng thái thời gian ----
+        LocalDateTime now   = LocalDateTime.now();
         LocalDateTime start = auction.getStartTime();
-        LocalDateTime end = auction.getEndTime();
+        LocalDateTime end   = auction.getEndTime();
 
         if (now.isBefore(start)) {
-            lblBadgeTrangThai.setText("SẮP DIỄN RA");
-            lblBadgeTrangThai.setStyle("-fx-background-color: " + COLOR_WAITING + "; -fx-text-fill: white; -fx-background-radius: 5;");
-            updateTimeDisplay(now, start, COLOR_WAITING);
+            // === CHỜ ĐỢI ===
+            setLeftBadge("CHỜ ĐỢI", COLOR_WAITING);
+            updateCountdownDisplay(now, start, COLOR_WAITING);
             btnDatGia.setDisable(true);
+            applyButtonStyle("#9E9E9E");
+
         } else if (now.isBefore(end)) {
-            lblBadgeTrangThai.setText("ĐANG DIỄN RA");
-            lblBadgeTrangThai.setStyle("-fx-background-color: " + COLOR_ONGOING + "; -fx-text-fill: white; -fx-background-radius: 5;");
-            updateTimeDisplay(now, end, COLOR_ONGOING);
+            // === ĐANG DIỄN RA ===
+            setLeftBadge("ĐANG DIỄN RA", COLOR_ONGOING);
+            updateCountdownDisplay(now, end, COLOR_ONGOING);
             btnDatGia.setDisable(false);
+            applyButtonStyle("#1a237e");
+
         } else {
+            // === KẾT THÚC ===
             handleEndedState();
         }
     }
 
-    private void updateTimeDisplay(LocalDateTime now, LocalDateTime target, String color) {
-        long sec = java.time.Duration.between(now, target).toSeconds();
-        if (sec < 0) sec = 0;
-        long h = sec / 3600;
-        long m = (sec % 3600) / 60;
-        long s = sec % 60;
-        lblThoiGian.setText(String.format("%02d : %02d : %02d", h, m, s));
+    /**
+     * Cập nhật badge trái theo trạng thái duyệt của Admin — dùng cho màn hình "Phiên của tôi".
+     */
+    private void updateOwnerLeftBadge() {
+        if (auction == null) return;
+        switch (auction.getStatus()) {
+            case PENDING:
+                setLeftBadge("CHỜ DUYỆT", "#F39C12");      // 🟠 Cam
+                break;
+            case APPROVED:
+            case OPEN:
+            case CLOSED:
+                setLeftBadge("ĐÃ DUYỆT", "#27ae60");       // 🟢 Xanh lá
+                break;
+            case REJECTED:
+            case CANCELLED:
+                setLeftBadge("KHÔNG ĐƯỢC DUYỆT", "#e74c3c"); // 🔴 Đỏ
+                break;
+            default:
+                setLeftBadge("KHÔNG RÕ", "#95a5a6");
+        }
+    }
+
+    private void setLeftBadge(String text, String hexColor) {
+        if (lblBadgeTrangThai == null) return;
+        lblBadgeTrangThai.setText(text);
+        lblBadgeTrangThai.setVisible(true);
+        lblBadgeTrangThai.setStyle(
+            "-fx-background-color: " + hexColor + ";" +
+            "-fx-text-fill: white;" +
+            "-fx-font-weight: bold;" +
+            "-fx-background-radius: 5;" +
+            "-fx-padding: 4 8;"
+        );
+    }
+
+    private void updateCountdownDisplay(LocalDateTime now, LocalDateTime target, String color) {
+        long totalSec = java.time.Duration.between(now, target).toSeconds();
+        if (totalSec < 0) totalSec = 0;
+        long h = totalSec / 3600;
+        long m = (totalSec % 3600) / 60;
+        long s = totalSec % 60;
+        lblThoiGian.setText(String.format("%02d:%02d:%02d", h, m, s));
         lblThoiGian.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold;");
     }
 
     private void handleEndedState() {
+        setLeftBadge("KẾT THÚC", COLOR_ENDED);
         lblThoiGian.setText("HẾT GIỜ");
         lblThoiGian.setStyle("-fx-text-fill: " + COLOR_ENDED + "; -fx-font-weight: bold;");
-        lblBadgeTrangThai.setText("KẾT THÚC");
-        lblBadgeTrangThai.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white; -fx-background-radius: 5;");
-        btnDatGia.setDisable(true);
-        btnDatGia.setText("ĐÃ ĐÓNG");
 
-        ColorAdjust grayscale = new ColorAdjust();
-        grayscale.setSaturation(-1.0);
-        imgSanPham.setEffect(grayscale);
+        // Người mua không thể đặt giá nữa khi kết thúc
+        if (!isOwnerView) {
+            btnDatGia.setDisable(true);
+            applyButtonStyle("#9E9E9E");
+        }
+
+        // Xám hóa ảnh khi kết thúc
+        if (imgSanPham != null) {
+            ColorAdjust grayscale = new ColorAdjust();
+            grayscale.setSaturation(-1.0);
+            imgSanPham.setEffect(grayscale);
+        }
+
         stopTimeline();
     }
 
+    // ==================== ẢNH SẢN PHẨM ====================
+
     private void populateImageData(Item item) {
+        if (item == null) {
+            imgSanPham.setImage(null);
+            return;
+        }
         String path = item.getImagePath();
         if (path != null && !path.isEmpty()) {
             try {
                 imgSanPham.setImage(new Image(path, true));
                 Rectangle clip = new Rectangle(220, 150);
-                clip.setArcWidth(30); clip.setArcHeight(30);
+                clip.setArcWidth(30);
+                clip.setArcHeight(30);
                 imgSanPham.setClip(clip);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                imgSanPham.setImage(null);
+            }
+        } else {
+            imgSanPham.setImage(null);
         }
     }
+
+    // ==================== XỬ LÝ CLICK NÚT ====================
 
     @FXML
     private void handleDatGia(ActionEvent event) {
         if (isOwnerView) {
-            System.out.println("Mở quản lý cho SP: " + auction.getId());
+            System.out.println("Mở quản lý cho phiên: " + auction.getId());
+            // TODO: chuyển sang màn hình quản lý phiên
         } else {
             switchSceneWithData(event, "Phien_Dau_Gia.fxml", "Đấu giá", this.auction);
         }
     }
+
+    // ==================== PUBLIC UTILS ====================
 
     public Auction getAuction() {
         return this.auction;
@@ -192,9 +340,7 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     public void updatePrice(double newPrice) {
         if (this.auction != null) {
             this.auction.setCurrentPrice(newPrice);
-            lblGiaHienTai.setText(PRICE_FORMAT.format(newPrice));
-            // updatePositionLabel(); // Nếu cần kiểm tra lại người dẫn đầu thì gọi ở đây, 
-            // nhưng hiện tại server chỉ trả về newPrice.
+            lblGiaHienTai.setText(PRICE_FORMAT.format(newPrice) + " ₫");
         }
     }
 }
