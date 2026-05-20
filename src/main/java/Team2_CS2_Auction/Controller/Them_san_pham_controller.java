@@ -1,6 +1,5 @@
 package Team2_CS2_Auction.Controller;
 
-import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Service.AuctionService;
 import Team2_CS2_Auction.Service.AuctionServiceImpl;
@@ -42,6 +41,8 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         loaiSanPhamCombo.setItems(FXCollections.observableArrayList(
                 "Đồ điện tử", "Tác phẩm nghệ thuật", "Bất động sản", "Xe hơi", "Khác"
         ));
+        // Đảm bảo nút xóa ảnh ẩn lúc ban đầu
+        if (btnDeleteImage != null) btnDeleteImage.setVisible(false);
     }
 
     @FXML
@@ -60,19 +61,13 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
             LocalDateTime start = parseDateTime(ngayBatDauPicker, gioBatDau, phutBatDau);
             LocalDateTime end = parseDateTime(ngayKetThucPicker, gioKetThuc, phutKetThuc);
 
-            // kiểm tra thời gian hợp lệ
+            // Kiểm tra thời gian hợp lệ
             if (start.isBefore(LocalDateTime.now())) {
-
-                throw new Exception(
-                        "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!"
-                );
+                throw new Exception("Thời gian bắt đầu phải lớn hơn thời gian hiện tại!");
             }
 
             if (end.isBefore(start)) {
-
-                throw new Exception(
-                        "Thời gian kết thúc phải sau thời gian bắt đầu!"
-                );
+                throw new Exception("Thời gian kết thúc phải sau thời gian bắt đầu!");
             }
 
             String finalImagePath = uploadSelectedImage();
@@ -80,7 +75,9 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
             auctionService.createAuction(seller, ten, loai, moTa, finalImagePath, giaKhoi, buocGia, start, end);
 
             showSuccessAlert("Đăng sản phẩm thành công!");
-            handleBackToHome(event);
+
+            // THAY ĐỔI Ở ĐÂY: Gọi hàm xóa sạch dữ liệu trên giao diện thay vì chuyển trang
+            clearAllFields();
 
         } catch (NumberFormatException e) {
             showErrorAlert("Giờ/Phút hoặc Giá phải là chữ số hợp lệ!");
@@ -89,13 +86,40 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         }
     }
 
+    /**
+     * Hàm dọn dẹp sạch sẽ dữ liệu trên toàn bộ giao diện
+     */
+    private void clearAllFields() {
+        // 1. Xóa các ô nhập văn bản và số số
+        txtTenSanPham.clear();
+        txtGiaKhoiDiem.clear();
+        txtBuocGia.clear();
+        txtMoTa.clear();
+
+        // 2. Xóa các ô nhập giờ và phút
+        gioBatDau.clear();
+        phutBatDau.clear();
+        gioKetThuc.clear();
+        phutKetThuc.clear();
+
+        // 3. Reset các bộ chọn ngày và combobox danh mục
+        loaiSanPhamCombo.setValue(null);
+        ngayBatDauPicker.setValue(null);
+        ngayKetThucPicker.setValue(null);
+
+        // 4. Khôi phục lại trạng thái khung ảnh như ban đầu
+        selectedFile = null;
+        selectedImagePath = "";
+        imgPreview.setImage(null);
+        imgPreview.setVisible(false);
+        vboxPlaceholder.setVisible(true);
+        btnDeleteImage.setVisible(false);
+    }
+
     private User getCurrentUser() throws Exception {
-
         if (Session.currentUser == null) {
-
             throw new Exception("Vui lòng đăng nhập lại!");
         }
-
         return Session.currentUser;
     }
 
@@ -111,46 +135,23 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         }
     }
 
-    private LocalDateTime parseDateTime(
-            DatePicker datePicker,
-            TextField hourField,
-            TextField minuteField
-    ) throws Exception {
-
-        int hour =
-                Integer.parseInt(
-                        hourField.getText().trim()
-                );
-
-        int minute =
-                Integer.parseInt(
-                        minuteField.getText().trim()
-                );
+    private LocalDateTime parseDateTime(DatePicker datePicker, TextField hourField, TextField minuteField) throws Exception {
+        int hour = Integer.parseInt(hourField.getText().trim());
+        int minute = Integer.parseInt(minuteField.getText().trim());
 
         if (hour < 0 || hour > 23) {
-
-            throw new Exception(
-                    "Giờ phải từ 0 -> 23"
-            );
+            throw new Exception("Giờ phải từ 0 -> 23");
         }
-
         if (minute < 0 || minute > 59) {
-
-            throw new Exception(
-                    "Phút phải từ 0 -> 59"
-            );
+            throw new Exception("Phút phải từ 0 -> 59");
         }
-
-        return datePicker
-                .getValue()
-                .atTime(hour, minute);
+        return datePicker.getValue().atTime(hour, minute);
     }
 
     private String uploadSelectedImage() throws Exception {
         if (selectedFile == null) {
             return "";
         }
-
         System.out.println("Đang upload ảnh lên mạng...");
         String uploadedUrl = Team2_CS2_Auction.util.ImgBBUploader.uploadImage(selectedFile);
 
@@ -172,65 +173,45 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     @FXML
     private void handleChooseImage() {
-
         FileChooser fileChooser = new FileChooser();
-
         fileChooser.setTitle("Chọn ảnh sản phẩm");
-
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter(
-                        "Image Files",
-                        "*.png",
-                        "*.jpg",
-                        "*.jpeg"
-                )
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
         );
 
         File file = fileChooser.showOpenDialog(null);
-
         if (file == null) {
             return;
         }
 
         try {
-
             String mimeType = Files.probeContentType(file.toPath());
-
             if (mimeType == null || !mimeType.startsWith("image")) {
-
                 showErrorAlert("File không phải ảnh hợp lệ!");
                 return;
             }
 
             long fileSizeMB = file.length() / (1024 * 1024);
-
             if (fileSizeMB > 5) {
-
                 showErrorAlert("Ảnh vượt quá 5MB!");
                 return;
             }
 
             selectedFile = file;
-
             selectedImagePath = file.toURI().toString();
-
             imgPreview.setImage(new Image(selectedImagePath));
-
             imgPreview.setVisible(true);
-
             vboxPlaceholder.setVisible(false);
-
             btnDeleteImage.setVisible(true);
 
         } catch (Exception e) {
-
             showErrorAlert("Không thể đọc file ảnh!");
         }
     }
 
     @FXML
     private void handleDeleteImage(ActionEvent event) {
-        event.consume(); // Ngăn sự kiện click truyền xuống StackPane
+        event.consume();
         selectedFile = null;
         selectedImagePath = "";
         imgPreview.setImage(null);
