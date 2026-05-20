@@ -104,80 +104,69 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
 
         formatDateColumn(colKetThuc);
     }
+
     private void setupActionButtons() {
 
         colThaoTac.setCellFactory(param -> new TableCell<>() {
 
-            private final Button btnApprove =
-                    new Button("Duyệt");
-
-            private final Button btnReject =
-                    new Button("Từ chối");
-
-            private final HBox container =
-                    new HBox(10, btnApprove, btnReject);
+            // Bỏ text, để nút trống để nhét Icon vào
+            private final Button btnApprove = new Button();
+            private final Button btnReject = new Button();
+            private final HBox container = new HBox(10, btnApprove, btnReject);
 
             {
+                // ===== TẠO ICON TÍCH XANH =====
+                javafx.scene.shape.SVGPath checkIcon = new javafx.scene.shape.SVGPath();
+                checkIcon.setContent("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z");
+                checkIcon.setFill(javafx.scene.paint.Color.WHITE);
+                btnApprove.setGraphic(checkIcon);
 
-                // ===== STYLE NÚT DUYỆT =====
+                // ===== TẠO ICON X ĐỎ =====
+                javafx.scene.shape.SVGPath crossIcon = new javafx.scene.shape.SVGPath();
+                crossIcon.setContent("M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z");
+                crossIcon.setFill(javafx.scene.paint.Color.WHITE);
+                btnReject.setGraphic(crossIcon);
 
+                // ===== STYLE NÚT DUYỆT (Giữ nguyên màu nền, ép khung vuông) =====
                 btnApprove.setStyle(
                         "-fx-background-color: #68D391;" +
-                                "-fx-text-fill: white;" +
-                                "-fx-font-weight: bold;" +
                                 "-fx-cursor: hand;" +
-                                "-fx-background-radius: 8;"
+                                "-fx-background-radius: 8;" +
+                                "-fx-min-width: 32px;" +
+                                "-fx-min-height: 32px;"
                 );
 
-                // ===== STYLE NÚT TỪ CHỐI =====
-
+                // ===== STYLE NÚT TỪ CHỐI (Giữ nguyên màu nền, ép khung vuông) =====
                 btnReject.setStyle(
                         "-fx-background-color: #FC8181;" +
-                                "-fx-text-fill: white;" +
-                                "-fx-font-weight: bold;" +
                                 "-fx-cursor: hand;" +
-                                "-fx-background-radius: 8;"
+                                "-fx-background-radius: 8;" +
+                                "-fx-min-width: 32px;" +
+                                "-fx-min-height: 32px;"
                 );
 
                 // ===== ACTION DUYỆT =====
-
                 btnApprove.setOnAction(e -> {
-
-                    Auction auction =
-                            getTableView()
-                                    .getItems()
-                                    .get(getIndex());
-
+                    Auction auction = getTableView().getItems().get(getIndex());
                     handleApproveAction(auction);
                 });
 
                 // ===== ACTION TỪ CHỐI =====
-
                 btnReject.setOnAction(e -> {
-
-                    Auction auction =
-                            getTableView()
-                                    .getItems()
-                                    .get(getIndex());
-
+                    Auction auction = getTableView().getItems().get(getIndex());
                     handleRejectAction(auction);
                 });
 
-                container.setAlignment(
-                        javafx.geometry.Pos.CENTER
-                );
+                container.setAlignment(javafx.geometry.Pos.CENTER);
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
-
                 super.updateItem(item, empty);
-
                 setGraphic(empty ? null : container);
             }
         });
     }
-
 
     private void loadData() {
         try {
@@ -201,26 +190,12 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
     }
 
     private void handleRejectAction(Auction auction) {
-
         try {
-
-            auctionService.rejectAuction(
-                    auction.getAuctionId()
-            );
-
-            new Alert(
-                    Alert.AlertType.INFORMATION,
-                    "Đã từ chối sản phẩm!"
-            ).show();
-
+            auctionService.rejectAuction(auction.getAuctionId());
+            new Alert(Alert.AlertType.INFORMATION, "Đã từ chối sản phẩm!").show();
             loadData();
-
         } catch (Exception e) {
-
-            new Alert(
-                    Alert.AlertType.ERROR,
-                    "Lỗi: " + e.getMessage()
-            ).show();
+            new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
         }
     }
 
