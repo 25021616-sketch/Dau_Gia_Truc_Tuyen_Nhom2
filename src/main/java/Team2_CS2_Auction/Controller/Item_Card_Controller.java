@@ -352,12 +352,8 @@ public class Item_Card_Controller extends Base_Admin_Controller {
 
     @FXML
     private void handleDatGia(ActionEvent event) {
-        if (isOwnerView) {
-            System.out.println("Mở quản lý cho phiên: " + auction.getId());
-            // TODO: chuyển sang màn hình quản lý phiên
-        } else {
-            switchSceneWithData(event, "Phien_Dau_Gia.fxml", "Đấu giá", this.auction);
-        }
+        // Cho phép seller xem phiên, nhưng UI sẽ disable nút "Đặt giá" khi mở
+        switchSceneWithData(event, "Phien_Dau_Gia.fxml", "Đấu giá", this.auction);
     }
 
     // ==================== PUBLIC UTILS ====================

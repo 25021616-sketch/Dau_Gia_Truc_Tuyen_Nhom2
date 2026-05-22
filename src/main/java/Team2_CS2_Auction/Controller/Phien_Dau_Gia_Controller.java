@@ -29,6 +29,9 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements Initializable {
 
@@ -44,6 +47,7 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
     private XYChart.Series<String, Number> bidSeries;
     private Timeline timeline;
+    private ScheduledExecutorService pollScheduler;
 
     private Auction currentAuction;
     private double currentPrice;
@@ -68,7 +72,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             bidHistoryChart.getData().add(bidSeries);
         }
 
-        // Thiết lập Listener để nhận tin nhắn Broadcast từ Server
         setupNetworkListener();
     }
 
@@ -82,12 +85,10 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                             Gson gson = GsonUtil.getGson();
                             JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
                             String rcvAuctionId = payload.get("auctionId").getAsString();
-                            
-                            // Chỉ cập nhật nếu tin nhắn thuộc về món hàng đang xem
+
                             if (currentAuction != null && currentAuction.getAuctionId().equals(rcvAuctionId)) {
                                 double newPrice = payload.get("newPrice").getAsDouble();
-                                
-                                // Cập nhật UI
+
                                 currentAuction.setCurrentPrice(newPrice);
                                 currentPrice = newPrice;
                                 currentBidLabel.setText(formatter.format(newPrice));
@@ -95,11 +96,12 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
                                 // Cập nhật đồ thị Realtime
                                 if (bidSeries != null) {
-                                    String timeNow = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
+                                    String timeNow = java.time.LocalDateTime.now()
+                                            .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
                                     timeNow = getUniqueTimeStr(timeNow);
                                     bidSeries.getData().add(new XYChart.Data<>(timeNow, newPrice));
-                                    // Giới hạn hiển thị 20 điểm gần nhất cho đỡ rối
-                                    if (bidSeries.getData().size() > 20) {
+
+                                    if (bidSeries.getData().size() > 10) {
                                         bidSeries.getData().remove(0);
                                     }
                                 }
@@ -115,7 +117,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
             @Override
             public void onConnectionError() {
-                // Ignore connection errors here, main listener handles it
             }
         };
         nm.addListener(networkListener);
@@ -154,17 +155,17 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 Platform.runLater(() -> {
                     if (bidSeries != null) {
                         bidSeries.getData().clear();
-                        
+
                         if (history.isEmpty()) {
-                            // Nếu chưa có lịch sử, vẽ điểm xuất phát
-                            String timeNow = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
+                            String timeNow = java.time.LocalDateTime.now()
+                                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
                             bidSeries.getData().add(new XYChart.Data<>(timeNow, currentPrice));
                         } else {
-                            // Chỉ vẽ tối đa 20 điểm cuối cùng để biểu đồ không bị nén quá chật
-                            int startIdx = Math.max(0, history.size() - 20);
+                            int startIdx = Math.max(0, history.size() - 10);
                             for (int i = startIdx; i < history.size(); i++) {
                                 Bid b = history.get(i);
-                                String timeStr = b.getTime().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
+                                String timeStr = b.getTime()
+                                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
                                 timeStr = getUniqueTimeStr(timeStr);
                                 bidSeries.getData().add(new XYChart.Data<>(timeStr, b.getAmount()));
                             }
@@ -178,6 +179,28 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
         updateTargetPrice();
         startCountdown();
+        updateBidButtonStateForSeller();
+    }
+
+    /**
+     * Kiểm tra xem người dùng hiện tại có phải seller không.
+     * Nếu là seller: disable nút "Đặt giá" và show cảnh báo
+     */
+    private void updateBidButtonStateForSeller() {
+        if (currentAuction == null || Session.currentUser == null) return;
+
+        int currentUserId = Session.currentUser.getId();
+        int sellerId = (currentAuction.getSeller() != null) ? currentAuction.getSeller().getId() : -1;
+
+        if (currentUserId == sellerId) {
+            System.out.println("✓ Đây là sản phẩm của bạn — disable nút đặt giá");
+
+            if (lblMoTa != null) {
+                String originalMoTa = currentAuction.getItem().getMoTa();
+                lblMoTa.setText("[⚠️ BẠN LÀ CHỦ SỞ HỮU - KHÔNG ĐẶT GIÁ]\n\n" + originalMoTa);
+                lblMoTa.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+            }
+        }
     }
 
     private void startCountdown() {
@@ -215,7 +238,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         lblThoiGian.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold; -fx-font-size: 18px;");
     }
 
-    // Hàm phụ: Giúp tạo ra các chuỗi thời gian duy nhất (tránh lỗi Duplicate Category của JavaFX LineChart)
     private String getUniqueTimeStr(String timeStr) {
         if (bidSeries == null) return timeStr;
         String uniqueStr = timeStr;
@@ -225,7 +247,7 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             for (XYChart.Data<String, Number> data : bidSeries.getData()) {
                 if (data.getXValue().equals(uniqueStr)) {
                     exists = true;
-                    uniqueStr += "\u200A"; // Thêm khoảng trắng tàng hình (Hair Space) để JavaFX hiểu là chuỗi mới
+                    uniqueStr += "\u200A";
                     break;
                 }
             }
@@ -249,10 +271,21 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     private void handlePlaceBid() {
         if (currentAuction == null) return;
         try {
-            Member currentUser = (Member) Team2_CS2_Auction.Session.Session.currentUser;
-            double finalPrice = Double.parseDouble(targetPriceLabel.getText().replaceAll("[^\\d]", "")); // Lấy số sạch
+            if (!(Session.currentUser instanceof Member)) {
+                throw new Exception("Chỉ Member mới có thể đặt giá!");
+            }
 
-            // GỬI LỆNH LÊN SERVER QUA SOCKET, KHÔNG CHẠY DATABASE Ở ĐÂY NỮA
+            Member currentUser = (Member) Session.currentUser;
+
+            if (currentAuction.getSeller() != null &&
+                    currentUser.getId() == currentAuction.getSeller().getId()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Bạn không thể đặt giá cho sản phẩm của chính mình!").show();
+                return;
+            }
+
+            double finalPrice = Double.parseDouble(targetPriceLabel.getText().replaceAll("[^\\d]", ""));
+
             JsonObject payload = new JsonObject();
             payload.addProperty("auctionId", currentAuction.getAuctionId());
             payload.addProperty("bidAmount", finalPrice);
@@ -262,10 +295,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 new Alert(Alert.AlertType.ERROR, "Mất kết nối tới Server!").show();
                 return;
             }
-            
+
             nm.send("PLACE_BID", payload);
-            // Không cập nhật UI ngay lập tức. Đợi Server Broadcast NEW_BID về thì UI mới cập nhật!
-            
+
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         }
@@ -274,7 +306,7 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     @FXML
     private void handleClose(javafx.event.ActionEvent event) {
         if (timeline != null) timeline.stop();
-        // Gỡ bỏ Listener khi thoát khỏi trang này để tránh rác bộ nhớ
+        if (pollScheduler != null) pollScheduler.shutdownNow();
         if (networkListener != null) {
             nm.removeListener(networkListener);
         }
