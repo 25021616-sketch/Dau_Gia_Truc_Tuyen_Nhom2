@@ -62,14 +62,26 @@
                                 <VBox spacing="5.0">
                                     <children>
                                         <Label style="-fx-font-weight: bold;" text="Mật khẩu" textFill="#20335e" />
-                                        <PasswordField fx:id="Dat_mat_khau" prefHeight="40.0" promptText="••••••••" style="-fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10;" />
+                                        <StackPane alignment="CENTER_RIGHT">
+                                            <children>
+                                                <PasswordField fx:id="Dat_mat_khau" prefHeight="40.0" promptText="••••••••" style="-fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-padding: 0 40 0 10;" />
+                                                <TextField fx:id="txtMatKhauShow" visible="false" managed="false" prefHeight="40.0" promptText="••••••••" style="-fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-padding: 0 40 0 10;" />
+                                                <Button fx:id="btnTogglePassword" onAction="#handleTogglePassword" text="👁" style="-fx-background-color: transparent; -fx-text-fill: #757575; -fx-cursor: hand; -fx-padding: 0 15 0 0;" StackPane.alignment="CENTER_RIGHT" />
+                                            </children>
+                                        </StackPane>
                                     </children>
                                 </VBox>
 
                                 <VBox spacing="5.0">
                                     <children>
                                         <Label style="-fx-font-weight: bold;" text="Nhập lại mật khẩu" textFill="#20335e" />
-                                        <PasswordField fx:id="Nhap_lai_mat_khau" prefHeight="40.0" promptText="••••••••" style="-fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10;" />
+                                        <StackPane alignment="CENTER_RIGHT">
+                                            <children>
+                                                <PasswordField fx:id="Nhap_lai_mat_khau" prefHeight="40.0" promptText="••••••••" style="-fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-padding: 0 40 0 10;" />
+                                                <TextField fx:id="txtConfirmMatKhauShow" visible="false" managed="false" prefHeight="40.0" promptText="••••••••" style="-fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-padding: 0 40 0 10;" />
+                                                <Button fx:id="btnToggleConfirmPassword" onAction="#handleToggleConfirmPassword" text="👁" style="-fx-background-color: transparent; -fx-text-fill: #757575; -fx-cursor: hand; -fx-padding: 0 15 0 0;" StackPane.alignment="CENTER_RIGHT" />
+                                            </children>
+                                        </StackPane>
                                     </children>
                                 </VBox>
 
