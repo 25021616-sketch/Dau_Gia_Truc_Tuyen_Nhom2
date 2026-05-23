@@ -81,8 +81,12 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
                                     showStyledAlert("Từ chối", "Tài khoản không có quyền Admin.", Alert.AlertType.WARNING);
                                 }
                             } else {
-                                showStyledAlert("Thành công", "Đăng nhập thành công! Chào mừng " + user.getUsername(), Alert.AlertType.INFORMATION);
-                                navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
+                                if (user.getRole() == UserRole.ADMIN) {
+                                    showStyledAlert("Từ chối", "Quản trị viên không thể đăng nhập vào giao diện người dùng.", Alert.AlertType.WARNING);
+                                } else {
+                                    showStyledAlert("Thành công", "Đăng nhập thành công! Chào mừng " + user.getUsername(), Alert.AlertType.INFORMATION);
+                                    navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
+                                }
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
