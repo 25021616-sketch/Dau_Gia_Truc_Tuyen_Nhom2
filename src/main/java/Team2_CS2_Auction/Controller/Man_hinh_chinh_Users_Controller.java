@@ -9,6 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -41,6 +42,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
     public void initialize(URL location, ResourceBundle resources) {
         loadDataFromServer();
         setupNetworkListener();
+        updateBalanceDisplay();
     }
 
     private void setupNetworkListener() {
@@ -92,6 +94,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         // Gọi lại khi màn hình thức dậy từ Cache
         setupNetworkListener(); // Mở lại kết nối Socket
         loadDataFromServer();   // Chạy ngầm fetch data mới (nếu có SP mới) và cập nhật UI mượt mà
+        updateBalanceDisplay(); // Cập nhật lại số dư mới nhất
     }
 
     private void loadDataFromServer() {
@@ -154,6 +157,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
     // =========================================================
     @Override
     protected void onNapTienSuccess() {
+        super.onNapTienSuccess();
         loadDataFromServer();
     }
 

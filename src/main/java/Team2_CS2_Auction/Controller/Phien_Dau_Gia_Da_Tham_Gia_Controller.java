@@ -118,6 +118,7 @@ public class Phien_Dau_Gia_Da_Tham_Gia_Controller extends Base_Admin_Controller 
 
     @Override
     protected void onNapTienSuccess() {
+        super.onNapTienSuccess();
         loadDataPhienDaThamGia();
     }
 }

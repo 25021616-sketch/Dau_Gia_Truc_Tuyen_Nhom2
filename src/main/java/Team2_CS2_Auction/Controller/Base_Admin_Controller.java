@@ -1,11 +1,15 @@
 package Team2_CS2_Auction.Controller;
 
 import Team2_CS2_Auction.Model.auction.Auction;
+import Team2_CS2_Auction.Repository.UserRepository;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -14,6 +18,28 @@ import java.net.URL;
 public abstract class Base_Admin_Controller {
 
     private static final String BASE_PATH = "/Team2_CS2_Auction/example/myauctionapp/";
+
+    @FXML protected Label lblUsername;
+    @FXML protected Label lblBalance;
+
+    private final UserRepository userRepository = new UserRepository();
+
+    public void updateBalanceDisplay() {
+        if (Team2_CS2_Auction.Session.Session.currentUser != null) {
+            String username = Team2_CS2_Auction.Session.Session.currentUser.getUsername();
+            // Lấy số dư thực tế mới nhất từ CSDL
+            double balance = userRepository.getBalance(Team2_CS2_Auction.Session.Session.currentUser.getId());
+            
+            Platform.runLater(() -> {
+                if (lblUsername != null) {
+                    lblUsername.setText(username);
+                }
+                if (lblBalance != null) {
+                    lblBalance.setText(String.format("%.2f $", balance));
+                }
+            });
+        }
+    }
 
     public void switchScene(ActionEvent event, String fxmlFileName, String title) {
         navigate(event, fxmlFileName, title, null);
@@ -29,6 +55,10 @@ public abstract class Base_Admin_Controller {
 
     // Lưu lại controller hiện tại đang hiển thị để gọi hook
     private static Object currentController = null;
+
+    public static Object getCurrentController() {
+        return currentController;
+    }
 
     private void navigate(ActionEvent event, String fxmlFileName, String title, Object data) {
         try {
@@ -60,7 +90,9 @@ public abstract class Base_Admin_Controller {
 
             // 4. Gọi hook thức dậy (Resume) để fetch data ngầm sau khi màn hình đã hiện
             if (controller instanceof Base_Admin_Controller) {
-                ((Base_Admin_Controller) controller).onResume();
+                Base_Admin_Controller baseCtrl = (Base_Admin_Controller) controller;
+                baseCtrl.updateBalanceDisplay();
+                baseCtrl.onResume();
             }
 
         } catch (java.io.IOException e) {
@@ -164,5 +196,7 @@ public abstract class Base_Admin_Controller {
     }
 
     // Hàm ảo để các lớp con override nếu muốn load lại data sau khi nạp tiền
-    protected void onNapTienSuccess() {}
+    protected void onNapTienSuccess() {
+        updateBalanceDisplay();
+    }
 }
