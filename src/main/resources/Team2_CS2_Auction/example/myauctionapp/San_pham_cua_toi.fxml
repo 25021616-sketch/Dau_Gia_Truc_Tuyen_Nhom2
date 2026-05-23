@@ -28,6 +28,26 @@
                         <TextField promptText="Chức năng này đang phát triển!" style="-fx-background-color: transparent; -fx-prompt-text-fill: #ADB5BD;" HBox.hgrow="ALWAYS" />
                     </children>
                 </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #E8EAF6; -fx-background-radius: 20; -fx-border-color: #C5CAE9; -fx-border-width: 1; -fx-border-radius: 20;">
+                    <padding>
+                        <Insets bottom="6.0" left="15.0" right="15.0" top="6.0" />
+                    </padding>
+                    <children>
+                        <Label text="👤" textFill="#1A237E">
+                            <font><Font size="14.0" /></font>
+                        </Label>
+                        <Label fx:id="lblUsername" text="User" textFill="#1A237E">
+                            <font><Font name="System Bold" size="13.0" /></font>
+                        </Label>
+                        <Label text="|" textFill="#9FA8DA" />
+                        <Label text="Số dư:" textFill="#5C6BC0">
+                            <font><Font size="13.0" /></font>
+                        </Label>
+                        <Label fx:id="lblBalance" text="0.00 $" textFill="#2E7D32">
+                            <font><Font name="System Bold" size="14.0" /></font>
+                        </Label>
+                    </children>
+                </HBox>
                 <Label style="-fx-cursor: hand;" text="🔔" textFill="#1A237E">
                     <font><Font size="18.0" /></font>
                 </Label>

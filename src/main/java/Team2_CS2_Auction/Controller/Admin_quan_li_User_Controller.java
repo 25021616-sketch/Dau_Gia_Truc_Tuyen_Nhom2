@@ -116,6 +116,12 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
         }
     }
 
+    @FXML
+    public void handleLogout(ActionEvent event) {
+        // Quay lại trang đăng nhập (Tên file: dang_nhap.fxml)
+        switchScene(event, "dang_nhap.fxml", "Đăng nhập");
+    }
+
     // Các hàm chuyển Scene
     @FXML public void handleGoToInventory(ActionEvent event) { switchScene(event, "Admin_quan_li_dau_gia.fxml", "Quản lý đấu giá"); }
     @FXML public void handleGoToHistory(ActionEvent event) { switchScene(event, "Admin_quan_li_lich_su.fxml", "Lịch sử đấu giá"); }

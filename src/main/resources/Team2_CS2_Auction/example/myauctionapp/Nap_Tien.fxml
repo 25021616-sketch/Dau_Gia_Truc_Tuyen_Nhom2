@@ -1,25 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="TOP_CENTER" prefHeight="350.0" prefWidth="400.0" spacing="15.0"
-      style="-fx-background-color: white; -fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #1A237E; -fx-border-width: 2;"
-      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="Team2_CS2_Auction.Controller.Nap_Tien_Controller">
+<VBox alignment="TOP_CENTER" prefHeight="350.0" prefWidth="400.0" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #1A237E; -fx-border-width: 2;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Nap_Tien_Controller">
     <padding><Insets bottom="25.0" left="30.0" right="30.0" top="20.0" /></padding>
     <children>
         <HBox alignment="CENTER_RIGHT">
             <children>
-                <Label text="NẠP TIỀN VÀO VÍ" textFill="#1a237e">
+                <Label prefHeight="27.0" prefWidth="175.0" text="NẠP TIỀN VÀO VÍ" textAlignment="RIGHT" textFill="#1a237e">
                     <font><Font name="System Bold" size="18.0" /></font>
                     <HBox.margin><Insets right="65.0" /></HBox.margin>
                 </Label>
-                <Button onAction="#handleClose" style="-fx-background-color: transparent; -fx-cursor: hand;" text="✕" textFill="#9e9e9e">
-                    <font><Font name="System Bold" size="16.0" /></font>
-                </Button>
             </children>
         </HBox>
 
@@ -41,14 +35,11 @@
                 <Label text="Số tiền muốn nạp ($)" textFill="#757575">
                     <font><Font name="System Bold" size="13.0" /></font>
                 </Label>
-                <TextField fx:id="txtAmount" prefHeight="45.0" promptText="Ví dụ: 500"
-                           style="-fx-background-radius: 10; -fx-border-color: #E0E0E0; -fx-border-radius: 10;" />
+                <TextField fx:id="txtAmount" prefHeight="45.0" promptText="Ví dụ: 500" style="-fx-background-radius: 10; -fx-border-color: #E0E0E0; -fx-border-radius: 10;" />
                 <Label fx:id="lblMessage" textFill="#d32f2f" wrapText="true" />
             </children>
         </VBox>
 
-        <Button maxWidth="Infinity" onAction="#handleConfirmDeposit" prefHeight="45.0"
-                style="-fx-background-color: #1A237E; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;"
-                text="XÁC NHẬN NẠP" />
+        <Button maxWidth="Infinity" onAction="#handleConfirmDeposit" prefHeight="45.0" style="-fx-background-color: #1A237E; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;" text="XÁC NHẬN NẠP" />
     </children>
 </VBox>

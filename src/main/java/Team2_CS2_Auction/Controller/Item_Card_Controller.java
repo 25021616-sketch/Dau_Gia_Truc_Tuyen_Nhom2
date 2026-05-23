@@ -71,7 +71,7 @@ public class Item_Card_Controller extends Base_Admin_Controller {
         // Gán thông tin cơ bản
         lblTenSP.setText(auction.getItem().getTenSanPham());
         lblLoaiSP.setText(auction.getItem().getLoaiSanPham().toUpperCase());
-        lblGiaHienTai.setText(PRICE_FORMAT.format(auction.getCurrentPrice()) + " ₫");
+        lblGiaHienTai.setText("$" + PRICE_FORMAT.format(auction.getCurrentPrice()));
 
         populateImageData(auction.getItem());
 
@@ -365,7 +365,7 @@ public class Item_Card_Controller extends Base_Admin_Controller {
     public void updatePrice(double newPrice) {
         if (this.auction != null) {
             this.auction.setCurrentPrice(newPrice);
-            lblGiaHienTai.setText(PRICE_FORMAT.format(newPrice) + " ₫");
+            lblGiaHienTai.setText("$" + PRICE_FORMAT.format(newPrice));
         }
     }
 }

@@ -309,6 +309,63 @@ public class AuctionRepositoryImpl implements AuctionRepository {
         return list;
     }
 
+    public int getTotalSessionsOrganized() {
+        String sql = "SELECT COUNT(*) FROM products WHERE status != 'PENDING' AND status != 'REJECTED'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public double getTotalRevenue() {
+
+        String sql = "SELECT SUM(final_price) FROM `transaction`";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()
+        ) {
+
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+
+    public int getTotalUsers() {
+
+        String sql = "SELECT COUNT(*) FROM user";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()
+        ) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
     public void createTransaction(
             int productId,
             int winnerId,
