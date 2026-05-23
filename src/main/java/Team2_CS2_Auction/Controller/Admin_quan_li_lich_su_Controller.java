@@ -150,4 +150,10 @@ public class Admin_quan_li_lich_su_Controller
                 "Trang_chu_Admin.fxml",
                 "Trang chủ Admin");
     }
+
+    @FXML
+    public void handleLogout(ActionEvent event) {
+        // Quay lại trang đăng nhập (Tên file: dang_nhap.fxml)
+        switchScene(event, "dang_nhap.fxml", "Đăng nhập");
+    }
 }
