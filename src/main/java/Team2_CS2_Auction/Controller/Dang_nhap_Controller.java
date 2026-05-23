@@ -26,6 +26,9 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
     @FXML private TextField Ten_dang_nhap;
     @FXML private Button btnLogin;
     @FXML private Label lblMessage;
+    @FXML private TextField txtMatKhauShow;
+    @FXML private Button btnTogglePassword;
+    private boolean isPasswordVisible = false;
 
     @FXML
     public void initialize() {
@@ -40,12 +43,76 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         }
         // Phục hồi lại trạng thái của các nút bấm và ô nhập liệu
         restoreLoginUIState();
+
+        // Reset trạng thái hiển thị mật khẩu về mặc định (ẩn) khi quay lại
+        isPasswordVisible = false;
+        if (txtMatKhauShow != null) {
+            txtMatKhauShow.setText("");
+            txtMatKhauShow.setVisible(false);
+            txtMatKhauShow.setManaged(false);
+        }
+        if (Mat_khau != null) {
+            Mat_khau.setText("");
+            Mat_khau.setVisible(true);
+            Mat_khau.setManaged(true);
+        }
+        if (btnTogglePassword != null) {
+            btnTogglePassword.setText("👁");
+            btnTogglePassword.setStyle("-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-cursor: hand; -fx-padding: 0 15 0 0;");
+        }
+    }
+
+    @FXML
+    private void handleTogglePassword(ActionEvent event) {
+        if (isPasswordVisible) {
+            // Đang hiển thị mật khẩu -> Chuyển sang ẩn mật khẩu
+            Mat_khau.setText(txtMatKhauShow.getText());
+
+            txtMatKhauShow.setVisible(false);
+            txtMatKhauShow.setManaged(false);
+            Mat_khau.setVisible(true);
+            Mat_khau.setManaged(true);
+
+            btnTogglePassword.setText("👁");
+            btnTogglePassword.setStyle("-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-cursor: hand; -fx-padding: 0 15 0 0;");
+            Mat_khau.requestFocus();
+            Mat_khau.selectEnd();
+            Mat_khau.deselect();
+
+            isPasswordVisible = false;
+        } else {
+            // Đang ẩn mật khẩu -> Chuyển sang hiển thị mật khẩu
+            txtMatKhauShow.setText(Mat_khau.getText());
+
+            Mat_khau.setVisible(false);
+            Mat_khau.setManaged(false);
+            txtMatKhauShow.setVisible(true);
+            txtMatKhauShow.setManaged(true);
+
+            btnTogglePassword.setText("👁");
+            btnTogglePassword.setStyle("-fx-background-color: transparent; -fx-text-fill: #20335e; -fx-cursor: hand; -fx-padding: 0 15 0 0;");
+            txtMatKhauShow.requestFocus();
+            txtMatKhauShow.selectEnd();
+            txtMatKhauShow.deselect();
+
+            isPasswordVisible = true;
+        }
     }
 
     @FXML
     private void handleLogin(ActionEvent event) {
         String username = Ten_dang_nhap.getText().trim();
-        String password = Mat_khau.getText();
+        
+        // Đồng bộ mật khẩu trước khi xử lý đăng nhập
+        String password;
+        if (isPasswordVisible) {
+            password = txtMatKhauShow.getText();
+            Mat_khau.setText(password);
+        } else {
+            password = Mat_khau.getText();
+            txtMatKhauShow.setText(password);
+        }
+        
         boolean isAdminLogin = Dang_nhap_Admin != null && Dang_nhap_Admin.isSelected();
 
         if (username.isEmpty() || password.isEmpty()) {
@@ -63,6 +130,7 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         }
         Ten_dang_nhap.setDisable(true);
         Mat_khau.setDisable(true);
+        if (txtMatKhauShow != null) txtMatKhauShow.setDisable(true);
         if (Dang_nhap_Admin != null) Dang_nhap_Admin.setDisable(true);
         if (lblMessage != null) {
             lblMessage.setTextFill(javafx.scene.paint.Color.web("#20335e"));
@@ -184,6 +252,7 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         }
         Ten_dang_nhap.setDisable(false);
         Mat_khau.setDisable(false);
+        if (txtMatKhauShow != null) txtMatKhauShow.setDisable(false);
         if (Dang_nhap_Admin != null) Dang_nhap_Admin.setDisable(false);
     }
 
