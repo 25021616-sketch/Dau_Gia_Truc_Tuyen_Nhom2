@@ -24,6 +24,23 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
     @FXML private CheckBox Dang_nhap_Admin;
     @FXML private PasswordField Mat_khau;
     @FXML private TextField Ten_dang_nhap;
+    @FXML private Button btnLogin;
+    @FXML private Label lblMessage;
+
+    @FXML
+    public void initialize() {
+        // Tải trước giao diện trang chủ trong bộ nhớ đệm ngay khi vừa mở màn hình đăng nhập để tối ưu tốc độ vào
+        preLoadScene(FXML_USER_HOME);
+    }
+
+    @Override
+    protected void onResume() {
+        if (lblMessage != null) {
+            lblMessage.setText("");
+        }
+        // Phục hồi lại trạng thái của các nút bấm và ô nhập liệu
+        restoreLoginUIState();
+    }
 
     @FXML
     private void handleLogin(ActionEvent event) {
@@ -32,86 +49,142 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         boolean isAdminLogin = Dang_nhap_Admin != null && Dang_nhap_Admin.isSelected();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showStyledAlert("Thiếu thông tin", "Vui lòng nhập tên đăng nhập và mật khẩu.", Alert.AlertType.WARNING);
-            return;
-        }
-
-        NetworkManager nm = NetworkManager.getInstance();
-
-// Nếu chưa connect thì tự connect
-        if (!nm.isConnected()) {
-
-            nm.connect("localhost", 8080);
-
-            // chờ connect một chút
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            if (lblMessage != null) {
+                lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                lblMessage.setText("⚠ Vui lòng nhập tài khoản và mật khẩu!");
             }
-        }
-
-// kiểm tra lại lần nữa
-        if (!nm.isConnected()) {
-
-            showStyledAlert(
-                    "Lỗi kết nối",
-                    "Không thể kết nối tới Server!",
-                    Alert.AlertType.ERROR
-            );
-
             return;
         }
-        NetworkListener listener = new NetworkListener() {
-            @Override
-            public void onMessageReceived(NetworkMessage message) {
-                if ("LOGIN_SUCCESS".equals(message.getAction())) {
-                    Platform.runLater(() -> {
-                        try {
-                            Gson gson = GsonUtil.getGson();
-                            UserDTO userDTO = gson.fromJson(message.getPayload(), UserDTO.class);
-                            User user = userDTO.toUser(); // Chuyển từ DTO về Model gốc
-                            Session.currentUser = user;
 
-                            if (isAdminLogin) {
-                                if (user.getRole() == UserRole.ADMIN) {
-                                    showStyledAlert("Admin", "Xin chào quản trị viên " + user.getUsername() + "!", Alert.AlertType.INFORMATION);
-                                    navigateTo(event, FXML_ADMIN_HOME, "Hệ thống quản trị");
-                                } else {
-                                    showStyledAlert("Từ chối", "Tài khoản không có quyền Admin.", Alert.AlertType.WARNING);
-                                }
-                            } else {
-                                showStyledAlert("Thành công", "Đăng nhập thành công! Chào mừng " + user.getUsername(), Alert.AlertType.INFORMATION);
-                                navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            showStyledAlert("Lỗi dữ liệu", "Lỗi phân tích JSON: " + e.getMessage(), Alert.AlertType.ERROR);
-                        }
-                    });
-                    nm.removeListener(this);
-                } else if ("LOGIN_FAILED".equals(message.getAction())) {
-                    Platform.runLater(() -> showStyledAlert("Thất bại", message.getPayload(), Alert.AlertType.ERROR));
-                    nm.removeListener(this);
+        // Tối ưu hóa UI: Vô hiệu hóa các trường nhập và thay đổi văn bản nút để thông báo tiến trình cho người dùng
+        if (btnLogin != null) {
+            btnLogin.setDisable(true);
+            btnLogin.setText("ĐANG ĐĂNG NHẬP...");
+        }
+        Ten_dang_nhap.setDisable(true);
+        Mat_khau.setDisable(true);
+        if (Dang_nhap_Admin != null) Dang_nhap_Admin.setDisable(true);
+        if (lblMessage != null) {
+            lblMessage.setTextFill(javafx.scene.paint.Color.web("#20335e"));
+            lblMessage.setText("⏳ Đang kết nối tới máy chủ...");
+        }
+
+        // Khởi động Background Thread để làm việc với mạng (Loại bỏ hoàn toàn cảm giác lag đơ)
+        new Thread(() -> {
+            NetworkManager nm = NetworkManager.getInstance();
+
+            // Nếu chưa kết nối thì kết nối trực tiếp không trì hoãn (Loại bỏ Thread.sleep cũ gây trễ)
+            if (!nm.isConnected()) {
+                nm.connect("localhost", 8080);
+            }
+
+            // Kiểm tra kết nối
+            if (!nm.isConnected()) {
+                Platform.runLater(() -> {
+                    // Phục hồi lại trạng thái nút bấm
+                    restoreLoginUIState();
+                    if (lblMessage != null) {
+                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                        lblMessage.setText("❌ Lỗi kết nối: Không thể kết nối tới máy chủ!");
+                    }
+                });
+                return;
+            }
+
+            // Giao tiếp qua Socket
+            Platform.runLater(() -> {
+                if (lblMessage != null) {
+                    lblMessage.setTextFill(javafx.scene.paint.Color.web("#20335e"));
+                    lblMessage.setText("⏳ Đang xác thực tài khoản...");
                 }
-            }
 
-            @Override
-            public void onConnectionError() {
-                Platform.runLater(() -> showStyledAlert("Lỗi", "Mất kết nối với máy chủ", Alert.AlertType.ERROR));
-                nm.removeListener(this);
-            }
-        };
+                NetworkListener listener = new NetworkListener() {
+                    @Override
+                    public void onMessageReceived(NetworkMessage message) {
+                        if ("LOGIN_SUCCESS".equals(message.getAction())) {
+                            Platform.runLater(() -> {
+                                try {
+                                    Gson gson = GsonUtil.getGson();
+                                    UserDTO userDTO = gson.fromJson(message.getPayload(), UserDTO.class);
+                                    User user = userDTO.toUser(); // Chuyển đổi từ DTO sang Model
+                                    Session.currentUser = user;
 
-        nm.addListener(listener);
+                                    if (lblMessage != null) {
+                                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#2E7D32"));
+                                        lblMessage.setText("✅ Đăng nhập thành công! Đang vào...");
+                                    }
 
-        // Đóng gói Payload đơn giản
-        JsonObject payload = new JsonObject();
-        payload.addProperty("username", username);
-        payload.addProperty("password", password);
-        payload.addProperty("isAdminLogin", isAdminLogin);
-        
-        nm.send("LOGIN", payload);
+                                    if (isAdminLogin) {
+                                        if (user.getRole() == UserRole.ADMIN) {
+                                            restoreLoginUIState();
+                                            navigateTo(event, FXML_ADMIN_HOME, "Hệ thống quản trị");
+                                        } else {
+                                            restoreLoginUIState();
+                                            if (lblMessage != null) {
+                                                lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                                                lblMessage.setText("⚠ Tài khoản không có quyền Admin!");
+                                            }
+                                        }
+                                    } else {
+                                        restoreLoginUIState();
+                                        navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    restoreLoginUIState();
+                                    if (lblMessage != null) {
+                                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                                        lblMessage.setText("❌ Lỗi xử lý dữ liệu: " + e.getMessage());
+                                    }
+                                }
+                            });
+                            nm.removeListener(this);
+                        } else if ("LOGIN_FAILED".equals(message.getAction())) {
+                            Platform.runLater(() -> {
+                                restoreLoginUIState();
+                                if (lblMessage != null) {
+                                    lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                                    lblMessage.setText("❌ " + message.getPayload());
+                                }
+                            });
+                            nm.removeListener(this);
+                        }
+                    }
+
+                    @Override
+                    public void onConnectionError() {
+                        Platform.runLater(() -> {
+                            restoreLoginUIState();
+                            if (lblMessage != null) {
+                                lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                                lblMessage.setText("❌ Mất kết nối tới máy chủ!");
+                            }
+                        });
+                        nm.removeListener(this);
+                    }
+                };
+
+                nm.addListener(listener);
+
+                // Gửi thông tin đăng nhập
+                JsonObject payload = new JsonObject();
+                payload.addProperty("username", username);
+                payload.addProperty("password", password);
+                payload.addProperty("isAdminLogin", isAdminLogin);
+                
+                nm.send("LOGIN", payload);
+            });
+        }).start();
+    }
+
+    private void restoreLoginUIState() {
+        if (btnLogin != null) {
+            btnLogin.setDisable(false);
+            btnLogin.setText("Đăng Nhập");
+        }
+        Ten_dang_nhap.setDisable(false);
+        Mat_khau.setDisable(false);
+        if (Dang_nhap_Admin != null) Dang_nhap_Admin.setDisable(false);
     }
 
     @FXML

@@ -60,6 +60,25 @@ public abstract class Base_Admin_Controller {
         return currentController;
     }
 
+    public static void preLoadScene(String fxmlFileName) {
+        if (sceneCache.containsKey(fxmlFileName)) return;
+        Platform.runLater(() -> {
+            try {
+                java.net.URL fxmlLocation = Base_Admin_Controller.class.getResource(BASE_PATH + fxmlFileName);
+                if (fxmlLocation != null) {
+                    FXMLLoader loader = new FXMLLoader(fxmlLocation);
+                    Parent root = loader.load();
+                    Object controller = loader.getController();
+                    sceneCache.put(fxmlFileName, root);
+                    controllerCache.put(fxmlFileName, controller);
+                    System.out.println("⚡ [Tối ưu] Đã tải trước bộ nhớ đệm cho: " + fxmlFileName);
+                }
+            } catch (IOException e) {
+                System.err.println("Lỗi tải trước giao diện " + fxmlFileName + ": " + e.getMessage());
+            }
+        });
+    }
+
     private void navigate(ActionEvent event, String fxmlFileName, String title, Object data) {
         try {
             // 1. Gọi hook dọn dẹp (tạm dừng timer/socket) trước khi rời màn hình cũ

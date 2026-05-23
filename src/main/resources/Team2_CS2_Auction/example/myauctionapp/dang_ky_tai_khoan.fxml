@@ -1,24 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<StackPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #f1f5f9;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Dang_ki_tai_khoan_Controller">
+<StackPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #f1f5f9;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Dang_ki_tai_khoan_Controller">
     <children>
         <HBox alignment="CENTER" maxHeight="520.0" maxWidth="720.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 30, 0, 0, 15);">
             <children>
 
                 <VBox alignment="CENTER" minWidth="320.0" prefWidth="320.0" spacing="20.0" style="-fx-background-color: #20335e; -fx-background-radius: 20 0 0 20;">
                     <children>
-                        <Label text="Đại học Công Nghệ - ĐHQGHN" textFill="WHITE">
+                        <Label text="Trường Đại học Công nghệ - ĐHQGHN" textFill="WHITE">
                             <font><Font name="System Bold" size="11.0" /></font>
                         </Label>
                         <VBox alignment="CENTER" spacing="5.0">
@@ -31,19 +25,7 @@
                                 </Label>
                             </children>
                         </VBox>
-                        <VBox spacing="8.0" style="-fx-padding: 0 0 0 35;">
-                            <children>
-                                <Label text="&quot;Nền tảng minh bạch – Kết nối giá trị thực.&quot;" textFill="#cbd5e1" wrapText="true">
-                                    <font><Font name="System Italic" size="10.0" /></font>
-                                </Label>
-                                <Label text="&quot;Định chuẩn giá trị – Nâng tầm giao dịch.&quot;" textFill="#cbd5e1" wrapText="true">
-                                    <font><Font name="System Italic" size="10.0" /></font>
-                                </Label>
-                                <Label text="&quot;Đấu giá an toàn, mua bán dễ dàng.&quot;" textFill="#cbd5e1" wrapText="true">
-                                    <font><Font name="System Italic" size="10.0" /></font>
-                                </Label>
-                            </children>
-                        </VBox>
+                        <VBox spacing="8.0" style="-fx-padding: 0 0 0 35;" />
                     </children>
                 </VBox>
 
@@ -91,7 +73,9 @@
                                     </children>
                                 </VBox>
 
-                                <Button fx:id="Dang_ky" maxWidth="Infinity" mnemonicParsing="false" prefHeight="48.0" style="-fx-background-color: #20335e; -fx-background-radius: 10; -fx-cursor: hand;" text="Đăng Ký" onAction="#handleRegister" textFill="WHITE">
+                                <Label fx:id="lblMessage" style="-fx-font-weight: bold; -fx-font-size: 13px;" textFill="#d32f2f" wrapText="true" />
+
+                                <Button fx:id="Dang_ky" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleRegister" prefHeight="48.0" style="-fx-background-color: #20335e; -fx-background-radius: 10; -fx-cursor: hand;" text="Đăng Ký" textFill="WHITE">
                                     <font><Font name="System Bold" size="14.0" /></font>
                                     <VBox.margin>
                                         <Insets top="10.0" />

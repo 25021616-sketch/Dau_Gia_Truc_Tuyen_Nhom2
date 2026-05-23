@@ -15,6 +15,7 @@ public class Dang_ki_tai_khoan_Controller extends Base_Admin_Controller {
 
     @FXML private TextField Sdt_dang_ki;
     @FXML private TextField Ten_dang_ki;
+    @FXML private Label lblMessage;
 
     private final UserService userService = new UserService();
 
@@ -55,26 +56,47 @@ public class Dang_ki_tai_khoan_Controller extends Base_Admin_Controller {
             );
 
             // THÀNH CÔNG
-            showStyledAlert(
-                    "✅ Thành công",
-                    "Đăng ký tài khoản thành công!",
-                    Alert.AlertType.INFORMATION
-            );
+            if (lblMessage != null) {
+                lblMessage.setTextFill(javafx.scene.paint.Color.web("#2E7D32"));
+                lblMessage.setText("✅ Đăng ký tài khoản thành công! Đang chuyển hướng...");
+            }
 
-            switchScene(
-                    event,
-                    "dang_nhap.fxml",
-                    "Trang Đăng nhập"
-            );
+            if (Dang_ky != null) Dang_ky.setDisable(true);
+
+            // Tự động chuyển cảnh mượt mà sau 1 giây
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+                javafx.application.Platform.runLater(() -> {
+                    if (Dang_ky != null) Dang_ky.setDisable(false);
+                    switchScene(
+                            event,
+                            "dang_nhap.fxml",
+                            "Trang Đăng nhập"
+                    );
+                });
+            }).start();
 
         } catch (Exception e) {
 
-            // HIỆN CHI TIẾT LỖI
-            showStyledAlert(
-                    "⚠ Thông báo",
-                    e.getMessage(),
-                    Alert.AlertType.WARNING
-            );
+            // HIỆN CHI TIẾT LỖI INLINE
+            if (lblMessage != null) {
+                lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                lblMessage.setText("⚠ " + e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        if (lblMessage != null) {
+            lblMessage.setText("");
+        }
+        if (Dang_ky != null) {
+            Dang_ky.setDisable(false);
         }
     }
 
