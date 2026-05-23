@@ -49,6 +49,12 @@ public class Nap_Tien_Controller {
                 lblMessage.setText("✅ Nạp tiền thành công!");
                 txtAmount.clear();
                 refreshBalance(); // Cập nhật lại số tiền hiển thị để user xem
+
+                // Cập nhật số dư ở màn hình chính ngay lập tức khi vừa bấm nút xác nhận
+                Object activeCtrl = Base_Admin_Controller.getCurrentController();
+                if (activeCtrl instanceof Base_Admin_Controller) {
+                    ((Base_Admin_Controller) activeCtrl).updateBalanceDisplay();
+                }
             }
 
         } catch (NumberFormatException e) {

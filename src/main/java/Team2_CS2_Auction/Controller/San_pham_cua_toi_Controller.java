@@ -96,6 +96,7 @@ public class San_pham_cua_toi_Controller extends Base_Admin_Controller implement
     // =========================================================
     @Override
     protected void onNapTienSuccess() {
+        super.onNapTienSuccess();
         loadMyProducts();
     }
 
