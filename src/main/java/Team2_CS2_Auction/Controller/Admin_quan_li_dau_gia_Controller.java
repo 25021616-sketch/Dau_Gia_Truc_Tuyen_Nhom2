@@ -199,6 +199,12 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
         }
     }
 
+    @FXML
+    public void handleLogout(ActionEvent event) {
+        // Quay lại trang đăng nhập (Tên file: dang_nhap.fxml)
+        switchScene(event, "dang_nhap.fxml", "Đăng nhập");
+    }
+
     private void formatPriceColumn(TableColumn<Auction, Double> col) {
         col.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(Double price, boolean empty) {
