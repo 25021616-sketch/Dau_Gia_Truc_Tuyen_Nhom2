@@ -107,7 +107,7 @@
 
     <center>
         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
-            <VBox spacing="25.0">
+            <VBox prefHeight="481.0" prefWidth="784.0" spacing="25.0">
                 <padding><Insets bottom="30" left="40" right="30" top="30" /></padding>
 
                 <HBox alignment="CENTER_LEFT">
@@ -125,13 +125,13 @@
                         <Label fx:id="lblRevenue" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" text="\$0" />
                     </VBox>
 
-                    <VBox alignment="CENTER_LEFT" prefWidth="230.0" spacing="6.0" style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: transparent transparent transparent #F59E0B; -fx-border-width: 0 0 0 5; -fx-padding: 20 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 4);">
+                    <VBox alignment="CENTER_LEFT" prefHeight="118.0" prefWidth="225.0" spacing="6.0" style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: transparent transparent transparent #F59E0B; -fx-border-width: 0 0 0 5; -fx-padding: 20 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 4);">
                         <Label fx:id="lblTotalSessions" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #0F172A;" text="0" />
-                        <Label style="-fx-text-fill: #64748B; -fx-font-weight: bold; -fx-font-size: 13;" text="Lượt thầu đang diễn ra" />
+                        <Label style="-fx-text-fill: #64748B; -fx-font-weight: bold; -fx-font-size: 13;" text="Tổng sô phiên" />
                     </VBox>
 
-                    <VBox alignment="CENTER_LEFT" prefWidth="230.0" spacing="6.0" style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: transparent transparent transparent #3B82F6; -fx-border-width: 0 0 0 5; -fx-padding: 20 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 4);">
-                        <Label style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #0F172A;" text="12,840" />
+                    <VBox alignment="CENTER_LEFT" prefHeight="118.0" prefWidth="233.0" spacing="6.0" style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: transparent transparent transparent #3B82F6; -fx-border-width: 0 0 0 5; -fx-padding: 20 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 4);">
+                        <Label fx:id="lblTotalUsers" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #0F172A;" text="0" />
                         <Label style="-fx-text-fill: #64748B; -fx-font-weight: bold; -fx-font-size: 13;" text="Tổng số người dùng" />
                     </VBox>
                 </HBox>
@@ -161,47 +161,8 @@
     </center>
 
     <right>
-        <VBox prefWidth="340.0" spacing="20.0" style="-fx-background-color: #F8FAFC;">
+        <VBox prefHeight="850.0" prefWidth="0.0" spacing="20.0" style="-fx-background-color: #F8FAFC;">
             <padding><Insets bottom="30" left="10" right="30" top="30" /></padding>
-
-            <VBox spacing="18.0" style="-fx-background-color: white; -fx-background-radius: 14; -fx-padding: 22; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 15, 0, 0, 4); -fx-border-color: #E2E8F0; -fx-border-radius: 14;">
-                <Label style="-fx-font-weight: bold; -fx-font-size: 15; -fx-text-fill: #0F172A;" text="Tần suất Đấu thầu" />
-                <HBox alignment="BOTTOM_CENTER" prefHeight="150.0" spacing="12.0">
-                    <Rectangle arcHeight="6" arcWidth="6" fill="#E2E8F0" height="60" width="16" />
-                    <Rectangle arcHeight="6" arcWidth="6" fill="#E2E8F0" height="95" width="16" />
-                    <Rectangle arcHeight="6" arcWidth="6" fill="#CBD5E1" height="50" width="16" />
-                    <Rectangle arcHeight="6" arcWidth="6" fill="#64748B" height="120" width="16" />
-                    <Rectangle arcHeight="6" arcWidth="6" fill="#0F172A" height="145" width="16" />
-                    <Rectangle arcHeight="6" arcWidth="6" fill="#3B82F6" height="110" width="16" />
-                </HBox>
-                <Separator />
-                <HBox alignment="CENTER">
-                    <Label style="-fx-font-size: 12; -fx-text-fill: #64748B;" text="Lượt đặt thầu mỗi giờ:" />
-                    <Region HBox.hgrow="ALWAYS" />
-                    <Label style="-fx-font-weight: bold; -fx-font-size: 14; -fx-text-fill: #0F172A;" text="124" />
-                </HBox>
-            </VBox>
-
-            <VBox spacing="18.0" style="-fx-background-color: white; -fx-background-radius: 14; -fx-padding: 22; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 15, 0, 0, 4); -fx-border-color: #E2E8F0; -fx-border-radius: 14;">
-                <Label style="-fx-font-weight: bold; -fx-font-size: 15; -fx-text-fill: #0F172A;" text="Nhật ký hệ thống trực tiếp" />
-                <VBox spacing="15">
-                    <HBox alignment="CENTER_LEFT" spacing="12">
-                        <Circle fill="#FEE2E2" radius="15" />
-                        <VBox>
-                            <Label style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #334155;" text="JohnDoe vừa nâng giá lên $45k" />
-                            <Label style="-fx-font-size: 11; -fx-text-fill: #94A3B8;" text="2 phút trước" />
-                        </VBox>
-                    </HBox>
-                    <HBox alignment="CENTER_LEFT" spacing="12">
-                        <Circle fill="#E0F2FE" radius="15" />
-                        <VBox>
-                            <Label style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #334155;" text="Cộng tác viên mới được xác minh" />
-                            <Label style="-fx-font-size: 11; -fx-text-fill: #94A3B8;" text="15 phút trước" />
-                        </VBox>
-                    </HBox>
-                </VBox>
-                <Button maxWidth="Infinity" onAction="#handleGoToHistory" style="-fx-background-color: transparent; -fx-text-fill: #1E3A8A; -fx-font-weight: bold; -fx-font-size: 12; -fx-cursor: hand;" text="Xem toàn bộ hoạt động →" />
-            </VBox>
         </VBox>
     </right>
 </BorderPane>
