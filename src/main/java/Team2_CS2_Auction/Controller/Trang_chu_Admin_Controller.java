@@ -34,6 +34,9 @@ public class Trang_chu_Admin_Controller
     @FXML
     private Label lblTotalSessions;
 
+    @FXML
+    private Label lblTotalUsers;
+
     private final AuctionRepositoryImpl repo =
             new AuctionRepositoryImpl();
 
@@ -71,17 +74,28 @@ public class Trang_chu_Admin_Controller
 
         try {
 
-            double revenue = repo.getTotalRevenue();
+            double revenue =
+                    repo.getTotalRevenue();
 
             int totalSessions =
                     repo.getTotalSessionsOrganized();
 
+            int totalUsers =
+                    repo.getTotalUsers();
+
+            // Tổng doanh thu
             lblRevenue.setText(
                     "$" + String.format("%,.0f", revenue)
             );
 
+            // Tổng phiên
             lblTotalSessions.setText(
                     String.format("%,d", totalSessions)
+            );
+
+            // Tổng user
+            lblTotalUsers.setText(
+                    String.format("%,d", totalUsers)
             );
 
         } catch (Exception e) {

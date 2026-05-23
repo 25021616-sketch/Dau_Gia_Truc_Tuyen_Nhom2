@@ -345,6 +345,27 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     }
 
 
+    public int getTotalUsers() {
+
+        String sql = "SELECT COUNT(*) FROM user";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()
+        ) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
     public void createTransaction(
             int productId,
             int winnerId,
