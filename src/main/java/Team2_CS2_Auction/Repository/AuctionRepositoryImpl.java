@@ -323,6 +323,27 @@ public class AuctionRepositoryImpl implements AuctionRepository {
         return 0;
     }
 
+    public double getTotalRevenue() {
+
+        String sql = "SELECT SUM(final_price) FROM `transaction`";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()
+        ) {
+
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
 
     public void createTransaction(
             int productId,
