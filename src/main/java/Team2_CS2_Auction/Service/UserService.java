@@ -145,6 +145,10 @@ public class UserService {
         if (isAdminLogin && user.getRole() != UserRole.ADMIN) {
             throw new Exception("Bạn không có quyền quản trị viên.");
         }
+        
+        if (!isAdminLogin && user.getRole() == UserRole.ADMIN) {
+            throw new Exception("Quản trị viên không thể đăng nhập vào giao diện người dùng.");
+        }
 
         // Khởi tạo Session
         Session.currentUser = user;
