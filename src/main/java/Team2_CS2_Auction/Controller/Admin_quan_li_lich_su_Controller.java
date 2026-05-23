@@ -89,6 +89,12 @@ public class Admin_quan_li_lich_su_Controller
         loadHistory();
     }
 
+    @Override
+    protected void onResume() {
+        System.out.println("[DEBUG] onResume called for Admin_quan_li_lich_su_Controller");
+        loadHistory();
+    }
+
     private void loadHistory() {
 
         try {
@@ -97,7 +103,7 @@ public class Admin_quan_li_lich_su_Controller
                     FXCollections.observableArrayList(
                             repo.getBidHistory()
                     );
-            System.out.println("SIZE = " + list.size());
+            System.out.println("[DEBUG] getBidHistory() list size = " + list.size());
             historyTable.setItems(list);
 
             double totalRevenue = 0;
@@ -105,6 +111,8 @@ public class Admin_quan_li_lich_su_Controller
                 totalRevenue += b.getBidAmount();
             }
             int totalSessions = list.size();
+            System.out.println("[DEBUG] totalSessions (successful) = " + totalSessions);
+            System.out.println("[DEBUG] lblTotalSessions is " + (lblTotalSessions == null ? "NULL" : "NOT NULL"));
 
             if (lblTotalSessions != null) {
                 lblTotalSessions.setText(String.format("%,d", totalSessions));
