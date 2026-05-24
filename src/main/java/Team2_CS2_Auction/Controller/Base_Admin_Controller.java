@@ -2,6 +2,7 @@ package Team2_CS2_Auction.Controller;
 
 import Team2_CS2_Auction.Model.auction.Auction;
 import Team2_CS2_Auction.Repository.UserRepository;
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -11,6 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
@@ -25,20 +27,28 @@ public abstract class Base_Admin_Controller {
     private final UserRepository userRepository = new UserRepository();
 
     public void updateBalanceDisplay() {
-        if (Team2_CS2_Auction.Session.Session.currentUser != null) {
-            String username = Team2_CS2_Auction.Session.Session.currentUser.getUsername();
-            // Lấy số dư thực tế mới nhất từ CSDL
-            double balance = userRepository.getBalance(Team2_CS2_Auction.Session.Session.currentUser.getId());
-            
-            Platform.runLater(() -> {
-                if (lblUsername != null) {
-                    lblUsername.setText(username);
-                }
-                if (lblBalance != null) {
-                    lblBalance.setText(String.format("%.2f $", balance));
-                }
-            });
-        }
+        if (Team2_CS2_Auction.Session.Session.currentUser == null) return;
+
+        final String username = Team2_CS2_Auction.Session.Session.currentUser.getUsername();
+        final int userId = Team2_CS2_Auction.Session.Session.currentUser.getId();
+
+        // FIX BUG #5: Chạy query DB trên background thread để KHÔNG block JavaFX UI thread
+        // Tránh cảm giác "đơ/lag" mỗi khi click chuyển màn hình
+        new Thread(() -> {
+            try {
+                double balance = userRepository.getBalance(userId);
+                Platform.runLater(() -> {
+                    if (lblUsername != null) {
+                        lblUsername.setText(username);
+                    }
+                    if (lblBalance != null) {
+                        lblBalance.setText(String.format("%.2f $", balance));
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("[Balance] Lỗi lấy số dư: " + e.getMessage());
+            }
+        }, "balance-fetch-thread").start();
     }
 
     public void switchScene(ActionEvent event, String fxmlFileName, String title) {
@@ -90,14 +100,19 @@ public abstract class Base_Admin_Controller {
             Object controller = controllerCache.get(fxmlFileName);
 
             // 2. Nếu chưa có trong Cache thì tiến hành nạp từ file FXML
+            // FIX BUG #4: KHÔNG cache Phien_Dau_Gia.fxml vì mỗi lần vào là một phiên khác nhau
+            boolean shouldCache = !"Phien_Dau_Gia.fxml".equals(fxmlFileName);
+
             if (root == null) {
                 FXMLLoader loader = getFXMLLoader(fxmlFileName);
                 if (loader == null) return;
                 root = loader.load();
                 controller = loader.getController();
 
-                sceneCache.put(fxmlFileName, root);
-                controllerCache.put(fxmlFileName, controller);
+                if (shouldCache) {
+                    sceneCache.put(fxmlFileName, root);
+                    controllerCache.put(fxmlFileName, controller);
+                }
             }
 
             // Cập nhật controller hiện tại
@@ -150,18 +165,41 @@ public abstract class Base_Admin_Controller {
         }
     }
 
-    private void displayScene(ActionEvent event, Parent root, String title) {
+    private void displayScene(ActionEvent event, Parent newRoot, String title) {
         Stage stage = getStageFromEvent(event);
 
         if (stage.getScene() == null) {
-            stage.setScene(new Scene(root));
+            // Lần đầu tiên — tạo Scene mới và fade in
+            newRoot.setOpacity(0);
+            stage.setScene(new Scene(newRoot));
+            stage.setTitle(title);
+            stage.setMaximized(true);
+            stage.show();
+            playFadeIn(newRoot);
         } else {
-            stage.getScene().setRoot(root);
-        }
+            // Đã có Scene — FadeOut màn hình cũ rồi swap + FadeIn màn hình mới
+            Parent oldRoot = stage.getScene().getRoot();
 
-        stage.setTitle(title);
-        stage.setMaximized(true);
-        stage.show();
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(120), oldRoot);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+            fadeOut.setOnFinished(e -> {
+                newRoot.setOpacity(0);
+                stage.getScene().setRoot(newRoot);
+                stage.setTitle(title);
+                stage.setMaximized(true);
+                playFadeIn(newRoot);
+            });
+            fadeOut.play();
+        }
+    }
+
+    /** Fade in nhanh 160ms sau khi màn hình mới được gắn vào Scene */
+    private void playFadeIn(Parent root) {
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(160), root);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
     }
 
     private Stage getStageFromEvent(ActionEvent event) {
