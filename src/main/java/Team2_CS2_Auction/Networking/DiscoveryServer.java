@@ -41,10 +41,27 @@ public class DiscoveryServer implements Runnable {
 
     @Override
     public void run() {
+        // Thử bind cổng 8888, nếu bị chiếm thì đợi và thử lại tối đa 5 lần
+        int maxRetries = 5;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                socket = new DatagramSocket(null);
+                socket.setReuseAddress(true);  // Cho phép bind lại cổng ngay sau khi restart
+                socket.bind(new java.net.InetSocketAddress(DISCOVERY_PORT));
+                socket.setBroadcast(true);
+                break; // Bind thành công, thoát vòng lặp retry
+            } catch (Exception e) {
+                System.err.println("[Discovery] Cổng " + DISCOVERY_PORT + " đang bị chiếm, thử lại lần " + attempt + "/" + maxRetries + "...");
+                try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+                if (attempt == maxRetries) {
+                    System.err.println("[Discovery] ❌ Không thể khởi động Discovery Server sau " + maxRetries + " lần thử. Client sẽ cần nhập IP thủ công.");
+                    return;
+                }
+            }
+        }
+
         try {
-            socket = new DatagramSocket(DISCOVERY_PORT);
-            socket.setBroadcast(true);
-            System.out.println("[Discovery] Đang lắng nghe yêu cầu tìm Server trên cổng " + DISCOVERY_PORT + "...");
+            System.out.println("[Discovery] ✅ Đang lắng nghe yêu cầu tìm Server trên cổng " + DISCOVERY_PORT + "...");
 
             while (isRunning) {
                 byte[] buf = new byte[256];
@@ -67,6 +84,8 @@ public class DiscoveryServer implements Runnable {
             if (isRunning) {
                 System.err.println("[Discovery] Lỗi: " + e.getMessage());
             }
+        } finally {
+            if (socket != null && !socket.isClosed()) socket.close();
         }
     }
 

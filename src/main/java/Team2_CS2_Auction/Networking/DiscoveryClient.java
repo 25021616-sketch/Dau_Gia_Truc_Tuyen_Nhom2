@@ -17,17 +17,30 @@ public class DiscoveryClient {
     private static final int DISCOVERY_PORT = 8888;
     private static final String REQUEST_MSG  = "DISCOVER_AUCTION_SERVER_REQUEST";
     private static final String RESPONSE_PREFIX = "DISCOVER_AUCTION_SERVER_RESPONSE:";
-    private static final int TIMEOUT_MS = 3000; // Đợi tối đa 3 giây
+    private static final int TIMEOUT_MS = 4000; // Đợi tối đa 4 giây mỗi lần
+    private static final int MAX_ATTEMPTS = 2;  // Thử tối đa 2 lần
 
     public static String discoverServerIp() {
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            System.out.println("[Discovery] Lần thử " + attempt + "/" + MAX_ATTEMPTS + " tìm Server...");
+            String result = tryDiscover();
+            if (result != null) return result;
+        }
+        return null; // Không tìm thấy
+    }
+
+    private static String tryDiscover() {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
             socket.setSoTimeout(TIMEOUT_MS);
 
             byte[] sendData = REQUEST_MSG.getBytes();
 
-            // 1. Broadcast tới 255.255.255.255
+            // 1. Broadcast tới 255.255.255.255 (toàn mạng)
             sendBroadcast(socket, sendData, "255.255.255.255");
+            
+            // 1.5. Gửi trực tiếp tới 127.0.0.1 để đảm bảo chạy trên cùng 1 máy tính luôn tìm thấy nhau
+            sendBroadcast(socket, sendData, "127.0.0.1");
 
             // 2. Broadcast tới tất cả broadcast address của các interface
             Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
@@ -49,18 +62,17 @@ public class DiscoveryClient {
 
             String msg = new String(response.getData(), 0, response.getLength()).trim();
             if (msg.startsWith(RESPONSE_PREFIX)) {
-                // Lấy IP thực mà Server gửi về (độ tin cậy cao hơn lấy source IP của packet)
                 String ip = msg.substring(RESPONSE_PREFIX.length()).trim();
-                System.out.println("[Discovery] Tìm thấy Server tại: " + ip);
+                System.out.println("[Discovery] ✅ Tìm thấy Server tại: " + ip);
                 return ip;
             }
 
         } catch (java.net.SocketTimeoutException e) {
-            System.out.println("[Discovery] Hết thời gian chờ - không tìm thấy Server tự động.");
+            System.out.println("[Discovery] Hết thời gian chờ lần này.");
         } catch (Exception e) {
             System.out.println("[Discovery] Lỗi khi tìm Server: " + e.getMessage());
         }
-        return null; // Không tìm thấy
+        return null;
     }
 
     private static void sendBroadcast(DatagramSocket socket, byte[] data, String broadcastAddr) {
