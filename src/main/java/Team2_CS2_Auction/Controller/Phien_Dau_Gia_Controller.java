@@ -53,6 +53,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     private double currentPrice;
     private final DecimalFormat formatter = new DecimalFormat("#,###");
 
+    // FIX BUG #2: Guard chống double-click nút "Đặt giá"
+    private boolean isBidding = false;
+
     private NetworkListener networkListener;
     private final NetworkManager nm = NetworkManager.getInstance();
     private final AuctionService auctionService = new AuctionServiceImpl();
@@ -76,6 +79,12 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     }
 
     private void setupNetworkListener() {
+        // FIX BUG #3: Luôn xóa listener cũ trước khi đăng ký listener mới
+        if (networkListener != null) {
+            nm.removeListener(networkListener);
+            networkListener = null;
+        }
+
         networkListener = new NetworkListener() {
             @Override
             public void onMessageReceived(NetworkMessage message) {
@@ -94,6 +103,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                                 currentBidLabel.setText(formatter.format(newPrice));
                                 updateTargetPrice();
 
+                                // Reset guard đặt giá khi nhận được kết quả từ server
+                                isBidding = false;
+
                                 // Cập nhật đồ thị Realtime
                                 if (bidSeries != null) {
                                     String timeNow = java.time.LocalDateTime.now()
@@ -110,6 +122,8 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                             e.printStackTrace();
                         }
                     } else if ("BID_FAILED".equals(message.getAction())) {
+                        // Reset guard khi bid thất bại để người dùng có thể thử lại
+                        isBidding = false;
                         new Alert(Alert.AlertType.ERROR, message.getPayload()).show();
                     }
                 });
@@ -117,13 +131,38 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
             @Override
             public void onConnectionError() {
+                Platform.runLater(() -> isBidding = false);
             }
         };
         nm.addListener(networkListener);
     }
 
+    /**
+     * FIX BUG #3: Override cleanup() để giải phóng tài nguyên khi rời màn hình.
+     * Dừng timeline và xóa networkListener khỏi NetworkManager.
+     */
+    @Override
+    protected void cleanup() {
+        if (timeline != null) {
+            timeline.stop();
+            timeline = null;
+        }
+        if (networkListener != null) {
+            nm.removeListener(networkListener);
+            networkListener = null;
+        }
+        isBidding = false;
+    }
+
     public void setAuctionData(Auction auction) {
         if (auction == null) return;
+
+        // FIX BUG #4: Dừng timeline cũ trước khi bắt đầu dữ liệu mới
+        if (timeline != null) {
+            timeline.stop();
+            timeline = null;
+        }
+        isBidding = false;
 
         this.currentAuction = auction;
         Item item = auction.getItem();
@@ -270,6 +309,14 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     @FXML
     private void handlePlaceBid() {
         if (currentAuction == null) return;
+
+        // FIX BUG #2: Chống double-click — chỉ cho phép 1 request tại một thời điểm
+        // isBidding sẽ được reset khi nhận được NEW_BID hoặc BID_FAILED từ server
+        if (isBidding) {
+            System.out.println("[Guard] Đang xử lý đặt giá, bỏ qua click trùng.");
+            return;
+        }
+
         try {
             if (!(Session.currentUser instanceof Member)) {
                 throw new Exception("Chỉ Member mới có thể đặt giá!");
@@ -296,20 +343,31 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 return;
             }
 
+            // Bật guard — sẽ tự reset khi nhận NEW_BID hoặc BID_FAILED
+            isBidding = true;
             nm.send("PLACE_BID", payload);
 
+            // Timeout an toàn: tự động reset guard sau 5 giây nếu server không phản hồi
+            new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(5), e -> {
+                    if (isBidding) {
+                        isBidding = false;
+                        System.out.println("[Guard] Timeout reset isBidding.");
+                    }
+                })
+            ).play();
+
         } catch (Exception e) {
+            isBidding = false;
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         }
     }
 
     @FXML
     private void handleClose(javafx.event.ActionEvent event) {
-        if (timeline != null) timeline.stop();
+        // cleanup() sẽ được gọi tự động bởi Base_Admin_Controller.navigate()
+        // nên không cần duplicate logic ở đây nữa
         if (pollScheduler != null) pollScheduler.shutdownNow();
-        if (networkListener != null) {
-            nm.removeListener(networkListener);
-        }
         switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
     }
 
