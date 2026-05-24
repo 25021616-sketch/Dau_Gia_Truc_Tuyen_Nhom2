@@ -17,6 +17,7 @@ import java.util.List;
 
 public class AuctionRepositoryImpl implements AuctionRepository {
 
+    private final UserRepository userRepo = new UserRepository();
     /**
      * Tìm một phiên đấu giá cụ thể theo ID
      */
@@ -147,9 +148,15 @@ public class AuctionRepositoryImpl implements AuctionRepository {
      * Cập nhật giá thầu mới (Có check giá cao hơn để chống tranh chấp)
      */
     @Override
-    public boolean updateBidPrice(String auctionId, double price, int bidderId) throws Exception {
-        String numericId = auctionId.replace("AUC_", "");
-        // 1. SQL cập nhật giá hiện tại của sản phẩm
+    public boolean updateBidPrice(
+            String auctionId,
+            double price,
+            int bidderId
+    ) throws Exception {
+
+        String numericId =
+                auctionId.replace("AUC_", "");
+
         String sqlUpdateProduct =
                 "UPDATE products " +
                         "SET current_price = ?, last_bidder_id = ? " +
@@ -157,43 +164,72 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                         "AND ? > current_price " +
                         "AND status = 'OPENING' " +
                         "AND end_time > NOW()";
-        // 2. SQL ghi lại lịch sử đặt giá (Để hàm lấy lịch sử có dữ liệu mà JOIN)
-        String sqlInsertBid = "INSERT INTO bid (user_id, product_id, bid_amount, bid_time) VALUES (?, ?, ?, NOW())";
+
+        String sqlInsertBid =
+                "INSERT INTO bid(user_id, product_id, bid_amount, bid_time) " +
+                        "VALUES (?, ?, ?, NOW())";
 
         Connection conn = null;
-        try {
-            conn = DBConnection.getConnection();
-            conn.setAutoCommit(false); // Bật transaction để đảm bảo lưu cả 2 hoặc không gì cả
 
-            // Thực hiện Update Product
-            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateProduct)) {
+        try {
+
+            conn = DBConnection.getConnection();
+
+            conn.setAutoCommit(false);
+
+            // UPDATE PRODUCT
+            try (
+                    PreparedStatement psUpdate =
+                            conn.prepareStatement(sqlUpdateProduct)
+            ) {
+
                 psUpdate.setDouble(1, price);
                 psUpdate.setInt(2, bidderId);
                 psUpdate.setInt(3, Integer.parseInt(numericId));
                 psUpdate.setDouble(4, price);
 
                 if (psUpdate.executeUpdate() == 0) {
+
                     conn.rollback();
+
                     return false;
                 }
             }
 
-            // Thực hiện Insert vào bảng bid
-            try (PreparedStatement psInsert = conn.prepareStatement(sqlInsertBid)) {
+            // INSERT BID
+            try (
+                    PreparedStatement psInsert =
+                            conn.prepareStatement(sqlInsertBid)
+            ) {
+
                 psInsert.setInt(1, bidderId);
                 psInsert.setInt(2, Integer.parseInt(numericId));
                 psInsert.setDouble(3, price);
+
                 psInsert.executeUpdate();
             }
 
             conn.commit();
+
             return true;
+
         } catch (Exception e) {
-            if (conn != null) conn.rollback();
+
+            if (conn != null) {
+
+                conn.rollback();
+            }
+
             e.printStackTrace();
+
             return false;
+
         } finally {
-            if (conn != null) conn.close();
+
+            if (conn != null) {
+
+                conn.close();
+            }
         }
     }
     @Override
@@ -366,78 +402,6 @@ public class AuctionRepositoryImpl implements AuctionRepository {
         return 0;
     }
 
-    public void createTransaction(
-            int productId,
-            int winnerId,
-            double finalPrice
-    ) throws Exception {
-
-        // Kiểm tra transaction đã tồn tại chưa
-        String checkSql =
-                "SELECT id FROM `transaction` WHERE product_id = ?";
-
-        // Insert transaction
-        String insertSql =
-                "INSERT INTO `transaction`(product_id, winner_id, final_price) " +
-                        "VALUES (?, ?, ?)";
-
-        // Update trạng thái sản phẩm
-        String updateProduct =
-                "UPDATE products SET status = 'FINISHED' WHERE id = ?";
-
-        try (Connection conn = DBConnection.getConnection()) {
-
-            // CHECK TRÙNG
-            try (PreparedStatement checkPs =
-                         conn.prepareStatement(checkSql)) {
-
-                checkPs.setInt(1, productId);
-
-                ResultSet rs = checkPs.executeQuery();
-
-                // Nếu đã tồn tại transaction thì bỏ qua
-                if (rs.next()) {
-
-                    System.out.println(
-                            "Transaction đã tồn tại!"
-                    );
-
-                    return;
-                }
-            }
-
-            // INSERT TRANSACTION
-            try (PreparedStatement ps =
-                         conn.prepareStatement(insertSql)) {
-
-                ps.setInt(1, productId);
-
-                ps.setInt(2, winnerId);
-
-                ps.setDouble(3, finalPrice);
-
-                ps.executeUpdate();
-
-                System.out.println(
-                        "Đã tạo transaction!"
-                );
-            }
-
-            // UPDATE STATUS
-            try (PreparedStatement ps =
-                         conn.prepareStatement(updateProduct)) {
-
-                ps.setInt(1, productId);
-
-                ps.executeUpdate();
-
-                System.out.println(
-                        "Đã cập nhật FINISHED!"
-                );
-            }
-        }
-    }
-
     public void finishAuction(int productId) throws Exception {
 
         Connection conn = null;
@@ -496,6 +460,106 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             }
 
             System.out.println("[SCHEDULER] Product " + productId + " | Winner ID=" + winnerId + " | Final Price=" + finalPrice);
+
+            // ===============================
+// THANH TOÁN NGƯỜI THẮNG
+// ===============================
+
+// Lấy số tiền đang bị lock
+            double lockedMoney =
+                    userRepo.getLockedBalance(winnerId);
+
+// Nếu lock nhỏ hơn giá thắng thì lỗi
+            if (lockedMoney < finalPrice) {
+
+                throw new Exception(
+                        "Người thắng không đủ tiền bị khóa!"
+                );
+            }
+
+// Trừ locked_balance
+            boolean unlockSuccess =
+                    userRepo.updateLockedBalance(
+                            winnerId,
+                            lockedMoney - finalPrice
+                    );
+
+            if (!unlockSuccess) {
+
+                throw new Exception(
+                        "Không thể cập nhật locked balance!"
+                );
+            }
+
+// Trừ tiền thật khỏi balance
+            boolean paySuccess =
+                    userRepo.updateBalance(
+                            winnerId,
+                            userRepo.getBalance(winnerId) - finalPrice
+                    );
+
+            if (!paySuccess) {
+
+                throw new Exception(
+                        "Thanh toán thất bại!"
+                );
+            }
+
+            System.out.println(
+                    "[SCHEDULER] Đã trừ tiền người thắng"
+            );
+
+            // ===============================
+// UNLOCK NGƯỜI THUA
+// ===============================
+
+            String loserSql =
+                    "SELECT DISTINCT user_id, bid_amount " +
+                            "FROM bid " +
+                            "WHERE product_id = ? " +
+                            "AND user_id != ?";
+
+            try (
+                    PreparedStatement psLoser =
+                            conn.prepareStatement(loserSql)
+            ) {
+
+                psLoser.setInt(1, productId);
+
+                psLoser.setInt(2, winnerId);
+
+                ResultSet rsLoser =
+                        psLoser.executeQuery();
+
+                while (rsLoser.next()) {
+
+                    int loserId =
+                            rsLoser.getInt("user_id");
+
+                    double loserBid =
+                            rsLoser.getDouble("bid_amount");
+
+                    double currentLocked =
+                            userRepo.getLockedBalance(loserId);
+
+                    double newLocked =
+                            currentLocked - loserBid;
+
+                    if (newLocked < 0) {
+                        newLocked = 0;
+                    }
+
+                    userRepo.updateLockedBalance(
+                            loserId,
+                            newLocked
+                    );
+
+                    System.out.println(
+                            "[SCHEDULER] Unlock tiền user " +
+                                    loserId
+                    );
+                }
+            }
 
             // 3. Kiểm tra `transaction` đã tồn tại chưa
             String checkTransactionSql = "SELECT id FROM `transaction` WHERE product_id = ?";
