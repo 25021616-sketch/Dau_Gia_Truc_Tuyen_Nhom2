@@ -78,6 +78,19 @@ public class AuctionServer {
         broadcast(msg);
     }
 
+    public void sendToUser(int userId, String action, Object payloadObj) {
+        String payloadJson = gson.toJson(payloadObj);
+        NetworkMessage msg = new NetworkMessage(action, payloadJson);
+        String jsonMsg = gson.toJson(msg);
+        synchronized (clients) {
+            for (ClientHandler handler : clients) {
+                if (handler.getLoggedInUserId() == userId) {
+                    handler.sendMessage(jsonMsg);
+                }
+            }
+        }
+    }
+
     public void removeClient(ClientHandler handler) {
         synchronized (clients) {
             clients.remove(handler);

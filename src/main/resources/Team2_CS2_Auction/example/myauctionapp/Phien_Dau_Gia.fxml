@@ -113,15 +113,19 @@
 
                                 <VBox spacing="15.0">
                                     <Label style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #424242;" text="ỦY QUYỀN ĐẤU THẦU TỰ ĐỘNG" />
-                                    <HBox alignment="BOTTOM_LEFT" spacing="15.0">
+                                    <HBox spacing="15.0">
                                         <children>
+                                            <VBox spacing="8" HBox.hgrow="ALWAYS">
+                                                <Label style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #757575;" text="SỐ LẦN BƯỚC GIÁ" />
+                                                <TextField fx:id="autoStepsCountField" prefHeight="45.0" promptText="VD: 1" style="-fx-background-radius: 5;" />
+                                            </VBox>
                                             <VBox spacing="8" HBox.hgrow="ALWAYS">
                                                 <Label style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #757575;" text="GIỚI HẠN TỐI ĐA ($)" />
                                                 <TextField fx:id="autoLimitField" prefHeight="45.0" promptText="Ví dụ: 5000" style="-fx-background-radius: 5;" />
                                             </VBox>
-                                            <Button maxWidth="Infinity" onAction="#handleActivateAutoBid" prefHeight="45.0" style="-fx-border-color: #1A237E; -fx-border-radius: 5; -fx-background-color: transparent; -fx-text-fill: #1A237E; -fx-font-weight: bold; -fx-cursor: hand;" text="KÍCH HOẠT" HBox.hgrow="ALWAYS" />
                                         </children>
                                     </HBox>
+                                    <Button fx:id="btnActivateAutoBid" maxWidth="Infinity" onAction="#handleActivateAutoBid" prefHeight="45.0" style="-fx-border-color: #1A237E; -fx-border-radius: 5; -fx-background-color: transparent; -fx-text-fill: #1A237E; -fx-font-weight: bold; -fx-cursor: hand;" text="KÍCH HOẠT" />
                                 </VBox>
 
                             </children>
