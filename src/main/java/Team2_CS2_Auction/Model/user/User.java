@@ -20,7 +20,7 @@ public class User implements Serializable {
     // THÊM THUỘC TÍNH SỐ DƯ (BALANCE) TẠI ĐÂY
     // ==========================================
     private double balance = 0.0;
-
+    private double lockedBalance = 0.0;
     // ─── Constructors ────────────────────────────────────────────
 
     protected User(int id, String username, String password,
@@ -47,6 +47,14 @@ public class User implements Serializable {
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    public double getLockedBalance() {
+        return lockedBalance;
+    }
+
+    public void setLockedBalance(double lockedBalance) {
+        this.lockedBalance = lockedBalance;
     }
 
     public String getStatus() {
