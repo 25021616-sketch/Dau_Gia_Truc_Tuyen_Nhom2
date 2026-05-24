@@ -71,17 +71,33 @@ public class AuctionServiceImpl implements AuctionService {
      * HÀM ĐẶT GIÁ THỐNG NHẤT - ĐÃ SỬA LOGIC CHUẨN
      */
     @Override
-    public void placeBid(User bidder, String auctionId, double bidAmount) throws Exception {
-        // 1. Lấy thông tin phiên đấu giá từ Repo
-        Auction currentAuction = auctionRepo.findById(auctionId);
-        if (currentAuction == null) throw new Exception("Không tìm thấy phiên đấu giá!");
+    public void placeBid(
+            User bidder,
+            String auctionId,
+            double bidAmount
+    ) throws Exception {
 
-        // 2. GIỮ: Chặn chủ sản phẩm tự đấu giá
-        if (currentAuction.getSeller().getId() == bidder.getId()) {
-            throw new Exception("Bạn không thể đặt giá cho sản phẩm của chính mình!");
+        // 1. Lấy auction
+        Auction currentAuction =
+                auctionRepo.findById(auctionId);
+
+        if (currentAuction == null) {
+
+            throw new Exception(
+                    "Không tìm thấy phiên đấu giá!"
+            );
         }
 
-        // 3. GIỮ: Kiểm tra giá đặt phải cao hơn giá hiện tại
+        // 2. Không cho chủ tự bid
+        if (currentAuction.getSeller().getId()
+                == bidder.getId()) {
+
+            throw new Exception(
+                    "Bạn không thể đấu giá sản phẩm của chính mình!"
+            );
+        }
+
+        // 3. Check giá tối thiểu
         double minimumBid =
                 currentAuction.getCurrentPrice()
                         + currentAuction.getStepPrice();
@@ -94,16 +110,165 @@ public class AuctionServiceImpl implements AuctionService {
             );
         }
 
-        // 4. CHỈ CẬP NHẬT GIÁ SẢN PHẨM TRONG DB
-        // Hàm này sẽ UPDATE products SET current_price = ...
-        boolean success = auctionRepo.updateBidPrice(auctionId, bidAmount, bidder.getId());
+        // 4. Check số dư khả dụng
+        double currentBalance =
+                userRepo.getBalance(
+                        bidder.getId()
+                );
 
-        if (success) {
-            // KHÔNG gọi userRepo.updateBalance nữa -> Tiền trong ví giữ nguyên
-            System.out.println("✅ Đã cập nhật giá mới: $" + bidAmount + " (Không trừ tiền ví)");
+        // 5. Lấy người giữ giá cao nhất cũ
+        int oldHighestBidderId =
+                userRepo.getHighestBidderId(
+                        auctionId
+                );
+
+        //6 LOCK TIỀN NGƯỜI BID
+        // Giá hiện tại trước khi update
+        double oldCurrentPrice =
+                currentAuction.getCurrentPrice();
+
+        // Locked hiện tại của user
+        double currentLocked =
+                userRepo.getLockedBalance(
+                        bidder.getId()
+                );
+
+        double newLockedAmount;
+
+        // ======================================
+        // CASE 1: USER TỰ NÂNG GIÁ
+        // Chỉ cộng phần chênh lệch
+        // ======================================
+
+        if (oldHighestBidderId == bidder.getId()) {
+
+            double difference =
+                    bidAmount - oldCurrentPrice;
+
+            newLockedAmount =
+                    currentLocked + difference;
+
         } else {
-            throw new Exception("Đặt giá thất bại! Có thể người khác vừa đặt mức giá cao hơn.");
+
+            // ======================================
+            // CASE 2: USER MỚI THAM GIA
+            // Lock full giá bid
+            // ======================================
+
+            newLockedAmount =
+                    currentLocked + bidAmount;
         }
+
+// Update lock mới
+        boolean locked =
+                userRepo.updateLockedBalance(
+                        bidder.getId(),
+                        newLockedAmount
+                );
+
+        if (!locked) {
+
+            throw new Exception(
+                    "Không thể lock tiền!"
+            );
+        }
+
+        double availableMoney =
+                currentBalance - currentLocked;
+
+
+        System.out.println(
+                "========== DEBUG BID =========="
+        );
+
+        System.out.println(
+                "Balance DB = " +
+                        currentBalance
+        );
+
+        System.out.println(
+                "Locked DB = " +
+                        currentLocked
+        );
+
+        System.out.println(
+                "Available = " +
+                        availableMoney
+        );
+
+        System.out.println(
+                "Bid Amount = " +
+                        bidAmount
+        );
+
+        if (availableMoney < bidAmount) {
+
+            throw new Exception(
+                    "Số dư khả dụng không đủ!"
+            );
+        }
+
+
+        // ======================================
+        // UNLOCK NGƯỜI BỊ VƯỢT GIÁ
+        // ======================================
+
+        if (oldHighestBidderId > 0 &&
+                oldHighestBidderId != bidder.getId()) {
+
+            double oldLocked =
+                    userRepo.getLockedBalance(
+                            oldHighestBidderId
+                    );
+
+            double newOldLocked =
+                    oldLocked - oldCurrentPrice;
+
+            if (newOldLocked < 0) {
+                newOldLocked = 0;
+            }
+
+            userRepo.updateLockedBalance(
+                    oldHighestBidderId,
+                    newOldLocked
+            );
+
+            System.out.println(
+                    "UNLOCK user cũ: "
+                            + oldHighestBidderId
+            );
+        }
+
+        // 8. Update giá mới
+        boolean success =
+                auctionRepo.updateBidPrice(
+                        auctionId,
+                        bidAmount,
+                        bidder.getId()
+                );
+
+        // 9. Rollback nếu fail
+        if (!success) {
+
+            userRepo.updateLockedBalance(
+                    bidder.getId(),
+                    currentLocked
+            );
+
+            throw new Exception(
+                    "Đặt giá thất bại!"
+            );
+        }
+
+        System.out.println(
+                "✅ Đặt giá thành công và đã lock tiền"
+        );
+
+        bidder.setLockedBalance(
+                userRepo.getLockedBalance(
+                        bidder.getId()
+                )
+        );
     }
 
     @Override
