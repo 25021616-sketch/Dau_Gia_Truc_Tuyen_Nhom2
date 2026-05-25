@@ -414,8 +414,9 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             // nhưng INSERT `transaction` lại thất bại => dữ liệu bị mất
             conn.setAutoCommit(false);
 
-            // 1. Kiểm tra đã FINISHED chưa
-            String checkSql = "SELECT status FROM products WHERE id = ?";
+            // 1. Kiểm tra đã FINISHED chưa và lấy seller_id
+            int sellerId = -1;
+            String checkSql = "SELECT status, seller_id FROM products WHERE id = ?";
             try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
                 checkPs.setInt(1, productId);
                 try (ResultSet checkRs = checkPs.executeQuery()) {
@@ -426,6 +427,7 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                             conn.rollback();
                             return;
                         }
+                        sellerId = checkRs.getInt("seller_id");
                     }
                 }
             }
@@ -508,6 +510,20 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             System.out.println(
                     "[SCHEDULER] Đã trừ tiền người thắng"
             );
+
+            // ===============================
+            // THANH TOÁN CHO NGƯỜI BÁN
+            // ===============================
+            if (sellerId > 0) {
+                double sellerBalance = userRepo.getBalance(sellerId);
+                boolean sellerPaySuccess = userRepo.updateBalance(sellerId, sellerBalance + finalPrice);
+                if (!sellerPaySuccess) {
+                    throw new Exception("Thanh toán tiền cho người bán thất bại!");
+                }
+                System.out.println("[SCHEDULER] Đã cộng tiền cho người bán (Seller ID=" + sellerId + ", Amount=" + finalPrice + ")");
+            } else {
+                System.err.println("[SCHEDULER] Không tìm thấy Seller ID hợp lệ cho product " + productId);
+            }
 
             // ===============================
 // UNLOCK NGƯỜI THUA
