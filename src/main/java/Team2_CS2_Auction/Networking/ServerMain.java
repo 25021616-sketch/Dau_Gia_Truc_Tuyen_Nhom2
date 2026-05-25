@@ -77,7 +77,8 @@ public class ServerMain {
                 }
             }
         } catch (Exception ignored) {}
-        return "127.0.0.1 (Không tìm được IP LAN - kiểm tra lại mạng)";
+        System.out.println("⚠️ Không tìm được IP LAN hợp lệ, sử dụng 127.0.0.1");
+        return "127.0.0.1";
     }
 
     /**
