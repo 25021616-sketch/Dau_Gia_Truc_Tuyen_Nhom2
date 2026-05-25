@@ -78,7 +78,7 @@ public class DepositUITest extends ApplicationTest {
                 .findFirst();
 
         if (confirmBtn.isPresent()) {
-            clickOn(confirmBtn.get());
+            interact(() -> confirmBtn.get().fire());
             WaitForAsyncUtils.waitForFxEvents();
 
             Label lblMessage = lookup("#lblMessage").queryAs(Label.class);
