@@ -8,8 +8,12 @@ import java.sql.Connection;
 
 /**
  * Điểm khởi động của Máy Chủ.
- * Chỉ cần chạy file này trên MỘT máy duy nhất.
- * Máy Client chỉ cần chạy Main.java — sẽ tự động kết nối qua Database.
+ * ---------------------------------------------------------------
+ * Chỉ cần chạy file này trên MỘT máy duy nhất (cùng WiFi với Client).
+ * Máy Client chỉ cần chạy Main.java — hệ thống tự động kết nối.
+ * ---------------------------------------------------------------
+ * Cách chạy:
+ *   mvn exec:java -Dexec.mainClass="Team2_CS2_Auction.Networking.ServerMain"
  */
 public class ServerMain {
 
@@ -20,44 +24,40 @@ public class ServerMain {
         System.out.println("  HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN - MÁY CHỦ");
         System.out.println("=================================================");
 
-        // 1. Lấy IP thực của máy (ưu tiên Ngrok nếu đang chạy)
-        String serverIp = getNgrokPublicAddress();
-        if (serverIp != null) {
-            System.out.println("  [NGROK] Địa chỉ Ngrok    : " + serverIp);
-        } else {
-            serverIp = getLanIp();
-            System.out.println("  [LAN]   IP nội bộ        : " + serverIp);
-        }
+        // Lấy IP LAN thật của máy này
+        String serverIp = getLanIp();
+        System.out.println("  IP CỦA MÁY CHỦ (LAN): " + serverIp + ":" + port);
 
-        // 2. Lưu IP lên Database → Client sẽ tự đọc
+        // Lưu IP lên Database → Client sẽ tự đọc
         saveIpToDatabase(serverIp, port);
+
         System.out.println("  => Đã lưu địa chỉ vào Database.");
         System.out.println("  => Máy Client chỉ cần chạy Main.java là kết nối tự động.");
         System.out.println("=================================================");
 
-        // 3. Khởi động Discovery Server (UDP broadcast) cho LAN backup
-        DiscoveryServer discovery = new DiscoveryServer();
-        discovery.start();
+        // Khởi động Discovery Server (UDP broadcast — fallback cho Client)
+        new DiscoveryServer().start();
 
-        // 4. Khởi động Server TCP
+        // Khởi động TCP Server
         AuctionServer server = new AuctionServer();
         Thread serverThread = new Thread(() -> server.start(port));
         serverThread.setDaemon(true);
         serverThread.start();
 
-        // 5. Khởi động Scheduler tự động kết thúc phiên
-        AuctionScheduler scheduler = new AuctionScheduler();
-        scheduler.start();
-        System.out.println("[SCHEDULER] Auto-finish scheduler đã khởi động.");
+        // Khởi động Scheduler tự động kết thúc phiên đấu giá
+        new AuctionScheduler().start();
+
+        System.out.println("[SERVER] Đang chờ Client kết nối tại cổng " + port + "...");
     }
 
-    // ===========================================================
-    // LẤY IP LAN CHÍNH XÁC (UDP socket trick — hoạt động tốt trên Windows)
-    // Không cần lọc card mạng thủ công — OS tự chọn IP phù hợp nhất
-    // ===========================================================
+    /**
+     * Lấy IP LAN chính xác bằng UDP socket trick.
+     * Phương pháp này hoạt động đúng trên Windows mà không cần
+     * lọc thủ công tên card mạng ảo (VirtualBox, VMware, WSL...).
+     */
     public static String getLanIp() {
         try (DatagramSocket socket = new DatagramSocket()) {
-            // Kết nối UDP tới 8.8.8.8 (chỉ để OS chọn interface, không gửi dữ liệu thật)
+            // Chỉ "connect" để OS chọn interface phù hợp, không gửi dữ liệu thật
             socket.connect(InetAddress.getByName("8.8.8.8"), 80);
             String ip = socket.getLocalAddress().getHostAddress();
             if (ip != null && !ip.equals("0.0.0.0")) {
@@ -67,55 +67,26 @@ public class ServerMain {
         return "127.0.0.1";
     }
 
-    // ===========================================================
-    // LẤY ĐỊA CHỈ NGROK (nếu đang chạy ngrok tcp 8080 trên máy này)
-    // ===========================================================
-    private static String getNgrokPublicAddress() {
-        try {
-            java.net.URL url = new java.net.URL("http://127.0.0.1:4040/api/tunnels");
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(2000);
-            conn.setReadTimeout(2000);
-            conn.setRequestMethod("GET");
-            if (conn.getResponseCode() != 200) return null;
-
-            java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(conn.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) sb.append(line);
-            reader.close();
-
-            String json = sb.toString();
-            int tcpIdx = json.indexOf("\"tcp://");
-            if (tcpIdx == -1) tcpIdx = json.indexOf("\"tls://");
-            if (tcpIdx != -1) {
-                int start = tcpIdx + 1;
-                int end = json.indexOf("\"", start);
-                String rawUrl = json.substring(start, end);
-                return rawUrl.replace("tcp://", "").replace("tls://", "");
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
-
-    // ===========================================================
-    // GHI IP + PORT LÊN DATABASE
-    // ===========================================================
+    /**
+     * Ghi IP và Port của Server lên bảng server_config trong MySQL.
+     * Client đọc bảng này khi khởi động để tự động kết nối.
+     */
     private static void saveIpToDatabase(String ip, int port) {
         try (Connection conn = DBConnection.getConnection()) {
+            // Tạo bảng nếu chưa có
             conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS server_config (" +
-                "  id INT PRIMARY KEY, " +
-                "  ip_address VARCHAR(255) NOT NULL, " +
-                "  port INT NOT NULL, " +
+                "  id INT PRIMARY KEY," +
+                "  ip_address VARCHAR(255) NOT NULL," +
+                "  port INT NOT NULL," +
                 "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
                 ")"
             ).executeUpdate();
 
+            // Ghi IP (upsert — ghi đè nếu đã có)
             conn.prepareStatement(
-                "INSERT INTO server_config (id, ip_address, port) VALUES (1, '" + ip + "', " + port + ") " +
-                "ON DUPLICATE KEY UPDATE ip_address = '" + ip + "', port = " + port
+                "INSERT INTO server_config (id, ip_address, port) VALUES (1,'" + ip + "'," + port + ") " +
+                "ON DUPLICATE KEY UPDATE ip_address='" + ip + "', port=" + port
             ).executeUpdate();
 
             System.out.println("[DB] ✅ Đã lưu: " + ip + ":" + port);
