@@ -72,5 +72,5 @@ Nếu bạn có thay đổi mã nguồn và muốn tạo lại file JAR, hãy ch
 - [x] (Admin) Xem lịch sử toàn hệ thống.
 
 ## 7. Link báo cáo PDF và video demo
-- **Link báo cáo PDF**: [Gắn link PDF của nhóm bạn tại đây]
-- **Link video demo**: [Gắn link Video YouTube/Drive tại đây]
+- **Link báo cáo PDF**: [Gắn link PDF]
+- **Link video demo**: [Gắn link Video]
