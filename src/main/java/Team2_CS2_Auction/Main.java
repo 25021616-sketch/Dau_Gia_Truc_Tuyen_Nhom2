@@ -41,44 +41,82 @@ public class Main extends Application {
         stage.show();
 
         // =========================================================
-        // Chạy UDP Discovery trên background thread (không block UI)
+        // TỰ ĐỘNG KẾT NỐI: đọc IP từ Database (Server ghi khi khởi động)
         // =========================================================
         new Thread(() -> {
-            System.out.println("[Discovery] Đang tìm kiếm Server tự động trong mạng LAN...");
-            String discoveredIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
-            String input;
+            String serverAddress = null;
 
-            if (discoveredIp != null && !discoveredIp.trim().isEmpty()) {
-                System.out.println("[Discovery] Tìm thấy Server tại IP: " + discoveredIp + "! Đang tự động kết nối...");
-                input = discoveredIp;
-                Platform.runLater(() ->
-                    statusLabel.setText("✅ Tìm thấy máy chủ: " + discoveredIp + " — Đang kết nối..."));
-            } else {
-                System.out.println("[Discovery] Không tìm thấy Server tự động. Hiển thị hộp thoại nhập thủ công.");
-                // Phải hiện dialog trên JavaFX thread
-                final String[] inputHolder = {null};
+            // Bước 1: Đọc IP từ Database (Server đã ghi sẵn khi chạy ServerMain)
+            serverAddress = readServerAddressFromDb();
+            if (serverAddress != null) {
+                System.out.println("[DB] ✅ Tìm thấy Server trong DB: " + serverAddress);
+                final String addr1 = serverAddress;
                 Platform.runLater(() -> {
-                    TextInputDialog dialog = new TextInputDialog("127.0.0.1");
-                    dialog.setTitle("Kết nối đến Máy Chủ");
-                    dialog.setHeaderText("Hệ Thống Đấu Giá Trực Tuyến");
-                    dialog.setContentText("Không tìm thấy Server tự động.\nNhập IP hoặc địa chỉ Server\n(VD: 192.168.1.5 hoặc 0.tcp.ngrok.io:12345):");
-
-                    Optional<String> result = dialog.showAndWait();
-                    if (result.isEmpty()) {
-                        stage.close();
-                        return;
-                    }
-                    inputHolder[0] = result.get().trim();
-                    if (inputHolder[0].isEmpty()) inputHolder[0] = "127.0.0.1";
-                    connectAndLoadUI(stage, inputHolder[0]);
+                    statusLabel.setText("✅ Tìm thấy máy chủ: " + addr1 + " — Đang kết nối...");
+                    connectAndLoadUI(stage, addr1);
                 });
-                return; // Background thread kết thúc, Platform.runLater xử lý tiếp
+                return;
             }
 
-            final String finalInput = input;
-            Platform.runLater(() -> connectAndLoadUI(stage, finalInput));
+            // Bước 2: Fallback — UDP Broadcast trong LAN
+            System.out.println("[Discovery] DB chưa có IP. Đang tìm qua UDP LAN...");
+            String discoveredIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
+            if (discoveredIp != null && !discoveredIp.trim().isEmpty()) {
+                System.out.println("[Discovery] ✅ Tìm thấy qua UDP: " + discoveredIp);
+                final String addr2 = discoveredIp;
+                Platform.runLater(() -> {
+                    statusLabel.setText("✅ Tìm thấy máy chủ: " + addr2 + " — Đang kết nối...");
+                    connectAndLoadUI(stage, addr2);
+                });
+                return;
+            }
+
+            // Bước 3: Fallback cuối — nhập tay (chỉ khi cả DB lẫn UDP đều thất bại)
+            System.out.println("[Discovery] Không tìm thấy tự động. Yêu cầu nhập tay.");
+            Platform.runLater(() -> {
+                TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+                dialog.setTitle("Kết nối đến Máy Chủ");
+                dialog.setHeaderText("Hệ Thống Đấu Giá Trực Tuyến");
+                dialog.setContentText("Không tìm thấy Server tự động.\nNhập IP hoặc địa chỉ Server\n(VD: 192.168.1.5 hoặc 0.tcp.ngrok.io:12345):");
+                Optional<String> result = dialog.showAndWait();
+                if (result.isEmpty()) { stage.close(); return; }
+                String input = result.get().trim();
+                if (input.isEmpty()) input = "127.0.0.1";
+                connectAndLoadUI(stage, input);
+            });
 
         }).start();
+    }
+
+    /** Đọc địa chỉ Server (ip:port) từ bảng server_config trong Database */
+    private String readServerAddressFromDb() {
+        try (java.sql.Connection conn = Team2_CS2_Auction.util.DBConnection.getConnection()) {
+            // Tạo bảng nếu chưa có (đề phòng Client chạy trước Server)
+            conn.prepareStatement(
+                "CREATE TABLE IF NOT EXISTS server_config (" +
+                "  id INT PRIMARY KEY, " +
+                "  ip_address VARCHAR(255) NOT NULL, " +
+                "  port INT NOT NULL, " +
+                "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
+                ")"
+            ).executeUpdate();
+
+            java.sql.PreparedStatement ps = conn.prepareStatement(
+                "SELECT ip_address, port FROM server_config WHERE id = 1"
+            );
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String ip = rs.getString("ip_address");
+                int port = rs.getInt("port");
+                // Chỉ dùng nếu IP là địa chỉ thật (không phải localhost mặc định)
+                if (ip != null && !ip.equals("127.0.0.1") && !ip.isEmpty()) {
+                    return ip + ":" + port;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[DB] Lỗi đọc cấu hình: " + e.getMessage());
+        }
+        return null;
     }
 
     /** Kết nối tới server và tải giao diện đăng nhập */
