@@ -232,6 +232,147 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             }
         }
     }
+
+    @Override
+    public void executeBidTransaction(int bidderId, String auctionId, double bidAmount) throws Exception {
+        String numericId = auctionId.replace("AUC_", "");
+        int productId = Integer.parseInt(numericId);
+
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // 1. Get auction info with FOR UPDATE
+            String sqlProduct = "SELECT seller_id, current_price, step_price, last_bidder_id, status FROM products WHERE id = ? FOR UPDATE";
+            double currentPrice = 0;
+            double stepPrice = 0;
+            int sellerId = 0;
+            int lastBidderId = 0;
+            String status = "";
+
+            try (PreparedStatement psProduct = conn.prepareStatement(sqlProduct)) {
+                psProduct.setInt(1, productId);
+                try (ResultSet rs = psProduct.executeQuery()) {
+                    if (rs.next()) {
+                        sellerId = rs.getInt("seller_id");
+                        currentPrice = rs.getDouble("current_price");
+                        stepPrice = rs.getDouble("step_price");
+                        lastBidderId = rs.getInt("last_bidder_id");
+                        status = rs.getString("status");
+                    } else {
+                        throw new Exception("Không tìm thấy phiên đấu giá!");
+                    }
+                }
+            }
+
+            if (!"OPENING".equals(status) && !"OPEN".equals(status)) {
+                throw new Exception("Phiên đấu giá chưa mở hoặc đã kết thúc!");
+            }
+
+            if (sellerId == bidderId) {
+                throw new Exception("Bạn không thể đấu giá sản phẩm của chính mình!");
+            }
+
+            double minimumBid = currentPrice + stepPrice;
+            if (bidAmount < minimumBid) {
+                throw new Exception("Giá tối thiểu phải là: " + minimumBid);
+            }
+
+            // 2. Get bidder balance with FOR UPDATE
+            String sqlBidder = "SELECT balance, locked_balance FROM user WHERE id = ? FOR UPDATE";
+            double bidderBalance = 0;
+            double bidderLocked = 0;
+
+            try (PreparedStatement psBidder = conn.prepareStatement(sqlBidder)) {
+                psBidder.setInt(1, bidderId);
+                try (ResultSet rs = psBidder.executeQuery()) {
+                    if (rs.next()) {
+                        bidderBalance = rs.getDouble("balance");
+                        bidderLocked = rs.getDouble("locked_balance");
+                    } else {
+                        throw new Exception("Không tìm thấy thông tin tài khoản người đấu giá!");
+                    }
+                }
+            }
+
+            double availableMoney = bidderBalance - bidderLocked;
+            double requiredExtraMoney;
+
+            if (lastBidderId == bidderId) {
+                requiredExtraMoney = bidAmount - currentPrice;
+            } else {
+                requiredExtraMoney = bidAmount;
+            }
+
+            if (availableMoney < requiredExtraMoney) {
+                throw new Exception("Số dư khả dụng không đủ!");
+            }
+
+            // 3. Update Bidder's Locked Balance
+            double newBidderLocked = bidderLocked + requiredExtraMoney;
+            String updateBidderLockedSql = "UPDATE user SET locked_balance = ? WHERE id = ?";
+            try (PreparedStatement psUpdateBidder = conn.prepareStatement(updateBidderLockedSql)) {
+                psUpdateBidder.setDouble(1, newBidderLocked);
+                psUpdateBidder.setInt(2, bidderId);
+                psUpdateBidder.executeUpdate();
+            }
+
+            // 4. Unlock Old Highest Bidder if different
+            if (lastBidderId > 0 && lastBidderId != bidderId) {
+                String sqlOldBidder = "SELECT locked_balance FROM user WHERE id = ? FOR UPDATE";
+                double oldBidderLocked = 0;
+                try (PreparedStatement psOldBidder = conn.prepareStatement(sqlOldBidder)) {
+                    psOldBidder.setInt(1, lastBidderId);
+                    try (ResultSet rsOld = psOldBidder.executeQuery()) {
+                        if (rsOld.next()) {
+                            oldBidderLocked = rsOld.getDouble("locked_balance");
+                        }
+                    }
+                }
+
+                double newOldBidderLocked = oldBidderLocked - currentPrice;
+                if (newOldBidderLocked < 0) newOldBidderLocked = 0;
+
+                String updateOldBidderSql = "UPDATE user SET locked_balance = ? WHERE id = ?";
+                try (PreparedStatement psUpdateOld = conn.prepareStatement(updateOldBidderSql)) {
+                    psUpdateOld.setDouble(1, newOldBidderLocked);
+                    psUpdateOld.setInt(2, lastBidderId);
+                    psUpdateOld.executeUpdate();
+                }
+            }
+
+            // 5. Update Product Price and Last Bidder
+            String updateProductSql = "UPDATE products SET current_price = ?, last_bidder_id = ? WHERE id = ?";
+            try (PreparedStatement psUpdateProduct = conn.prepareStatement(updateProductSql)) {
+                psUpdateProduct.setDouble(1, bidAmount);
+                psUpdateProduct.setInt(2, bidderId);
+                psUpdateProduct.setInt(3, productId);
+                psUpdateProduct.executeUpdate();
+            }
+
+            // 6. Insert Bid History
+            String insertBidSql = "INSERT INTO bid(user_id, product_id, bid_amount, bid_time) VALUES (?, ?, ?, NOW())";
+            try (PreparedStatement psInsertBid = conn.prepareStatement(insertBidSql)) {
+                psInsertBid.setInt(1, bidderId);
+                psInsertBid.setInt(2, productId);
+                psInsertBid.setDouble(3, bidAmount);
+                psInsertBid.executeUpdate();
+            }
+
+            conn.commit();
+        } catch (Exception e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (Exception ignored) {}
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
     @Override
     public List<Auction> findAuctionsByBidderId(int userId) throws Exception {
         List<Auction> results = new ArrayList<>();
@@ -491,6 +632,8 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             System.out.println(
                     "[SCHEDULER] Đã trừ tiền người thắng"
             );
+
+            
 
             // ===============================
 // UNLOCK NGƯỜI THUA
