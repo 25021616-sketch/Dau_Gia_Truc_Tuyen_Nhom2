@@ -13,25 +13,22 @@ public class ServerMain {
         System.out.println("  HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN - MÁY CHỦ");
         System.out.println("=================================================");
         System.out.println("  IP LAN CỦA MÁY NÀY: " + getServerIp());
-        System.out.println("  => Các máy Client sẽ tự động kết nối qua IP LAN này.");
+        System.out.println("  => Hãy dùng IP trên để kết nối từ máy khác.");
         System.out.println("=================================================");
 
-        // 1. Chạy Flyway Migration để chuẩn hóa cơ sở dữ liệu
-        Team2_CS2_Auction.util.DBConnection.runFlywayMigration();
-
-        // 2. Khởi động UDP Discovery Server giúp các máy khách tìm thấy tự động
-        System.out.println("[Discovery] Đang khởi động UDP Discovery Server...");
-        DiscoveryServer discoveryServer = new DiscoveryServer();
-        discoveryServer.start();
-
-        // 3. Khởi động Tunnel ngầm tạo cổng kết nối Internet tự động cho Giảng viên & Trợ giảng
-        System.out.println("[Tunnel] Đang thiết lập đường kết nối Internet tự động...");
-        TunnelManager.startTunnelAsync();
-        Runtime.getRuntime().addShutdownHook(new Thread(TunnelManager::stopTunnel));
-
-        // 4. Khởi động TCP Auction Server
         AuctionServer server = new AuctionServer();
-        server.start(port);
+
+        // ✅ FIX: Chạy server trên Thread riêng để không block luồng chính
+        // Nếu để server.start(port) chạy trực tiếp, nó sẽ block mãi mãi
+        // khiến scheduler.start() phía dưới KHÔNG BAO GIỜ được thực thi.
+        Thread serverThread = new Thread(() -> server.start(port));
+        serverThread.setDaemon(true);
+        serverThread.start();
+
+        AuctionScheduler scheduler = new AuctionScheduler();
+        scheduler.start();
+
+        System.out.println("[SCHEDULER] Auto-finish scheduler đã khởi động.");
     }
 
     /** Lấy địa chỉ IPv4 LAN thực của máy (bỏ qua loopback, mạng ảo) */

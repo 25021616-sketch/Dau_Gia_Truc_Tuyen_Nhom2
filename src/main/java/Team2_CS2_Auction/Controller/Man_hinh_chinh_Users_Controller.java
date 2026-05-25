@@ -46,6 +46,13 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
     }
 
     private void setupNetworkListener() {
+        // FIX BUG #1: Luôn xóa listener cũ trước khi tạo listener mới
+        // Tránh tình trạng listener bị nhân bản mỗi lần onResume() được gọi
+        if (networkListener != null) {
+            nm.removeListener(networkListener);
+            networkListener = null;
+        }
+
         networkListener = new NetworkListener() {
             @Override
             public void onMessageReceived(NetworkMessage message) {
@@ -79,21 +86,22 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
 
     @Override
     protected void cleanup() {
+        // Xóa listener khi rời màn hình
         if (networkListener != null) {
             nm.removeListener(networkListener);
+            networkListener = null;
         }
-        // Phải dừng tất cả các đồng hồ đếm ngược của thẻ sản phẩm
+        // Dừng tất cả các đồng hồ đếm ngược của thẻ sản phẩm
         activeControllers.forEach(ctrl -> {
             if (ctrl != null) ctrl.stopTimeline();
         });
-        // KHÔNG clear activeControllers nữa vì ta đang giữ lại Scene Cache
     }
 
     @Override
     protected void onResume() {
         // Gọi lại khi màn hình thức dậy từ Cache
-        setupNetworkListener(); // Mở lại kết nối Socket
-        loadDataFromServer();   // Chạy ngầm fetch data mới (nếu có SP mới) và cập nhật UI mượt mà
+        setupNetworkListener(); // Mở lại kết nối Socket (đã có guard xóa listener cũ bên trong)
+        loadDataFromServer();   // Chạy ngầm fetch data mới và cập nhật UI mượt mà
         updateBalanceDisplay(); // Cập nhật lại số dư mới nhất
     }
 

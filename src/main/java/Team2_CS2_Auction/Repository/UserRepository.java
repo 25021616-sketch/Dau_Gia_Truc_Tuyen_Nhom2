@@ -11,7 +11,7 @@ public class UserRepository {
 
     public User login(String username, String password) {
         // 1. SỬA QUERY: Thêm cột 'status' vào câu lệnh SELECT
-        String sql = "SELECT id, username, password, phone, role, status FROM user WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))";
+        String sql = "SELECT id, username, password, phone, role, status, balance, locked_balance FROM user WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -37,6 +37,14 @@ public class UserRepository {
 
                     // 2. QUAN TRỌNG: Gán status vào Object User
                     user.setStatus(status != null ? status : "ACTIVE");
+
+                    user.setBalance(
+                            rs.getDouble("balance")
+                    );
+
+                    user.setLockedBalance(
+                            rs.getDouble("locked_balance")
+                    );
 
                     return user;
                 } else {
@@ -239,5 +247,93 @@ public class UserRepository {
         }
 
         return false;
+    }
+
+    public double getLockedBalance(int userId) {
+
+        String sql =
+                "SELECT locked_balance " +
+                        "FROM user WHERE id = ?";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+
+                return rs.getDouble("locked_balance");
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    public boolean updateLockedBalance(
+            int userId,
+            double lockedAmount
+    ) {
+
+        String sql =
+                "UPDATE user " +
+                        "SET locked_balance = ? " +
+                        "WHERE id = ?";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setDouble(1, lockedAmount);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public int getHighestBidderId(String auctionId) {
+
+        String numericId =
+                auctionId.replace("AUC_", "");
+
+        String sql =
+                "SELECT last_bidder_id " +
+                        "FROM products " +
+                        "WHERE id = ?";
+
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, Integer.parseInt(numericId));
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+
+                return rs.getInt("last_bidder_id");
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return -1;
     }
 }
