@@ -3,6 +3,10 @@ package Team2_CS2_Auction.Controller;
 import Team2_CS2_Auction.Model.auction.Auction;
 import Team2_CS2_Auction.Service.AuctionService;
 import Team2_CS2_Auction.Service.AuctionServiceImpl;
+import Team2_CS2_Auction.Networking.NetworkManager;
+import Team2_CS2_Auction.Networking.NetworkMessage;
+import Team2_CS2_Auction.Networking.NetworkListener;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -32,12 +36,31 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
 
     private final AuctionService auctionService = new AuctionServiceImpl();
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private NetworkListener networkListener;
+    private final NetworkManager nm = NetworkManager.getInstance();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         setupTableColumns();
         setupActionButtons();
         loadData();
+        setupNetworkListener();
+    }
+
+    private void setupNetworkListener() {
+        if (networkListener != null) nm.removeListener(networkListener);
+        networkListener = new NetworkListener() {
+            @Override
+            public void onMessageReceived(NetworkMessage message) {
+                if ("PRODUCT_UPDATED".equals(message.getAction())) {
+                    // Admin khác duyệt/từ chối hoặc có SP mới được đăng -> Tải lại bảng ngay
+                    Platform.runLater(() -> loadData());
+                }
+            }
+            @Override
+            public void onConnectionError() {}
+        };
+        nm.addListener(networkListener);
     }
 
     private void setupTableColumns() {
@@ -180,10 +203,11 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
 
     private void handleApproveAction(Auction auction) {
         try {
-            // Đảm bảo Auction Model có hàm getAuctionId()
             auctionService.approveAuction(auction.getAuctionId());
             new Alert(Alert.AlertType.INFORMATION, "Đã duyệt sản phẩm thành công!").show();
             loadData();
+            // Báo cho toàn mạng biết có SP mới được duyệt
+            nm.send("PRODUCT_UPDATED", "");
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
         }
@@ -194,6 +218,8 @@ public class Admin_quan_li_dau_gia_Controller extends Base_Admin_Controller impl
             auctionService.rejectAuction(auction.getAuctionId());
             new Alert(Alert.AlertType.INFORMATION, "Đã từ chối sản phẩm!").show();
             loadData();
+            // Báo cho toàn mạng biết có SP bị từ chối
+            nm.send("PRODUCT_UPDATED", "");
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
         }

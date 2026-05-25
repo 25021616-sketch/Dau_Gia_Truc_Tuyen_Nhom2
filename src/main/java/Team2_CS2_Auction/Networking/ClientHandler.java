@@ -73,15 +73,18 @@ public class ClientHandler {
                     // Gọi Database
                     auctionService.placeBid(dummyBidder, auctionId, bidAmount);
 
-                    // THÀNH CÔNG: BROADCAST CHO MỌI NGƯỜI CÙNG BIẾT
+                    // THÀNH CÔNG: BROADCAST GIÁ MỚI cho toàn mạng
                     JsonObject broadcastPayload = new JsonObject();
                     broadcastPayload.addProperty("auctionId", auctionId);
                     broadcastPayload.addProperty("newPrice", bidAmount);
                     broadcastPayload.addProperty("winnerId", userId);
-                    
+
                     server.broadcast("NEW_BID", broadcastPayload);
                     System.out.println("Đã broadcast giá mới cho " + auctionId + ": $" + bidAmount);
-                    
+
+                    // Gửi số dư mới nhất cho người vừa đặt giá
+                    sendBalanceUpdated(userId);
+
                     // Kích hoạt tiến trình thầu tự động trên luồng phụ
                     int prodId = Integer.parseInt(auctionId.replace("AUC_", ""));
                     new Thread(() -> triggerAutoBidsStart(prodId, userId, bidAmount)).start();
@@ -152,6 +155,12 @@ public class ClientHandler {
                 } catch (Exception e) {
                     sendMessage(gson.toJson(new NetworkMessage("AUTO_BID_FAILED", "Lỗi: " + e.getMessage())));
                 }
+                break;
+            case "PRODUCT_UPDATED":
+                // Nhận tín hiệu từ 1 client (Admin duyệt/từ chối, User đăng SP)
+                // và phát thanh (Broadcast) lại cho TẤT CẢ client biết để reload danh sách
+                System.out.println("[EVENT] Nhận PRODUCT_UPDATED -> Broadcast toàn mạng");
+                server.broadcast("PRODUCT_UPDATED", "");
                 break;
             case "TEST":
                 System.out.println("Payload TEST nhận được: " + message.getPayload());
@@ -228,6 +237,9 @@ public class ClientHandler {
                     
                     server.broadcast("NEW_BID", broadcastPayload);
                     server.sendToUser(activeBid.getUserId(), "AUTO_BID_PLACED", String.valueOf(targetPrice));
+
+                    // Gửi số dư mới nhất cho người vừa được auto-bid thay
+                    sendBalanceUpdatedToUser(activeBid.getUserId());
                     System.out.println("[AUTO-BID] Tự động thầu thành công cho User ID: " + activeBid.getUserId() + " tại giá $" + targetPrice);
 
                     // Đệ quy kích hoạt tiếp với giá mới
@@ -241,6 +253,25 @@ public class ClientHandler {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /** Lấy số dư mới nhất từ DB và gửi BALANCE_UPDATED cho chính user của session này */
+    private void sendBalanceUpdated(int userId) {
+        new Thread(() -> sendBalanceUpdatedToUser(userId)).start();
+    }
+
+    /** Lấy số dư từ DB và gửi BALANCE_UPDATED cho một user cụ thể qua WebSocket */
+    private void sendBalanceUpdatedToUser(int targetUserId) {
+        try {
+            double newBalance = userRepository.getBalance(targetUserId);
+            JsonObject balancePayload = new JsonObject();
+            balancePayload.addProperty("userId", targetUserId);
+            balancePayload.addProperty("balance", newBalance);
+            server.sendToUser(targetUserId, "BALANCE_UPDATED", balancePayload);
+            System.out.println("[BALANCE] Đã gửi số dư cập nhật cho User " + targetUserId + ": $" + newBalance);
+        } catch (Exception e) {
+            System.err.println("[BALANCE] Lỗi cập nhật số dư cho User " + targetUserId + ": " + e.getMessage());
         }
     }
 
