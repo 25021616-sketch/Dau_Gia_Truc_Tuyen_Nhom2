@@ -468,25 +468,24 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             // Lấy số tiền đang bị lock
             double lockedMoney = userRepo.getLockedBalance(winnerId);
 
-            // Nếu lock nhỏ hơn giá thắng thì không throw exception (để tránh treo Scheduler)
-            // mà chỉ in ra cảnh báo và trừ tối đa số locked đang có.
+            // Nếu lock nhỏ hơn giá thắng thì cảnh báo thay vì báo lỗi để không treo hệ thống
             if (lockedMoney < finalPrice) {
-                System.err.println("[WARNING] Người thắng ID=" + winnerId + " không đủ locked_balance (" + lockedMoney + " < " + finalPrice + "). Vẫn tiến hành trừ tiền thật.");
+                System.err.println("[WARNING] Người thắng " + winnerId + " không đủ locked_balance. Vẫn trừ vào số dư thật.");
             }
 
-            // Trừ locked_balance (không để âm)
+            // Trừ locked_balance
             double newWinnerLocked = Math.max(0, lockedMoney - finalPrice);
             boolean unlockSuccess = userRepo.updateLockedBalance(winnerId, newWinnerLocked);
 
             if (!unlockSuccess) {
-                System.err.println("[WARNING] Không thể cập nhật locked balance cho user " + winnerId);
+                System.err.println("[WARNING] Không thể cập nhật locked balance!");
             }
 
             // Trừ tiền thật khỏi balance
             boolean paySuccess = userRepo.updateBalance(winnerId, userRepo.getBalance(winnerId) - finalPrice);
 
             if (!paySuccess) {
-                System.err.println("[WARNING] Thanh toán trừ balance thất bại cho user " + winnerId);
+                System.err.println("[WARNING] Thanh toán thất bại!");
             }
 
             System.out.println(
