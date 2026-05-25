@@ -105,7 +105,10 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                                     bidSeries.getData().add(new XYChart.Data<>(timeNow, newPrice));
                                     // Giới hạn hiển thị 20 điểm gần nhất cho đỡ rối
                                     if (bidSeries.getData().size() > 20) {
-                                        bidSeries.getData().remove(0);
+                                        XYChart.Data<String, Number> removed = bidSeries.getData().remove(0);
+                                        if (bidHistoryChart != null && bidHistoryChart.getXAxis() instanceof javafx.scene.chart.CategoryAxis) {
+                                            ((javafx.scene.chart.CategoryAxis) bidHistoryChart.getXAxis()).getCategories().remove(removed.getXValue());
+                                        }
                                     }
                                 }
                             }
@@ -233,6 +236,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 List<Bid> history = auctionService.getBidHistory(auction.getAuctionId());
                 Platform.runLater(() -> {
                     if (bidSeries != null) {
+                        if (bidHistoryChart != null && bidHistoryChart.getXAxis() instanceof javafx.scene.chart.CategoryAxis) {
+                            ((javafx.scene.chart.CategoryAxis) bidHistoryChart.getXAxis()).getCategories().clear();
+                        }
                         bidSeries.getData().clear();
                         
                         if (history.isEmpty()) {
