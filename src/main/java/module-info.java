@@ -8,6 +8,7 @@ module Team2_CS2_Auction {
     requires java.net.http;
     requires com.google.gson;
     requires java.desktop;
+    requires io.javalin;
 
     // 2. Cho phép JavaFX (FXML) truy cập vào Controller để bắt sự kiện (Button click,...)
     opens Team2_CS2_Auction.Controller to javafx.fxml;

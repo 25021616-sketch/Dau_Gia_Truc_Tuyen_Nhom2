@@ -1,25 +1,35 @@
 package Team2_CS2_Auction.Networking;
 
 import com.google.gson.Gson;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+import com.google.gson.JsonObject;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NetworkManager {
     private static NetworkManager instance;
-    private Socket socket;
-    private PrintWriter out;
-    private BufferedReader in;
-    private Thread listenerThread;
-    
-    private final List<NetworkListener> listeners = new ArrayList<>();
+    private final HttpClient httpClient;
+    private WebSocket webSocket;
+    private final List<NetworkListener> listeners = new CopyOnWriteArrayList<>();
     private final Gson gson = GsonUtil.getGson();
 
-    private NetworkManager() {}
+    private String currentHost;
+    private int currentPort;
+
+    private NetworkManager() {
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+    }
 
     public static synchronized NetworkManager getInstance() {
         if (instance == null) {
@@ -39,77 +49,116 @@ public class NetworkManager {
     }
 
     public boolean isConnected() {
-        return socket != null && socket.isConnected() && !socket.isClosed();
+        return webSocket != null && !webSocket.isOutputClosed() && !webSocket.isInputClosed();
     }
 
+    // ==============================================================
+    // 1. REST API Client: Dùng cho các Request/Response đồng bộ
+    // ==============================================================
+    public UserDTO login(String host, int port, String username, String password, boolean isAdminLogin) throws Exception {
+        this.currentHost = host;
+        this.currentPort = port;
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("username", username);
+        payload.addProperty("password", password);
+        payload.addProperty("isAdminLogin", isAdminLogin);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://" + host + ":" + port + "/api/login"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            return gson.fromJson(response.body(), UserDTO.class);
+        } else {
+            throw new Exception(response.body());
+        }
+    }
+
+    // ==============================================================
+    // 2. WebSocket Client: Dùng cho Real-time Bidding & Events
+    // ==============================================================
     public void connect(String host, int port) {
+        this.currentHost = host;
+        this.currentPort = port;
         try {
-            socket = new Socket(host, port);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            URI wsUri = URI.create("ws://" + host + ":" + port + "/ws/auction");
+            this.webSocket = httpClient.newWebSocketBuilder()
+                    .buildAsync(wsUri, new WebSocket.Listener() {
+                        StringBuilder textBuilder = new StringBuilder();
 
-            System.out.println("Đã kết nối tới Server: " + host + ":" + port);
+                        @Override
+                        public void onOpen(WebSocket webSocket) {
+                            System.out.println("Đã kết nối WebSocket tới: " + wsUri);
+                            WebSocket.Listener.super.onOpen(webSocket);
+                        }
 
-            // Start listening thread
-            listenerThread = new Thread(this::listenToServer);
-            listenerThread.setDaemon(true); // Terminate when main app closes
-            listenerThread.start();
+                        @Override
+                        public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+                            textBuilder.append(data);
+                            if (last) {
+                                String jsonMessage = textBuilder.toString();
+                                textBuilder.setLength(0); // Clear builder
+                                handleIncomingMessage(jsonMessage);
+                            }
+                            return WebSocket.Listener.super.onText(webSocket, data, last);
+                        }
 
-        } catch (IOException e) {
-            System.err.println("Không thể kết nối tới Server: " + e.getMessage());
+                        @Override
+                        public void onError(WebSocket webSocket, Throwable error) {
+                            System.err.println("Lỗi WebSocket: " + error.getMessage());
+                            notifyConnectionError();
+                        }
+
+                        @Override
+                        public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+                            System.out.println("WebSocket đóng kết nối: " + reason);
+                            notifyConnectionError();
+                            return null;
+                        }
+                    }).join();
+        } catch (Exception e) {
+            System.err.println("Không thể kết nối WebSocket: " + e.getMessage());
             notifyConnectionError();
         }
     }
 
-    private void listenToServer() {
+    private void handleIncomingMessage(String jsonMessage) {
         try {
-            String jsonMessage;
-            while ((jsonMessage = in.readLine()) != null) {
-                // Parse JSON to NetworkMessage
-                NetworkMessage message = gson.fromJson(jsonMessage, NetworkMessage.class);
-                notifyListeners(message);
+            NetworkMessage message = gson.fromJson(jsonMessage, NetworkMessage.class);
+            for (NetworkListener listener : listeners) {
+                listener.onMessageReceived(message);
             }
-        } catch (IOException e) {
-            System.out.println("Kết nối tới Server bị đóng hoặc có lỗi: " + e.getMessage());
-            notifyConnectionError();
-        } finally {
-            disconnect();
+        } catch (Exception e) {
+            System.err.println("Lỗi parse JSON từ Server: " + e.getMessage());
         }
     }
 
     public void send(String action, Object payloadObj) {
-        if (out != null) {
+        if (webSocket != null) {
             String payloadJson = gson.toJson(payloadObj);
             NetworkMessage msg = new NetworkMessage(action, payloadJson);
             String jsonMsg = gson.toJson(msg);
-            out.println(jsonMsg);
+            webSocket.sendText(jsonMsg, true);
         } else {
-            System.err.println("Chưa kết nối tới server. Không thể gửi tin nhắn.");
-        }
-    }
-
-    private void notifyListeners(NetworkMessage message) {
-        // We might want to run this on JavaFX Application Thread depending on use case,
-        // but let's notify directly. JavaFX controllers should use Platform.runLater
-        for (NetworkListener listener : new ArrayList<>(listeners)) {
-            listener.onMessageReceived(message);
+            System.err.println("Chưa kết nối WebSocket. Không thể gửi tin nhắn.");
         }
     }
 
     private void notifyConnectionError() {
-        for (NetworkListener listener : new ArrayList<>(listeners)) {
+        for (NetworkListener listener : listeners) {
             listener.onConnectionError();
         }
     }
 
     public void disconnect() {
-        try {
-            if (out != null) out.close();
-            if (in != null) in.close();
-            if (socket != null && !socket.isClosed()) socket.close();
-            System.out.println("Đã ngắt kết nối khỏi Server.");
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (webSocket != null) {
+            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Client đóng ứng dụng");
+            System.out.println("Đã ngắt kết nối WebSocket.");
         }
     }
 }

@@ -140,110 +140,56 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         // Khởi động Background Thread để làm việc với mạng (Loại bỏ hoàn toàn cảm giác lag đơ)
         new Thread(() -> {
             NetworkManager nm = NetworkManager.getInstance();
+            String host = Team2_CS2_Auction.Main.getLastServerHost();
+            int port = Team2_CS2_Auction.Main.getLastServerPort();
 
-            // Nếu chưa kết nối thì thử kết nối lại tới server đã biết (từ Main.java)
-            if (!nm.isConnected()) {
-                String lastHost = Team2_CS2_Auction.Main.getLastServerHost();
-                int lastPort = Team2_CS2_Auction.Main.getLastServerPort();
-                nm.connect(lastHost, lastPort);
-            }
+            try {
+                // 1. Gọi REST API để xác thực đăng nhập
+                UserDTO userDTO = nm.login(host, port, username, password, isAdminLogin);
+                User user = userDTO.toUser();
+                Session.currentUser = user;
 
-            // Kiểm tra kết nối
-            if (!nm.isConnected()) {
+                // 2. Mở kết nối WebSocket sau khi đăng nhập thành công để nhận sự kiện real-time
+                nm.connect(host, port);
+                
+                // Báo cho Server biết session WebSocket này thuộc về user nào
+                JsonObject wsPayload = new JsonObject();
+                wsPayload.addProperty("userId", user.getId());
+                nm.send("LOGIN_WEBSOCKET", wsPayload);
+
                 Platform.runLater(() -> {
-                    // Phục hồi lại trạng thái nút bấm
-                    restoreLoginUIState();
                     if (lblMessage != null) {
-                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
-                        lblMessage.setText("❌ Lỗi kết nối: Không thể kết nối tới máy chủ!");
-                    }
-                });
-                return;
-            }
-
-            // Giao tiếp qua Socket
-            Platform.runLater(() -> {
-                if (lblMessage != null) {
-                    lblMessage.setTextFill(javafx.scene.paint.Color.web("#20335e"));
-                    lblMessage.setText("⏳ Đang xác thực tài khoản...");
-                }
-
-                NetworkListener listener = new NetworkListener() {
-                    @Override
-                    public void onMessageReceived(NetworkMessage message) {
-                        if ("LOGIN_SUCCESS".equals(message.getAction())) {
-                            Platform.runLater(() -> {
-                                try {
-                                    Gson gson = GsonUtil.getGson();
-                                    UserDTO userDTO = gson.fromJson(message.getPayload(), UserDTO.class);
-                                    User user = userDTO.toUser(); // Chuyển đổi từ DTO sang Model
-                                    Session.currentUser = user;
-
-                                    if (lblMessage != null) {
-                                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#2E7D32"));
-                                        lblMessage.setText("✅ Đăng nhập thành công! Đang vào...");
-                                    }
-
-                                    if (isAdminLogin) {
-                                        if (user.getRole() == UserRole.ADMIN) {
-                                            restoreLoginUIState();
-                                            navigateTo(event, FXML_ADMIN_HOME, "Hệ thống quản trị");
-                                        } else {
-                                            restoreLoginUIState();
-                                            if (lblMessage != null) {
-                                                lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
-                                                lblMessage.setText("⚠ Tài khoản không có quyền Admin!");
-                                            }
-                                        }
-                                    } else {
-                                        restoreLoginUIState();
-                                        navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    restoreLoginUIState();
-                                    if (lblMessage != null) {
-                                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
-                                        lblMessage.setText("❌ Lỗi xử lý dữ liệu: " + e.getMessage());
-                                    }
-                                }
-                            });
-                            nm.removeListener(this);
-                        } else if ("LOGIN_FAILED".equals(message.getAction())) {
-                            Platform.runLater(() -> {
-                                restoreLoginUIState();
-                                if (lblMessage != null) {
-                                    lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
-                                    lblMessage.setText("❌ " + message.getPayload());
-                                }
-                            });
-                            nm.removeListener(this);
-                        }
+                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#2E7D32"));
+                        lblMessage.setText("✅ Đăng nhập thành công! Đang vào...");
                     }
 
-                    @Override
-                    public void onConnectionError() {
-                        Platform.runLater(() -> {
+                    if (isAdminLogin) {
+                        if (user.getRole() == UserRole.ADMIN) {
+                            restoreLoginUIState();
+                            navigateTo(event, FXML_ADMIN_HOME, "Hệ thống quản trị");
+                        } else {
                             restoreLoginUIState();
                             if (lblMessage != null) {
                                 lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
-                                lblMessage.setText("❌ Mất kết nối tới máy chủ!");
+                                lblMessage.setText("⚠ Tài khoản không có quyền Admin!");
                             }
-                        });
-                        nm.removeListener(this);
+                        }
+                    } else {
+                        restoreLoginUIState();
+                        navigateTo(event, FXML_USER_HOME, "Sàn đấu giá");
                     }
-                };
+                });
 
-                nm.addListener(listener);
-
-                // Gửi thông tin đăng nhập
-                JsonObject payload = new JsonObject();
-                payload.addProperty("username", username);
-                payload.addProperty("password", password);
-                payload.addProperty("isAdminLogin", isAdminLogin);
-                
-                nm.send("LOGIN", payload);
-            });
+            } catch (Exception e) {
+                // Đăng nhập thất bại hoặc lỗi kết nối
+                Platform.runLater(() -> {
+                    restoreLoginUIState();
+                    if (lblMessage != null) {
+                        lblMessage.setTextFill(javafx.scene.paint.Color.web("#C62828"));
+                        lblMessage.setText("❌ " + e.getMessage());
+                    }
+                });
+            }
         }).start();
     }
 

@@ -2,7 +2,6 @@ package Team2_CS2_Auction.Networking;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Model.user.Member;
 import Team2_CS2_Auction.Model.auction.AutoBid;
 import Team2_CS2_Auction.Model.auction.Auction;
@@ -10,23 +9,15 @@ import Team2_CS2_Auction.Repository.AutoBidRepository;
 import Team2_CS2_Auction.Repository.UserRepository;
 import Team2_CS2_Auction.Repository.AuctionRepository;
 import Team2_CS2_Auction.Repository.AuctionRepositoryImpl;
-import Team2_CS2_Auction.Service.UserService;
 import Team2_CS2_Auction.Service.AuctionService;
 import Team2_CS2_Auction.Service.AuctionServiceImpl;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+import io.javalin.websocket.WsContext;
 import java.util.List;
 
-public class ClientHandler implements Runnable {
-    private final Socket socket;
-    private final AuctionServer server;
-    private PrintWriter out;
-    private BufferedReader in;
+public class ClientHandler {
+    private final WsContext ctx;
+    private final JavalinServer server;
     private final Gson gson = GsonUtil.getGson();
-    private final UserService userService = new UserService();
     private final AuctionService auctionService = new AuctionServiceImpl();
     
     private int loggedInUserId = -1;
@@ -34,8 +25,8 @@ public class ClientHandler implements Runnable {
     private final UserRepository userRepository = new UserRepository();
     private final AuctionRepository auctionRepository = new AuctionRepositoryImpl();
 
-    public ClientHandler(Socket socket, AuctionServer server) {
-        this.socket = socket;
+    public ClientHandler(WsContext ctx, JavalinServer server) {
+        this.ctx = ctx;
         this.server = server;
     }
 
@@ -43,25 +34,14 @@ public class ClientHandler implements Runnable {
         return loggedInUserId;
     }
 
-    @Override
-    public void run() {
+    // Được gọi bởi JavalinServer mỗi khi nhận tin nhắn WebSocket
+    public void handleIncomingMessage(String jsonMessage) {
         try {
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            String jsonMessage;
-            while ((jsonMessage = in.readLine()) != null) {
-                System.out.println("Server nhận: " + jsonMessage);
-                
-                // Parse message to NetworkMessage
-                NetworkMessage message = gson.fromJson(jsonMessage, NetworkMessage.class);
-                handleMessage(message);
-            }
-        } catch (IOException e) {
-            System.out.println("Client mất kết nối: " + e.getMessage());
-        } finally {
-            closeConnection();
-            server.removeClient(this);
+            System.out.println("WebSocket Server nhận: " + jsonMessage);
+            NetworkMessage message = gson.fromJson(jsonMessage, NetworkMessage.class);
+            handleMessage(message);
+        } catch (Exception e) {
+            System.err.println("Lỗi parse tin nhắn WebSocket: " + e.getMessage());
         }
     }
     
@@ -69,30 +49,17 @@ public class ClientHandler implements Runnable {
         String action = message.getAction();
         
         switch (action) {
-            case "LOGIN":
+            case "LOGIN_WEBSOCKET":
+                // Gửi một dummy action nếu client muốn báo cho server biết session này thuộc về user nào (sau khi REST login)
                 try {
-                    // Phân tích payload
                     JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
-                    String username = payload.get("username").getAsString();
-                    String password = payload.get("password").getAsString();
-                    boolean isAdminLogin = payload.has("isAdminLogin") && payload.get("isAdminLogin").getAsBoolean();
-
-                    // Gọi logic từ UserService (truy xuất DB)
-                    User user = userService.handleLoginLogic(username, password, isAdminLogin);
-                    this.loggedInUserId = user.getId();
-                    
-                    // GỬI DTO THAY VÌ GỬI TRỰC TIẾP MODEL ĐỂ TRÁNH LỖI GSON
-                    UserDTO dto = UserDTO.fromUser(user);
-                    NetworkMessage response = new NetworkMessage("LOGIN_SUCCESS", gson.toJson(dto));
-                    sendMessage(gson.toJson(response));
-                    System.out.println("Đăng nhập thành công: " + username);
+                    this.loggedInUserId = payload.get("userId").getAsInt();
+                    System.out.println("WebSocket Session gắn với User ID: " + this.loggedInUserId);
                 } catch (Exception e) {
-                    // Gửi lỗi về Client
-                    NetworkMessage response = new NetworkMessage("LOGIN_FAILED", e.getMessage());
-                    sendMessage(gson.toJson(response));
-                    System.out.println("Đăng nhập thất bại: " + e.getMessage());
+                    e.printStackTrace();
                 }
                 break;
+                
             case "PLACE_BID":
                 try {
                     JsonObject bidPayload = gson.fromJson(message.getPayload(), JsonObject.class);
@@ -193,12 +160,10 @@ public class ClientHandler implements Runnable {
                 sendMessage(gson.toJson(response));
                 break;
             default:
-                System.out.println("Action không hợp lệ: " + action);
+                System.out.println("Action không hợp lệ trên WebSocket: " + action);
                 break;
         }
     }
-
-
 
     private void triggerAutoBidsStart(int productId, int currentWinnerId, double currentPrice) {
         try {
@@ -218,7 +183,7 @@ public class ClientHandler implements Runnable {
         try {
             String auctionId = "AUC_" + productId;
 
-            // Lấy tất cả Auto Bid đang hoạt động cho sản phẩm này kèm balance (Chỉ tốn đúng 1 kết nối mạng)
+            // Lấy tất cả Auto Bid đang hoạt động cho sản phẩm này kèm balance
             List<AutoBid> activeBids = autoBidRepository.getActiveAutoBidsByProduct(productId);
 
             for (AutoBid activeBid : activeBids) {
@@ -230,7 +195,7 @@ public class ClientHandler implements Runnable {
                 // Tính toán giá thầu tự động mới
                 double targetPrice = currentPrice + (activeBid.getStepMultiplier() * stepPrice);
 
-                // Kiểm tra giới hạn tối đa (Không tốn kết nối mạng vì maxLimit có sẵn)
+                // Kiểm tra giới hạn tối đa
                 if (targetPrice > activeBid.getMaxLimit()) {
                     // Tắt Auto Bid
                     autoBidRepository.deactivate(activeBid.getUserId(), productId);
@@ -238,7 +203,7 @@ public class ClientHandler implements Runnable {
                     continue;
                 }
 
-                // Kiểm tra số dư khả dụng (balance - locked) vì balance trong AutoBid là tổng balance
+                // Kiểm tra số dư khả dụng (balance - locked)
                 double balance = activeBid.getBalance();
                 double lockedBalance = userRepository.getLockedBalance(activeBid.getUserId());
                 double availableBalance = balance - lockedBalance;
@@ -265,7 +230,7 @@ public class ClientHandler implements Runnable {
                     server.sendToUser(activeBid.getUserId(), "AUTO_BID_PLACED", String.valueOf(targetPrice));
                     System.out.println("[AUTO-BID] Tự động thầu thành công cho User ID: " + activeBid.getUserId() + " tại giá $" + targetPrice);
 
-                    // Đệ quy kích hoạt tiếp với giá mới (Hoàn toàn không tốn kết nối findById!)
+                    // Đệ quy kích hoạt tiếp với giá mới
                     triggerAutoBids(productId, activeBid.getUserId(), targetPrice, stepPrice);
                     return; // Dừng vòng lặp này vì luồng đệ quy sẽ xử lý tiếp các thầu sau
                 } catch (Exception ex) {
@@ -280,18 +245,8 @@ public class ClientHandler implements Runnable {
     }
 
     public void sendMessage(String jsonMsg) {
-        if (out != null) {
-            out.println(jsonMsg);
-        }
-    }
-
-    public void closeConnection() {
-        try {
-            if (out != null) out.close();
-            if (in != null) in.close();
-            if (socket != null && !socket.isClosed()) socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (ctx.session.isOpen()) {
+            ctx.send(jsonMsg);
         }
     }
 }

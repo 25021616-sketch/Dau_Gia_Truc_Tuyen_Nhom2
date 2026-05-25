@@ -38,11 +38,10 @@ public class ServerMain {
         // Khởi động Discovery Server (UDP broadcast — fallback cho Client)
         new DiscoveryServer().start();
 
-        // Khởi động TCP Server
-        AuctionServer server = new AuctionServer();
-        Thread serverThread = new Thread(() -> server.start(port));
-        serverThread.setDaemon(true);
-        serverThread.start();
+        // Khởi động Javalin Server (REST + WebSocket)
+        JavalinServer server = new JavalinServer();
+        server.start(port); // Javalin.start() runs on its own thread automatically
+
 
         // Khởi động Scheduler tự động kết thúc phiên đấu giá
         new AuctionScheduler().start();
