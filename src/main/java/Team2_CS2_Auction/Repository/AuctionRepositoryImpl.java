@@ -412,7 +412,7 @@ public class AuctionRepositoryImpl implements AuctionRepository {
 
     @Override
     public List<Bid> getBidHistory(String auctionId) throws Exception {
-        String numericId = auctionId.replace("AUC_", "");
+        String numericId = auctionId.replace("AUC_", "").replace("AUC", "");
         List<Bid> history = new ArrayList<>();
         String sql = "SELECT * FROM bid WHERE product_id = ? ORDER BY bid_time ASC";
 

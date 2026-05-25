@@ -83,7 +83,8 @@ public class UserMainUITest extends ApplicationTest {
     @Test
     public void testSceneIsNotEmpty() {
         // Kiểm tra scene chứa ít nhất 1 node con
-        var scene = targetWindow().getScene();
+        Label lblUsername = lookup("#lblUsername").queryAs(Label.class);
+        var scene = lblUsername.getScene();
         assertNotNull(scene, "Scene không được null");
         assertNotNull(scene.getRoot(), "Root không được null");
     }
