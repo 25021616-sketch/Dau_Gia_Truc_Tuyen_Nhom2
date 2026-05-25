@@ -89,24 +89,12 @@ public class DiscoveryServer implements Runnable {
         }
     }
 
-    /** Lấy địa chỉ IPv4 LAN thực (bỏ qua loopback, mạng ảo) */
+    /** Lấy IP LAN chính xác bằng UDP socket trick (hoạt động tốt trên Windows) */
     public static String getLanIp() {
-        try {
-            Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
-            while (ifaces.hasMoreElements()) {
-                NetworkInterface iface = ifaces.nextElement();
-                if (!iface.isUp() || iface.isLoopback() || iface.isVirtual()) continue;
-                String name = iface.getName().toLowerCase();
-                if (name.contains("vbox") || name.contains("vmware") || name.contains("wsl")) continue;
-
-                Enumeration<InetAddress> addrs = iface.getInetAddresses();
-                while (addrs.hasMoreElements()) {
-                    InetAddress addr = addrs.nextElement();
-                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
-                        return addr.getHostAddress();
-                    }
-                }
-            }
+        try (java.net.DatagramSocket socket = new java.net.DatagramSocket()) {
+            socket.connect(java.net.InetAddress.getByName("8.8.8.8"), 80);
+            String ip = socket.getLocalAddress().getHostAddress();
+            if (ip != null && !ip.equals("0.0.0.0")) return ip;
         } catch (Exception ignored) {}
         return "127.0.0.1";
     }

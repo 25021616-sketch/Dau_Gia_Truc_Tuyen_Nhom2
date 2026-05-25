@@ -2,9 +2,9 @@ package Team2_CS2_Auction.Networking;
 
 import Team2_CS2_Auction.util.DBConnection;
 
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 /**
  * Điểm khởi động của Máy Chủ.
@@ -12,6 +12,7 @@ import java.sql.ResultSet;
  * Máy Client chỉ cần chạy Main.java — sẽ tự động kết nối qua Database.
  */
 public class ServerMain {
+
     public static void main(String[] args) {
         int port = 8080;
 
@@ -34,20 +35,40 @@ public class ServerMain {
         System.out.println("  => Máy Client chỉ cần chạy Main.java là kết nối tự động.");
         System.out.println("=================================================");
 
-        // 3. Khởi động Server TCP
+        // 3. Khởi động Discovery Server (UDP broadcast) cho LAN backup
+        DiscoveryServer discovery = new DiscoveryServer();
+        discovery.start();
+
+        // 4. Khởi động Server TCP
         AuctionServer server = new AuctionServer();
         Thread serverThread = new Thread(() -> server.start(port));
         serverThread.setDaemon(true);
         serverThread.start();
 
-        // 4. Khởi động Scheduler tự động kết thúc phiên
+        // 5. Khởi động Scheduler tự động kết thúc phiên
         AuctionScheduler scheduler = new AuctionScheduler();
         scheduler.start();
         System.out.println("[SCHEDULER] Auto-finish scheduler đã khởi động.");
     }
 
     // ===========================================================
-    // LẤY ĐỊA CHỈ NGROK (nếu đang chạy ngrok trên máy này)
+    // LẤY IP LAN CHÍNH XÁC (UDP socket trick — hoạt động tốt trên Windows)
+    // Không cần lọc card mạng thủ công — OS tự chọn IP phù hợp nhất
+    // ===========================================================
+    public static String getLanIp() {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            // Kết nối UDP tới 8.8.8.8 (chỉ để OS chọn interface, không gửi dữ liệu thật)
+            socket.connect(InetAddress.getByName("8.8.8.8"), 80);
+            String ip = socket.getLocalAddress().getHostAddress();
+            if (ip != null && !ip.equals("0.0.0.0")) {
+                return ip;
+            }
+        } catch (Exception ignored) {}
+        return "127.0.0.1";
+    }
+
+    // ===========================================================
+    // LẤY ĐỊA CHỈ NGROK (nếu đang chạy ngrok tcp 8080 trên máy này)
     // ===========================================================
     private static String getNgrokPublicAddress() {
         try {
@@ -56,7 +77,6 @@ public class ServerMain {
             conn.setConnectTimeout(2000);
             conn.setReadTimeout(2000);
             conn.setRequestMethod("GET");
-
             if (conn.getResponseCode() != 200) return null;
 
             java.io.BufferedReader reader = new java.io.BufferedReader(
@@ -67,46 +87,16 @@ public class ServerMain {
             reader.close();
 
             String json = sb.toString();
-
-            // Tìm tcp tunnel: "public_url":"tcp://X.tcp.ngrok.io:PORT"
             int tcpIdx = json.indexOf("\"tcp://");
             if (tcpIdx == -1) tcpIdx = json.indexOf("\"tls://");
             if (tcpIdx != -1) {
-                int start = tcpIdx + 1; // bỏ dấu "
+                int start = tcpIdx + 1;
                 int end = json.indexOf("\"", start);
-                String rawUrl = json.substring(start, end); // tcp://X.tcp.ngrok.io:PORT
+                String rawUrl = json.substring(start, end);
                 return rawUrl.replace("tcp://", "").replace("tls://", "");
             }
-        } catch (Exception ignored) {
-            // Ngrok chưa chạy → bỏ qua
-        }
-        return null;
-    }
-
-    // ===========================================================
-    // LẤY IP LAN NỘI BỘ
-    // ===========================================================
-    private static String getLanIp() {
-        try {
-            java.util.Enumeration<java.net.NetworkInterface> ifaces =
-                    java.net.NetworkInterface.getNetworkInterfaces();
-            while (ifaces.hasMoreElements()) {
-                java.net.NetworkInterface iface = ifaces.nextElement();
-                if (!iface.isUp() || iface.isLoopback() || iface.isVirtual()) continue;
-                String name = iface.getName().toLowerCase();
-                if (name.contains("vbox") || name.contains("vmware") ||
-                    name.contains("wsl") || name.contains("docker")) continue;
-
-                java.util.Enumeration<java.net.InetAddress> addrs = iface.getInetAddresses();
-                while (addrs.hasMoreElements()) {
-                    java.net.InetAddress addr = addrs.nextElement();
-                    if (addr instanceof java.net.Inet4Address && !addr.isLoopbackAddress()) {
-                        return addr.getHostAddress();
-                    }
-                }
-            }
         } catch (Exception ignored) {}
-        return "127.0.0.1";
+        return null;
     }
 
     // ===========================================================
@@ -114,7 +104,6 @@ public class ServerMain {
     // ===========================================================
     private static void saveIpToDatabase(String ip, int port) {
         try (Connection conn = DBConnection.getConnection()) {
-            // Tạo bảng nếu chưa có
             conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS server_config (" +
                 "  id INT PRIMARY KEY, " +
@@ -124,7 +113,6 @@ public class ServerMain {
                 ")"
             ).executeUpdate();
 
-            // Upsert dòng id=1
             conn.prepareStatement(
                 "INSERT INTO server_config (id, ip_address, port) VALUES (1, '" + ip + "', " + port + ") " +
                 "ON DUPLICATE KEY UPDATE ip_address = '" + ip + "', port = " + port
