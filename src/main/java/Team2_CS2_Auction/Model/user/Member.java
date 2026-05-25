@@ -106,7 +106,7 @@ public class Member extends User implements ISeller, IBidder {
 
     @Override
     public String getInfo() {
-        return String.format("Member{id=%d, username='%s', balance=%.2f}", getId(), getUsername(), balance);
+        return String.format(java.util.Locale.US, "Member{id=%d, username='%s', balance=%.2f}", getId(), getUsername(), balance);
     }
 
     // --- Getters & Setters cho TableView ---
