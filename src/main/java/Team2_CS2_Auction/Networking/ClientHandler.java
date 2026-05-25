@@ -159,7 +159,8 @@ public class ClientHandler implements Runnable {
                         System.out.println("[AUTO-BID] Đã bật Auto Bid cho User " + userId + " tại SP " + prodId);
                         
                         // Kiểm tra xem có tự động thầu ngay lập tức không (nếu người dùng chưa dẫn đầu)
-                        new Thread(() -> triggerAutoBidsStart(prodId, -1, -1.0)).start();
+                        int currentWinnerId = userRepository.getHighestBidderId("AUC_" + prodId);
+                        new Thread(() -> triggerAutoBidsStart(prodId, currentWinnerId, -1.0)).start();
                     } else {
                         sendMessage(gson.toJson(new NetworkMessage("AUTO_BID_FAILED", "Không thể lưu cấu hình đấu giá tự động!")));
                     }
@@ -266,6 +267,8 @@ public class ClientHandler implements Runnable {
                     return; // Dừng vòng lặp này vì luồng đệ quy sẽ xử lý tiếp các thầu sau
                 } catch (Exception ex) {
                     System.err.println("[AUTO-BID] Đặt thầu tự động lỗi: " + ex.getMessage());
+                    autoBidRepository.deactivate(activeBid.getUserId(), productId);
+                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED", "Đấu giá tự động đã dừng do lỗi: " + ex.getMessage());
                 }
             }
         } catch (Exception e) {
