@@ -41,22 +41,37 @@ public class Main extends Application {
         stage.show();
 
         // =========================================================
-        // Chạy UDP Discovery trên background thread (không block UI)
+        // Tự động tìm Server (từ Database hoặc UDP Discovery) trên background thread
         // =========================================================
         new Thread(() -> {
-            System.out.println("[Discovery] Đang tìm kiếm Server tự động trong mạng LAN...");
-            String discoveredIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
-            String input;
+            String targetIp = null;
+            int targetPort = 8080;
 
-            if (discoveredIp != null && !discoveredIp.trim().isEmpty()) {
-                System.out.println("[Discovery] Tìm thấy Server tại IP: " + discoveredIp + "! Đang tự động kết nối...");
-                input = discoveredIp;
-                Platform.runLater(() ->
-                    statusLabel.setText("✅ Tìm thấy máy chủ: " + discoveredIp + " — Đang kết nối..."));
+            System.out.println("[DB] Đang kiểm tra cấu hình Server từ Database...");
+            String dbIp = Team2_CS2_Auction.Repository.ServerConfigRepository.getServerIp();
+            
+            if (dbIp != null && !dbIp.isEmpty()) {
+                targetIp = dbIp;
+                targetPort = Team2_CS2_Auction.Repository.ServerConfigRepository.getServerPort();
+                System.out.println("[DB] Tìm thấy Server qua Database tại: " + targetIp + ":" + targetPort);
+            } else {
+                System.out.println("[Discovery] Không thấy trên DB. Đang tìm kiếm UDP trong mạng LAN...");
+                String discoveredIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
+                if (discoveredIp != null && !discoveredIp.trim().isEmpty()) {
+                    targetIp = discoveredIp;
+                    System.out.println("[Discovery] Tìm thấy Server tại IP: " + targetIp);
+                }
+            }
+
+            if (targetIp != null) {
+                final String finalIp = targetIp + ":" + targetPort;
+                Platform.runLater(() -> {
+                    statusLabel.setText("✅ Tìm thấy máy chủ: " + finalIp + " — Đang kết nối...");
+                    connectAndLoadUI(stage, finalIp);
+                });
             } else {
                 System.out.println("[Discovery] Không tìm thấy Server tự động. Hiển thị hộp thoại nhập thủ công.");
                 // Phải hiện dialog trên JavaFX thread
-                final String[] inputHolder = {null};
                 Platform.runLater(() -> {
                     TextInputDialog dialog = new TextInputDialog("127.0.0.1");
                     dialog.setTitle("Kết nối đến Máy Chủ");
@@ -68,16 +83,11 @@ public class Main extends Application {
                         stage.close();
                         return;
                     }
-                    inputHolder[0] = result.get().trim();
-                    if (inputHolder[0].isEmpty()) inputHolder[0] = "127.0.0.1";
-                    connectAndLoadUI(stage, inputHolder[0]);
+                    String input = result.get().trim();
+                    if (input.isEmpty()) input = "127.0.0.1";
+                    connectAndLoadUI(stage, input);
                 });
-                return; // Background thread kết thúc, Platform.runLater xử lý tiếp
             }
-
-            final String finalInput = input;
-            Platform.runLater(() -> connectAndLoadUI(stage, finalInput));
-
         }).start();
     }
 
