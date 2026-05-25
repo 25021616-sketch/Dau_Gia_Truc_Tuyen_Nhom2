@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="850.0" prefWidth="1300.0"
-            style="-fx-background-color: #F8FAFC; -fx-font-family: 'Segoe UI', system-ui, sans-serif;"
-            stylesheets="@style.css"
-            xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="Team2_CS2_Auction.Controller.Admin_quan_li_lich_su_Controller">
+<BorderPane prefHeight="850.0" prefWidth="1300.0" style="-fx-background-color: #F8FAFC; -fx-font-family: 'Segoe UI', system-ui, sans-serif;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Admin_quan_li_lich_su_Controller">
 
     <left>
         <VBox prefWidth="250.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E2E8F0; -fx-border-width: 0 1 0 0;" BorderPane.alignment="CENTER">
@@ -19,7 +14,7 @@
 
                 <HBox alignment="CENTER_LEFT" spacing="12">
                     <padding>
-                        <Insets top="30.0" right="24.0" bottom="30.0" left="24.0" />
+                        <Insets bottom="30.0" left="24.0" right="24.0" top="30.0" />
                     </padding>
                     <children>
                         <StackPane prefHeight="36.0" prefWidth="36.0" style="-fx-background-color: #1A237E; -fx-background-radius: 8;">
@@ -38,37 +33,33 @@
 
                 <VBox spacing="4.0" VBox.vgrow="ALWAYS">
                     <children>
-                        <Button fx:id="Dashboard" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToDashboard"
-                                style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-background-radius: 0; -fx-graphic-text-gap: 12;" text="Bảng điều khiển">
+                        <Button fx:id="Dashboard" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToDashboard" style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-background-radius: 0; -fx-graphic-text-gap: 12;" text="Bảng điều khiển">
                             <font><Font name="System Bold" size="13.0" /></font>
-                            <padding><Insets top="12.0" right="24.0" bottom="12.0" left="24.0" /></padding>
+                            <padding><Insets bottom="12.0" left="24.0" right="24.0" top="12.0" /></padding>
                             <graphic>
                                 <SVGPath content="M2 2h6v6H2V2zm10 0h6v6h-6V2zM2 12h6v6H2v-6zm10 0h6v6h-6v-6z" fill="#718096" />
                             </graphic>
                         </Button>
 
-                        <Button fx:id="users" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToUsers"
-                                style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-background-radius: 0; -fx-graphic-text-gap: 12;" text="Người dùng">
+                        <Button fx:id="users" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToUsers" style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-background-radius: 0; -fx-graphic-text-gap: 12;" text="Người dùng">
                             <font><Font name="System Bold" size="13.0" /></font>
-                            <padding><Insets top="12.0" right="24.0" bottom="12.0" left="24.0" /></padding>
+                            <padding><Insets bottom="12.0" left="24.0" right="24.0" top="12.0" /></padding>
                             <graphic>
                                 <SVGPath content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#718096" />
                             </graphic>
                         </Button>
 
-                        <Button fx:id="inventory" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToInventory"
-                                style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-background-radius: 0; -fx-graphic-text-gap: 12;" text="Kho hàng">
+                        <Button fx:id="inventory" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleGoToInventory" style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-background-radius: 0; -fx-graphic-text-gap: 12;" text="Kho hàng">
                             <font><Font name="System Bold" size="13.0" /></font>
-                            <padding><Insets top="12.0" right="24.0" bottom="12.0" left="24.0" /></padding>
+                            <padding><Insets bottom="12.0" left="24.0" right="24.0" top="12.0" /></padding>
                             <graphic>
                                 <SVGPath content="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H9v-2h6v2zm3-4H6v-2h12v2zm0-4H6V8h12v2z" fill="#718096" />
                             </graphic>
                         </Button>
 
-                        <Button fx:id="history" alignment="BASELINE_LEFT" maxWidth="Infinity"
-                                style="-fx-background-color: #EBF3FF; -fx-text-fill: #1A237E; -fx-background-radius: 0; -fx-border-color: transparent #1A237E transparent transparent; -fx-border-width: 0 4 0 0; -fx-graphic-text-gap: 12;" text="Lịch sử">
+                        <Button fx:id="history" alignment="BASELINE_LEFT" maxWidth="Infinity" style="-fx-background-color: #EBF3FF; -fx-text-fill: #1A237E; -fx-background-radius: 0; -fx-border-color: transparent #1A237E transparent transparent; -fx-border-width: 0 4 0 0; -fx-graphic-text-gap: 12;" text="Lịch sử">
                             <font><Font name="System Bold" size="13.0" /></font>
-                            <padding><Insets top="12.0" right="24.0" bottom="12.0" left="24.0" /></padding>
+                            <padding><Insets bottom="12.0" left="24.0" right="24.0" top="12.0" /></padding>
                             <graphic>
                                 <SVGPath content="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C12.13 19.13 14.99 20 13 20c5.52 0 10-4.48 10-10S18.52 3 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" fill="#1A237E" />
                             </graphic>
@@ -78,27 +69,25 @@
 
                 <VBox spacing="4.0">
                     <children>
-                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity"
-                                style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-graphic-text-gap: 12;" text="Cài đặt">
+                        <Button alignment="BASELINE_LEFT" maxWidth="Infinity" style="-fx-background-color: transparent; -fx-text-fill: #4A5568; -fx-cursor: hand; -fx-graphic-text-gap: 12;" text="Cài đặt">
                             <font><Font name="System Bold" size="13.0" /></font>
-                            <padding><Insets top="12.0" right="24.0" bottom="24.0" left="24.0" /></padding>
+                            <padding><Insets bottom="24.0" left="24.0" right="24.0" top="12.0" /></padding>
                             <graphic>
                                 <SVGPath content="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18 1.4-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="#718096" />
                             </graphic>
                         </Button>
 
-                        <Button fx:id="btnLogout" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleLogout"
-                                style="-fx-background-color: transparent; -fx-text-fill: #E53E3E; -fx-cursor: hand; -fx-graphic-text-gap: 12;" text="Đăng xuất">
+                        <Button fx:id="btnLogout" alignment="BASELINE_LEFT" maxWidth="Infinity" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: #E53E3E; -fx-cursor: hand; -fx-graphic-text-gap: 12;" text="Đăng xuất">
                             <font><Font name="System Bold" size="13.0" /></font>
-                            <padding><Insets top="12.0" right="24.0" bottom="24.0" left="24.0" /></padding>
+                            <padding><Insets bottom="24.0" left="24.0" right="24.0" top="12.0" /></padding>
                             <graphic>
                                 <SVGPath content="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" fill="#E53E3E" />
                             </graphic>
                         </Button>
 
                         <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #F1F5F9; -fx-background-radius: 12;">
-                            <VBox.margin><Insets left="16.0" right="16.0" bottom="20.0" /></VBox.margin>
-                            <padding><Insets top="10.0" right="12.0" bottom="10.0" left="12.0" /></padding>
+                            <VBox.margin><Insets bottom="20.0" left="16.0" right="16.0" /></VBox.margin>
+                            <padding><Insets bottom="10.0" left="12.0" right="12.0" top="10.0" /></padding>
                             <children>
                                 <Circle fill="#64748B" radius="16.0" />
                                 <VBox>
@@ -149,10 +138,9 @@
                         <HBox alignment="CENTER_LEFT">
                             <Label style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #2D3748;" text="Nhật ký giao dịch" />
                             <Region HBox.hgrow="ALWAYS" />
-                            <TextField promptText="Tìm theo tên hoặc ID..." style="-fx-background-color: #F4F7FE; -fx-background-radius: 8; -fx-pref-width: 250; -fx-padding: 8 12; -fx-border-color: #E2E8F0; -fx-border-radius: 8;" />
                         </HBox>
 
-                        <TableView fx:id="historyTable" prefHeight="450" styleClass="modern-table" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-width: 0;">
+                        <TableView fx:id="historyTable" prefHeight="450" style="-fx-background-color: transparent; -fx-border-width: 0;" styleClass="modern-table" VBox.vgrow="ALWAYS">
                             <columns>
                                 <TableColumn fx:id="colSTT" maxWidth="50.0" text="STT" />
                                 <TableColumn fx:id="colID" maxWidth="70.0" text="ID" />
@@ -166,9 +154,7 @@
                             </columnResizePolicy>
                         </TableView>
 
-                        <HBox alignment="CENTER_RIGHT" spacing="10">
-                            <Pagination maxPageIndicatorCount="3" pageCount="10" />
-                        </HBox>
+                        <HBox alignment="CENTER_RIGHT" spacing="10" />
                     </VBox>
 
                     <HBox alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">

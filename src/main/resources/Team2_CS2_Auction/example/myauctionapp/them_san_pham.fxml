@@ -8,28 +8,33 @@
 
 <AnchorPane style="-fx-background-color: #F9FAFB;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Them_san_pham_controller">
     <children>
-        <HBox alignment="CENTER_LEFT" prefHeight="65.0" spacing="15.0" style="-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-width: 0 0 1 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="30.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 0 1 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <padding>
+                <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+            </padding>
             <children>
                 <Button fx:id="Quay_lai_trang_chủ" mnemonicParsing="false" onAction="#handleBackToHome" styleClass="back-button" text="← Trang chủ">
                     <font><Font name="System Bold" size="13.0" /></font>
                 </Button>
-                <Label style="-fx-font-weight: bold; -fx-text-fill: #1A365D;" text="THÔNG TIN PHIÊN ĐẤU GIÁ">
-                    <font><Font size="20.0" /></font>
+                <Label text="HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN" textFill="#1A237E">
+                    <font>
+                        <Font name="System Bold Italic" size="24.0" />
+                    </font>
                 </Label>
                 <Region HBox.hgrow="ALWAYS" />
-                <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #E8EAF6; -fx-background-radius: 20; -fx-border-color: #C5CAE9; -fx-border-width: 1; -fx-border-radius: 20;">
+                <HBox alignment="CENTER_LEFT" prefHeight="39.0" prefWidth="363.0" spacing="10.0" style="-fx-background-color: #E8EAF6; -fx-background-radius: 20; -fx-border-color: #C5CAE9; -fx-border-width: 1; -fx-border-radius: 20;">
                     <padding>
                         <Insets bottom="6.0" left="15.0" right="15.0" top="6.0" />
                     </padding>
                     <children>
-                        <Label text="👤" textFill="#1A237E">
+                        <Label prefHeight="20.0" prefWidth="22.0" text="👤" textFill="#1A237E">
                             <font><Font size="14.0" /></font>
                         </Label>
-                        <Label fx:id="lblUsername" text="User" textFill="#1A237E">
+                        <Label fx:id="lblUsername" prefHeight="19.0" prefWidth="66.0" text="User" textFill="#1A237E">
                             <font><Font name="System Bold" size="13.0" /></font>
                         </Label>
                         <Label text="|" textFill="#9FA8DA" />
-                        <Label text="Số dư:" textFill="#5C6BC0">
+                        <Label prefHeight="19.0" prefWidth="45.0" text="Số dư:" textFill="#5C6BC0">
                             <font><Font size="13.0" /></font>
                         </Label>
                         <Label fx:id="lblBalance" text="0.00 $" textFill="#2E7D32">
@@ -37,8 +42,14 @@
                         </Label>
                     </children>
                 </HBox>
+                <Label style="-fx-cursor: hand;" text="🔔" textFill="#1A237E">
+                    <font><Font size="18.0" /></font>
+                </Label>
+                <Button mnemonicParsing="false" onAction="#handleGoToDangNhap" style="-fx-background-color: #b10303; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;" text="ĐĂNG XUẤT">
+                    <font><Font name="System Bold" size="12.0" /></font>
+                    <padding><Insets bottom="8.0" left="20.0" right="20.0" top="8.0" /></padding>
+                </Button>
             </children>
-            <padding><Insets left="20.0" right="30.0" /></padding>
         </HBox>
 
         <ScrollPane fitToWidth="true" styleClass="custom-scroll" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="65.0">
