@@ -57,22 +57,47 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
             @Override
             public void onMessageReceived(NetworkMessage message) {
                 Platform.runLater(() -> {
-                    if ("NEW_BID".equals(message.getAction())) {
-                        try {
-                            Gson gson = GsonUtil.getGson();
-                            JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
-                            String rcvAuctionId = payload.get("auctionId").getAsString();
-                            double newPrice = payload.get("newPrice").getAsDouble();
-
-                            for (Item_Card_Controller ctrl : activeControllers) {
-                                if (ctrl != null && ctrl.getAuction() != null && ctrl.getAuction().getAuctionId().equals(rcvAuctionId)) {
-                                    ctrl.updatePrice(newPrice);
-                                    break;
+                    switch (message.getAction()) {
+                        case "NEW_BID":
+                            try {
+                                Gson gson = GsonUtil.getGson();
+                                JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
+                                String rcvAuctionId = payload.get("auctionId").getAsString();
+                                double newPrice = payload.get("newPrice").getAsDouble();
+                                for (Item_Card_Controller ctrl : activeControllers) {
+                                    if (ctrl != null && ctrl.getAuction() != null && ctrl.getAuction().getAuctionId().equals(rcvAuctionId)) {
+                                        ctrl.updatePrice(newPrice);
+                                        break;
+                                    }
                                 }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                            break;
+
+                        case "PRODUCT_UPDATED":
+                            // Sản phẩm mới được duyệt hoặc bị từ chối -> Tải lại danh sách ngay
+                            loadDataFromServer();
+                            break;
+
+                        case "BALANCE_UPDATED":
+                            // Server báo số dư thay đổi (do đặt giá / auto-bid) -> Cập nhật ngay
+                            try {
+                                Gson gson = GsonUtil.getGson();
+                                JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
+                                double newBalance = payload.get("balance").getAsDouble();
+                                // Cập nhật Session để các màn hình khác cũng nhất quán
+                                if (Team2_CS2_Auction.Session.Session.currentUser != null) {
+                                    Team2_CS2_Auction.Session.Session.currentUser.setBalance(newBalance);
+                                }
+                                updateBalanceDisplay(); // Cập nhật UI ngay lập tức
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            break;
+
+                        default:
+                            break;
                     }
                 });
             }
@@ -82,6 +107,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
             }
         };
         nm.addListener(networkListener);
+
     }
 
     @Override

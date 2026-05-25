@@ -192,6 +192,19 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                         } catch (Exception e) {
                             showStyledAlert("Đấu giá tự động", "Hệ thống đã tự động đặt thầu thành công thay cho bạn!", Alert.AlertType.INFORMATION);
                         }
+                    } else if ("BALANCE_UPDATED".equals(message.getAction())) {
+                        // Server vừa xử lý xong việc đặt giá -> cập nhật số dư trên header
+                        try {
+                            com.google.gson.JsonObject balPayload = GsonUtil.getGson().fromJson(message.getPayload(), com.google.gson.JsonObject.class);
+                            double newBalance = balPayload.get("balance").getAsDouble();
+                            if (Team2_CS2_Auction.Session.Session.currentUser != null) {
+                                Team2_CS2_Auction.Session.Session.currentUser.setBalance(newBalance);
+                            }
+                            // Gọi hàm cập nhật số dư ở header (kế thừa từ Base_Admin_Controller)
+                            updateBalanceDisplay();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
             }

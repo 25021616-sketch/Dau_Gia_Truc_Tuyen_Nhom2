@@ -4,6 +4,7 @@ import Team2_CS2_Auction.Model.user.User;
 import Team2_CS2_Auction.Service.AuctionService;
 import Team2_CS2_Auction.Service.AuctionServiceImpl;
 import Team2_CS2_Auction.Session.Session;
+import Team2_CS2_Auction.Networking.NetworkManager;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -75,6 +76,9 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
             auctionService.createAuction(seller, ten, loai, moTa, finalImagePath, giaKhoi, buocGia, start, end);
 
             showSuccessAlert("Đăng sản phẩm thành công!");
+
+            // Báo cho toàn mạng biết có sản phẩm mới được đăng (chờ Admin duyệt)
+            NetworkManager.getInstance().send("PRODUCT_UPDATED", "");
 
             // THAY ĐỔI Ở ĐÂY: Gọi hàm xóa sạch dữ liệu trên giao diện thay vì chuyển trang
             clearAllFields();
