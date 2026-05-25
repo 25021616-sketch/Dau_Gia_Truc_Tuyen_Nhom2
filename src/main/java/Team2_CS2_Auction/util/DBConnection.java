@@ -3,6 +3,8 @@ package Team2_CS2_Auction.util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import org.flywaydb.core.Flyway;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 public class DBConnection {
 
@@ -14,14 +16,30 @@ public class DBConnection {
 
     private static final String PASSWORD = "wRUFbXdBBbdfWquOSqETKpVqzRzEYjEr";
 
+    private static HikariDataSource dataSource;
+
+    static {
+        try {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(URL);
+            config.setUsername(USER);
+            config.setPassword(PASSWORD);
+            config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+            config.setMaximumPoolSize(10);
+            config.setMinimumIdle(2);
+            config.setConnectionTimeout(30000); // 30s
+            config.setIdleTimeout(600000); // 10 minutes
+            config.setMaxLifetime(1800000); // 30 minutes
+            dataSource = new HikariDataSource(config);
+        } catch (Exception e) {
+            System.err.println("[DB] ❌ Khởi tạo HikariCP thất bại: " + e.getMessage());
+        }
+    }
+
     public static Connection getConnection() throws Exception {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(URL, USER, PASSWORD);
+            return dataSource.getConnection();
         } catch (Exception e) {
-            // ✅ FIX: throw exception thay vì return null
-            // Trả về null khiến caller bị NullPointerException âm thầm,
-            // gây rollback mà không có log lỗi rõ ràng.
             System.err.println("[DB] ❌ Kết nối database thất bại: " + e.getMessage());
             throw new Exception("Không thể kết nối Database: " + e.getMessage(), e);
         }
