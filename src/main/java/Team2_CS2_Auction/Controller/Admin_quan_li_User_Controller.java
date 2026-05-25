@@ -8,6 +8,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -22,9 +24,11 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
     @FXML private TableColumn<Member, String> colTen;
     @FXML private TableColumn<Member, Double> colTaiSan; // Cột mới
     @FXML private TableColumn<Member, String> colNgayDangKy;
+    @FXML private TextField txtSearch;
 
     private AdminService adminService = new AdminServiceImpl(new AuctionRepositoryImpl());
     private ObservableList<Member> masterData = FXCollections.observableArrayList();
+    private FilteredList<Member> filteredData;
 
     @FXML
     public void initialize() {
@@ -71,7 +75,29 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
             return new SimpleStringProperty("N/A");
         });
 
-        userTable.setItems(masterData);
+        filteredData = new FilteredList<>(masterData, p -> true);
+
+        if (txtSearch != null) {
+            txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+                filteredData.setPredicate(member -> {
+                    if (newValue == null || newValue.isEmpty()) {
+                        return true;
+                    }
+                    String lowerCaseFilter = newValue.toLowerCase();
+
+                    if (String.valueOf(member.getId()).toLowerCase().contains(lowerCaseFilter)) {
+                        return true;
+                    } else if (member.getUsername().toLowerCase().contains(lowerCaseFilter)) {
+                        return true;
+                    }
+                    return false;
+                });
+            });
+        }
+
+        SortedList<Member> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(userTable.comparatorProperty());
+        userTable.setItems(sortedData);
     }
 
     private void loadData() {
