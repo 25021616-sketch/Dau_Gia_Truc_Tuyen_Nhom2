@@ -15,6 +15,11 @@ public interface AuctionRepository {
     boolean updateBidPrice(String auctionId, double price, int bidderId) throws Exception;
 
     /**
+     * Thực thi toàn bộ quá trình đặt giá trong một Transaction duy nhất.
+     */
+    void executeBidTransaction(int bidderId, String auctionId, double bidAmount) throws Exception;
+
+    /**
      * Lấy danh sách các phiên đấu giá mà người dùng đã từng tham gia đặt giá.
      * Tên hàm phải khớp với AuctionServiceImpl đang gọi.
      */
