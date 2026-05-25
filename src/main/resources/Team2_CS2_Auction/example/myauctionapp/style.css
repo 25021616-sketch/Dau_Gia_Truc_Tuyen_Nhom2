@@ -458,3 +458,46 @@
 .btn-action-reject:hover {
     -fx-background-color: #DC2626; /* Đậm hơn khi hover */
 }
+
+/* =======================================================================
+   9. ĐỊNH DẠNG BIỂU ĐỒ (LINE CHART)
+   ======================================================================= */
+.chart-plot-background {
+    -fx-background-color: transparent; /* Nền trong suốt giúp đồng bộ với thẻ Card */
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: #E2E8F0; /* Đường lưới dọc đứt quãng màu xám nhạt */
+    -fx-stroke-dash-array: 2 4;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #E2E8F0; /* Đường lưới ngang đứt quãng màu xám nhạt */
+    -fx-stroke-dash-array: 2 4;
+}
+
+/* Đường vẽ của biểu đồ */
+.chart-series-line {
+    -fx-stroke: #1A237E; /* Màu xanh Indigo của dự án */
+    -fx-stroke-width: 3px; /* Đường vẽ dày dặn, sắc nét */
+}
+
+/* Các điểm nút (symbols) tại mỗi mốc dữ liệu */
+.chart-line-symbol {
+    -fx-background-color: #1A237E, #FFFFFF; /* Viền ngoài màu xanh dự án, lõi màu trắng */
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 4px;
+    -fx-padding: 4px;
+}
+
+/* Định dạng nhãn và trục biểu đồ */
+.axis {
+    -fx-font-size: 11px;
+    -fx-tick-label-fill: #718096;
+}
+
+.axis-label {
+    -fx-text-fill: #4A5568;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}

@@ -5,7 +5,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Phien_Dau_Gia_Controller">
+<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Phien_Dau_Gia_Controller">
     <content>
         <VBox prefWidth="1250.0" spacing="20.0" style="-fx-background-color: #F8F8FA; -fx-padding: 25;">
             <children>
@@ -50,12 +50,12 @@
                                 <VBox spacing="10.0" style="-fx-background-color: #FFFFFF; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5);" VBox.vgrow="ALWAYS">
                                     <children>
                                         <Label style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1A237E;" text="BIỂU ĐỒ LỊCH SỬ ĐẶT GIÁ" />
-                                        <LineChart fx:id="bidHistoryChart" animated="true" legendVisible="false" style="-fx-padding: 10 0 0 0;" VBox.vgrow="ALWAYS">
+                                        <LineChart fx:id="bidHistoryChart" animated="false" legendVisible="false" style="-fx-padding: 10 0 0 0;" VBox.vgrow="ALWAYS">
                                             <xAxis>
-                                                <CategoryAxis label="Thời gian" tickLabelRotation="-90" />
+                                                <CategoryAxis animated="false" label="Thời gian" tickLabelRotation="-90" />
                                             </xAxis>
                                             <yAxis>
-                                                <NumberAxis label="Giá ($)" />
+                                                <NumberAxis animated="false" label="Giá ($)" />
                                             </yAxis>
                                         </LineChart>
                                     </children>
