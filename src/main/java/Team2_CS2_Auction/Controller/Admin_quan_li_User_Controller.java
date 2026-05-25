@@ -74,18 +74,64 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
         userTable.setItems(masterData);
     }
 
+    private javafx.animation.Timeline refreshTimeline;
+
+    @Override
+    protected void onResume() {
+        loadData();
+        startAutoRefresh();
+    }
+
+    @Override
+    protected void cleanup() {
+        stopAutoRefresh();
+    }
+
+    private void startAutoRefresh() {
+        if (refreshTimeline != null) {
+            refreshTimeline.stop();
+        }
+        refreshTimeline = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.seconds(3), event -> loadDataBackground())
+        );
+        refreshTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        refreshTimeline.play();
+    }
+
+    private void stopAutoRefresh() {
+        if (refreshTimeline != null) {
+            refreshTimeline.stop();
+        }
+    }
+
     private void loadData() {
         try {
-            masterData.clear();
             List<Member> members = adminService.getMemberList();
-            if (members != null && !members.isEmpty()) {
+            masterData.clear();
+            if (members != null) {
                 masterData.addAll(members);
-                System.out.println("✅ Đã load " + members.size() + " thành viên.");
             }
             userTable.refresh();
         } catch (Exception e) {
             System.err.println("❌ Lỗi load dữ liệu: " + e.getMessage());
         }
+    }
+
+    private void loadDataBackground() {
+        new Thread(() -> {
+            try {
+                List<Member> members = adminService.getMemberList();
+                javafx.application.Platform.runLater(() -> {
+                    masterData.clear();
+                    if (members != null) {
+                        masterData.addAll(members);
+                    }
+                    userTable.refresh();
+                });
+            } catch (Exception e) {
+                System.err.println("❌ Lỗi load dữ liệu background: " + e.getMessage());
+            }
+        }, "admin-user-load-thread").start();
     }
 
     @FXML

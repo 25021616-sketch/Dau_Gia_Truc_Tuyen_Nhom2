@@ -64,42 +64,69 @@ public class Trang_chu_Admin_Controller
         switchScene(event, "dang_nhap.fxml", "Đăng nhập");
     }
 
+    private javafx.animation.Timeline refreshTimeline;
+
+    @Override
+    protected void onResume() {
+        loadDashboardData();
+        startAutoRefresh();
+    }
+
+    @Override
+    protected void cleanup() {
+        stopAutoRefresh();
+    }
+
+    private void startAutoRefresh() {
+        if (refreshTimeline != null) {
+            refreshTimeline.stop();
+        }
+        refreshTimeline = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.seconds(3), event -> loadDashboardDataBackground())
+        );
+        refreshTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        refreshTimeline.play();
+    }
+
+    private void stopAutoRefresh() {
+        if (refreshTimeline != null) {
+            refreshTimeline.stop();
+        }
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
         loadDashboardData();
     }
 
     private void loadDashboardData() {
-
         try {
+            double revenue = repo.getTotalRevenue();
+            int totalSessions = repo.getTotalSessionsOrganized();
+            int totalUsers = repo.getTotalUsers();
 
-            double revenue =
-                    repo.getTotalRevenue();
-
-            int totalSessions =
-                    repo.getTotalSessionsOrganized();
-
-            int totalUsers =
-                    repo.getTotalUsers();
-
-            // Tổng doanh thu
-            lblRevenue.setText(
-                    "$" + String.format("%,.0f", revenue)
-            );
-
-            // Tổng phiên
-            lblTotalSessions.setText(
-                    String.format("%,d", totalSessions)
-            );
-
-            // Tổng user
-            lblTotalUsers.setText(
-                    String.format("%,d", totalUsers)
-            );
-
+            lblRevenue.setText("$" + String.format("%,.0f", revenue));
+            lblTotalSessions.setText(String.format("%,d", totalSessions));
+            lblTotalUsers.setText(String.format("%,d", totalUsers));
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void loadDashboardDataBackground() {
+        new Thread(() -> {
+            try {
+                double revenue = repo.getTotalRevenue();
+                int totalSessions = repo.getTotalSessionsOrganized();
+                int totalUsers = repo.getTotalUsers();
+                javafx.application.Platform.runLater(() -> {
+                    lblRevenue.setText("$" + String.format("%,.0f", revenue));
+                    lblTotalSessions.setText(String.format("%,d", totalSessions));
+                    lblTotalUsers.setText(String.format("%,d", totalUsers));
+                });
+            } catch (Exception e) {
+                System.err.println("❌ Lỗi load dashboard background: " + e.getMessage());
+            }
+        }, "admin-dashboard-load-thread").start();
     }
 }
