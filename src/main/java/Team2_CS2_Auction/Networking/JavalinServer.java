@@ -41,8 +41,8 @@ public class JavalinServer {
                 User user = userService.handleLoginLogic(username, password, isAdminLogin);
                 UserDTO dto = UserDTO.fromUser(user);
                 
-                // Trả về JSON chuẩn của REST
-                ctx.status(200).json(dto);
+                // Trả về JSON chuẩn của REST bằng Gson có sẵn
+                ctx.status(200).contentType("application/json").result(gson.toJson(dto));
                 System.out.println("REST: Đăng nhập thành công -> " + username);
             } catch (Exception e) {
                 // Trả về mã lỗi HTTP 401 Unauthorized kèm message
@@ -56,6 +56,7 @@ public class JavalinServer {
         // ==========================================
         app.ws("/ws/auction", ws -> {
             ws.onConnect(ctx -> {
+                ctx.session.setIdleTimeout(java.time.Duration.ofHours(24));
                 System.out.println("[+] WebSocket Client kết nối: " + ctx.session.getRemoteAddress());
                 ClientHandler handler = new ClientHandler(ctx, this);
                 clients.put(ctx, handler);
