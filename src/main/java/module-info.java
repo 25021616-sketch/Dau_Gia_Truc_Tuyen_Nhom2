@@ -30,5 +30,7 @@ module Team2_CS2_Auction {
     opens Team2_CS2_Auction.Networking to com.google.gson, javafx.fxml;
     requires org.flywaydb.core;
     requires mysql.connector.j;
+    requires com.zaxxer.hikari;
+    requires org.slf4j;
     opens db.migration to org.flywaydb.core;
 }
