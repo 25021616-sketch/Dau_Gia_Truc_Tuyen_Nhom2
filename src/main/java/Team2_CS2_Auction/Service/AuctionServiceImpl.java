@@ -111,101 +111,51 @@ public class AuctionServiceImpl implements AuctionService {
         }
 
         // 4. Check số dư khả dụng
-        double currentBalance =
-                userRepo.getBalance(
-                        bidder.getId()
-                );
+        double currentBalance = userRepo.getBalance(bidder.getId());
+        double currentLocked = userRepo.getLockedBalance(bidder.getId());
+        double availableMoney = currentBalance - currentLocked;
 
         // 5. Lấy người giữ giá cao nhất cũ
-        int oldHighestBidderId =
-                userRepo.getHighestBidderId(
-                        auctionId
-                );
+        int oldHighestBidderId = userRepo.getHighestBidderId(auctionId);
 
-        //6 LOCK TIỀN NGƯỜI BID
         // Giá hiện tại trước khi update
-        double oldCurrentPrice =
-                currentAuction.getCurrentPrice();
+        double oldCurrentPrice = currentAuction.getCurrentPrice();
 
-        // Locked hiện tại của user
-        double currentLocked =
-                userRepo.getLockedBalance(
-                        bidder.getId()
-                );
-
-        double newLockedAmount;
+        double requiredExtraMoney;
 
         // ======================================
         // CASE 1: USER TỰ NÂNG GIÁ
         // Chỉ cộng phần chênh lệch
         // ======================================
-
         if (oldHighestBidderId == bidder.getId()) {
-
-            double difference =
-                    bidAmount - oldCurrentPrice;
-
-            newLockedAmount =
-                    currentLocked + difference;
-
+            requiredExtraMoney = bidAmount - oldCurrentPrice;
         } else {
-
             // ======================================
             // CASE 2: USER MỚI THAM GIA
             // Lock full giá bid
             // ======================================
-
-            newLockedAmount =
-                    currentLocked + bidAmount;
+            requiredExtraMoney = bidAmount;
         }
 
-// Update lock mới
-        boolean locked =
-                userRepo.updateLockedBalance(
-                        bidder.getId(),
-                        newLockedAmount
-                );
+        System.out.println("========== DEBUG BID ==========");
+        System.out.println("Balance DB = " + currentBalance);
+        System.out.println("Locked DB = " + currentLocked);
+        System.out.println("Available = " + availableMoney);
+        System.out.println("Bid Amount = " + bidAmount);
+        System.out.println("Required Extra = " + requiredExtraMoney);
+
+        // KIỂM TRA SỐ DƯ TRƯỚC KHI LOCK TIỀN!
+        if (availableMoney < requiredExtraMoney) {
+            throw new Exception("Số dư khả dụng không đủ!");
+        }
+
+        double newLockedAmount = currentLocked + requiredExtraMoney;
+
+        // Update lock mới
+        boolean locked = userRepo.updateLockedBalance(bidder.getId(), newLockedAmount);
 
         if (!locked) {
-
-            throw new Exception(
-                    "Không thể lock tiền!"
-            );
-        }
-
-        double availableMoney =
-                currentBalance - currentLocked;
-
-
-        System.out.println(
-                "========== DEBUG BID =========="
-        );
-
-        System.out.println(
-                "Balance DB = " +
-                        currentBalance
-        );
-
-        System.out.println(
-                "Locked DB = " +
-                        currentLocked
-        );
-
-        System.out.println(
-                "Available = " +
-                        availableMoney
-        );
-
-        System.out.println(
-                "Bid Amount = " +
-                        bidAmount
-        );
-
-        if (availableMoney < bidAmount) {
-
-            throw new Exception(
-                    "Số dư khả dụng không đủ!"
-            );
+            throw new Exception("Không thể lock tiền!");
         }
 
 
