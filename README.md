@@ -83,8 +83,6 @@ classDiagram
     
     class UserRole {
         <<enumeration>>
-        BIDDER
-        SELLER
         MEMBER
         ADMIN
     }
