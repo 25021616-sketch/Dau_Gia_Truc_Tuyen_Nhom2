@@ -141,9 +141,11 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         new Thread(() -> {
             NetworkManager nm = NetworkManager.getInstance();
 
-            // Nếu chưa kết nối thì kết nối trực tiếp không trì hoãn (Loại bỏ Thread.sleep cũ gây trễ)
+            // Nếu chưa kết nối thì thử kết nối lại tới server đã biết (từ Main.java)
             if (!nm.isConnected()) {
-                nm.connect("localhost", 8080);
+                String lastHost = Team2_CS2_Auction.Main.getLastServerHost();
+                int lastPort = Team2_CS2_Auction.Main.getLastServerPort();
+                nm.connect(lastHost, lastPort);
             }
 
             // Kiểm tra kết nối
