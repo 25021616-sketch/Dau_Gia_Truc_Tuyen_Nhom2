@@ -73,6 +73,13 @@
             <version>4.0.18</version>
             <scope>test</scope>
         </dependency>
+        <!-- JUnit Platform Launcher (bắt buộc cho JUnit 5 + Surefire 3.x) -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.12.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -85,6 +92,12 @@
                     <source>21</source>
                     <target>21</target>
                 </configuration>
+            </plugin>
+            <!-- Nâng cấp Surefire để hỗ trợ JUnit 5 (@BeforeEach, @Test) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
             </plugin>
             <plugin>
                 <groupId>org.openjfx</groupId>
