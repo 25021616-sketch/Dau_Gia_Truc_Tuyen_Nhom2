@@ -18,6 +18,9 @@ public class ServerMain {
 
         AuctionServer server = new AuctionServer();
 
+        // Tạo các bảng cần thiết (nếu chưa có) qua JDBC trực tiếp
+        Team2_CS2_Auction.util.DatabaseMigrator.migrate();
+
         // ✅ FIX: Chạy server trên Thread riêng để không block luồng chính
         // Nếu để server.start(port) chạy trực tiếp, nó sẽ block mãi mãi
         // khiến scheduler.start() phía dưới KHÔNG BAO GIỜ được thực thi.

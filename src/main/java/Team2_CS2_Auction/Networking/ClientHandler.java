@@ -238,12 +238,15 @@ public class ClientHandler implements Runnable {
                     continue;
                 }
 
-                // Kiểm tra số dư tài khoản (KHÔNG TỐN kết nối mạng vì balance đã được JOIN từ trước!)
+                // Kiểm tra số dư khả dụng (balance - locked) vì balance trong AutoBid là tổng balance
                 double balance = activeBid.getBalance();
-                if (balance < targetPrice) {
+                double lockedBalance = userRepository.getLockedBalance(activeBid.getUserId());
+                double availableBalance = balance - lockedBalance;
+                if (availableBalance < targetPrice) {
                     // Tắt Auto Bid
                     autoBidRepository.deactivate(activeBid.getUserId(), productId);
-                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED", "Đấu giá tự động đã dừng do số dư tài khoản của bạn ($" + balance + ") không đủ để thực hiện thầu mới $" + targetPrice + "!");
+                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED", 
+                        "[Đấu giá tự động đã dừng] Số dư khả dụng (" + availableBalance + ") không đủ để thầu mức " + targetPrice);
                     continue;
                 }
 
