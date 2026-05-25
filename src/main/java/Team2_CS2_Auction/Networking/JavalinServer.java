@@ -92,8 +92,13 @@ public class JavalinServer {
     public void broadcast(NetworkMessage message) {
         String jsonMsg = gson.toJson(message);
         for (WsContext ctx : clients.keySet()) {
-            if (ctx.session.isOpen()) {
-                ctx.send(jsonMsg);
+            try {
+                if (ctx.session.isOpen()) {
+                    ctx.send(jsonMsg);
+                }
+            } catch (Exception e) {
+                // 1 client bị lỗi/ngắt không được làm ảnh hưởng các client còn lại
+                System.err.println("[Broadcast] Lỗi gửi tới client: " + e.getMessage());
             }
         }
     }
@@ -109,10 +114,14 @@ public class JavalinServer {
         String payloadJson = gson.toJson(payloadObj);
         NetworkMessage msg = new NetworkMessage(action, payloadJson);
         String jsonMsg = gson.toJson(msg);
-        
+
         for (ClientHandler handler : clients.values()) {
             if (handler.getLoggedInUserId() == userId) {
-                handler.sendMessage(jsonMsg);
+                try {
+                    handler.sendMessage(jsonMsg);
+                } catch (Exception e) {
+                    System.err.println("[SendToUser] Lỗi gửi tới userId=" + userId + ": " + e.getMessage());
+                }
             }
         }
     }

@@ -149,7 +149,11 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
                 User user = userDTO.toUser();
                 Session.currentUser = user;
 
-                // 2. Mở kết nối WebSocket sau khi đăng nhập thành công để nhận sự kiện real-time
+                // 2. Mở kết nối WebSocket sau khi đăng nhập thành công.
+                // Nếu đã có kết nối cũ (ví dụ: login lần 2), ngắt kết nối cũ trước.
+                if (nm.isConnected()) {
+                    nm.disconnect();
+                }
                 nm.connect(host, port);
                 
                 // Báo cho Server biết session WebSocket này thuộc về user nào

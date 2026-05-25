@@ -134,32 +134,28 @@ public class Main extends Application {
         final String host = lastServerHost;
         final int port = lastServerPort;
 
-        // Kết nối TCP trên background thread để không treo UI
-        new Thread(() -> {
-            System.out.println("Đang kết nối tới: " + host + ":" + port + " ...");
-            NetworkManager.getInstance().connect(host, port);
+        // Chỉ load giao diện đăng nhập, KHÔNG kết nối WebSocket tại đây.
+        // WebSocket sẽ được kết nối sau khi đăng nhập thành công trong Dang_nhap_Controller.
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader fxmlLoader = new FXMLLoader(
+                    getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/dang_nhap.fxml"));
+                Parent root = fxmlLoader.load();
 
-            // Sau khi kết nối xong, load FXML trên JavaFX thread
-            Platform.runLater(() -> {
-                try {
-                    FXMLLoader fxmlLoader = new FXMLLoader(
-                        getClass().getResource("/Team2_CS2_Auction/example/myauctionapp/dang_nhap.fxml"));
-                    Parent root = fxmlLoader.load();
+                Scene scene = new Scene(root);
+                stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - ĐHQGHN");
+                stage.setMaximized(true);
+                stage.setScene(scene);
+                stage.show();
 
-                    Scene scene = new Scene(root);
-                    stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - ĐHQGHN");
-                    stage.setMaximized(true);
-                    stage.setScene(scene);
-                    stage.show();
+            } catch (IOException e) {
+                System.err.println("Lỗi: Không tìm thấy file FXML!");
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 
-                } catch (IOException e) {
-                    System.err.println("Lỗi: Không tìm thấy file FXML!");
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }).start();
     }
 
     @Override

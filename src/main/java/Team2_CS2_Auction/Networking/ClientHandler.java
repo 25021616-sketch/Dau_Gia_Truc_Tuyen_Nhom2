@@ -189,72 +189,91 @@ public class ClientHandler {
     }
 
     private void triggerAutoBids(int productId, int currentWinnerId, double currentPrice, double stepPrice) {
-        try {
+        // VÒNG LẶP thay vì đệ quy: tránh tạo vô số Thread và gây cạn kiệt pool kết nối DB
+        // Giới hạn tối đa 50 vòng để đề phòng vòng thầu vô tận (2 người cùng auto-bid nhau)
+        final int MAX_ROUNDS = 50;
+        int round = 0;
+
+        int winnerId = currentWinnerId;
+        double price = currentPrice;
+
+        while (round < MAX_ROUNDS) {
+            round++;
             String auctionId = "AUC_" + productId;
 
-            // Lấy tất cả Auto Bid đang hoạt động cho sản phẩm này kèm balance
-            List<AutoBid> activeBids = autoBidRepository.getActiveAutoBidsByProduct(productId);
+            List<AutoBid> activeBids;
+            try {
+                activeBids = autoBidRepository.getActiveAutoBidsByProduct(productId);
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
+
+            boolean anyBidPlaced = false;
 
             for (AutoBid activeBid : activeBids) {
-                // Bỏ qua nếu người thầu hiện tại đang dẫn đầu (không tự thầu đè lên chính mình)
-                if (activeBid.getUserId() == currentWinnerId) {
-                    continue;
-                }
+                // Bỏ qua nếu người đang dẫn đầu (không tự thầu đè lên chính mình)
+                if (activeBid.getUserId() == winnerId) continue;
 
-                // Tính toán giá thầu tự động mới
-                double targetPrice = currentPrice + (activeBid.getStepMultiplier() * stepPrice);
+                double targetPrice = price + (activeBid.getStepMultiplier() * stepPrice);
 
                 // Kiểm tra giới hạn tối đa
                 if (targetPrice > activeBid.getMaxLimit()) {
-                    // Tắt Auto Bid
                     autoBidRepository.deactivate(activeBid.getUserId(), productId);
-                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED", "Đấu giá tự động đã bị dừng do giá thầu mới $" + targetPrice + " vượt giới hạn tối đa $" + activeBid.getMaxLimit() + " của bạn!");
+                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED",
+                        "Đấu giá tự động đã bị dừng do giá $" + targetPrice + " vượt giới hạn $" + activeBid.getMaxLimit());
                     continue;
                 }
 
-                // Kiểm tra số dư khả dụng (balance - locked)
+                // Kiểm tra số dư khả dụng
                 double balance = activeBid.getBalance();
                 double lockedBalance = userRepository.getLockedBalance(activeBid.getUserId());
                 double availableBalance = balance - lockedBalance;
                 if (availableBalance < targetPrice) {
-                    // Tắt Auto Bid
                     autoBidRepository.deactivate(activeBid.getUserId(), productId);
-                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED", 
-                        "[Đấu giá tự động đã dừng] Số dư khả dụng (" + availableBalance + ") không đủ để thầu mức " + targetPrice);
+                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED",
+                        "[Auto-Bid dừng] Số dư khả dụng (" + availableBalance + ") không đủ để thầu mức " + targetPrice);
                     continue;
                 }
 
-                // Hợp lệ -> Tiến hành đặt thầu tự động!
+                // Hợp lệ → Đặt thầu tự động
                 Member activeBidder = new Member(activeBid.getUserId(), "User_" + activeBid.getUserId(), "123456", "000");
                 try {
                     auctionService.placeBid(activeBidder, auctionId, targetPrice);
 
-                    // Broadcast giá mới cho toàn mạng
                     JsonObject broadcastPayload = new JsonObject();
                     broadcastPayload.addProperty("auctionId", auctionId);
                     broadcastPayload.addProperty("newPrice", targetPrice);
                     broadcastPayload.addProperty("winnerId", activeBid.getUserId());
-                    
                     server.broadcast("NEW_BID", broadcastPayload);
+
                     server.sendToUser(activeBid.getUserId(), "AUTO_BID_PLACED", String.valueOf(targetPrice));
-
-                    // Gửi số dư mới nhất cho người vừa được auto-bid thay
                     sendBalanceUpdatedToUser(activeBid.getUserId());
-                    System.out.println("[AUTO-BID] Tự động thầu thành công cho User ID: " + activeBid.getUserId() + " tại giá $" + targetPrice);
+                    System.out.println("[AUTO-BID] Vòng " + round + " - User " + activeBid.getUserId() + " → $" + targetPrice);
 
-                    // Đệ quy kích hoạt tiếp với giá mới
-                    triggerAutoBids(productId, activeBid.getUserId(), targetPrice, stepPrice);
-                    return; // Dừng vòng lặp này vì luồng đệ quy sẽ xử lý tiếp các thầu sau
+                    // Cập nhật trạng thái cho vòng kế tiếp
+                    winnerId = activeBid.getUserId();
+                    price = targetPrice;
+                    anyBidPlaced = true;
+                    break; // Chỉ xử lý 1 auto-bid mỗi vòng, vòng kế tiếp sẽ xử lý tiếp
+
                 } catch (Exception ex) {
-                    System.err.println("[AUTO-BID] Đặt thầu tự động lỗi: " + ex.getMessage());
+                    System.err.println("[AUTO-BID] Lỗi đặt thầu: " + ex.getMessage());
                     autoBidRepository.deactivate(activeBid.getUserId(), productId);
-                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED", "Đấu giá tự động đã dừng do lỗi: " + ex.getMessage());
+                    server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED",
+                        "Auto-Bid dừng do lỗi: " + ex.getMessage());
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            // Không có ai thầu thêm → kết thúc vòng lặp
+            if (!anyBidPlaced) break;
+        }
+
+        if (round >= MAX_ROUNDS) {
+            System.out.println("[AUTO-BID] Đã đạt giới hạn " + MAX_ROUNDS + " vòng tự động. Dừng để bảo vệ hệ thống.");
         }
     }
+
 
     /** Lấy số dư mới nhất từ DB và gửi BALANCE_UPDATED cho chính user của session này */
     private void sendBalanceUpdated(int userId) {
