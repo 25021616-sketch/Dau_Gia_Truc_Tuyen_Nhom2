@@ -462,47 +462,31 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             System.out.println("[SCHEDULER] Product " + productId + " | Winner ID=" + winnerId + " | Final Price=" + finalPrice);
 
             // ===============================
-// THANH TOÁN NGƯỜI THẮNG
-// ===============================
+            // THANH TOÁN NGƯỜI THẮNG
+            // ===============================
 
-// Lấy số tiền đang bị lock
-            double lockedMoney =
-                    userRepo.getLockedBalance(winnerId);
+            // Lấy số tiền đang bị lock
+            double lockedMoney = userRepo.getLockedBalance(winnerId);
 
-// Nếu lock nhỏ hơn giá thắng thì lỗi
+            // Nếu lock nhỏ hơn giá thắng thì không throw exception (để tránh treo Scheduler)
+            // mà chỉ in ra cảnh báo và trừ tối đa số locked đang có.
             if (lockedMoney < finalPrice) {
-
-                throw new Exception(
-                        "Người thắng không đủ tiền bị khóa!"
-                );
+                System.err.println("[WARNING] Người thắng ID=" + winnerId + " không đủ locked_balance (" + lockedMoney + " < " + finalPrice + "). Vẫn tiến hành trừ tiền thật.");
             }
 
-// Trừ locked_balance
-            boolean unlockSuccess =
-                    userRepo.updateLockedBalance(
-                            winnerId,
-                            lockedMoney - finalPrice
-                    );
+            // Trừ locked_balance (không để âm)
+            double newWinnerLocked = Math.max(0, lockedMoney - finalPrice);
+            boolean unlockSuccess = userRepo.updateLockedBalance(winnerId, newWinnerLocked);
 
             if (!unlockSuccess) {
-
-                throw new Exception(
-                        "Không thể cập nhật locked balance!"
-                );
+                System.err.println("[WARNING] Không thể cập nhật locked balance cho user " + winnerId);
             }
 
-// Trừ tiền thật khỏi balance
-            boolean paySuccess =
-                    userRepo.updateBalance(
-                            winnerId,
-                            userRepo.getBalance(winnerId) - finalPrice
-                    );
+            // Trừ tiền thật khỏi balance
+            boolean paySuccess = userRepo.updateBalance(winnerId, userRepo.getBalance(winnerId) - finalPrice);
 
             if (!paySuccess) {
-
-                throw new Exception(
-                        "Thanh toán thất bại!"
-                );
+                System.err.println("[WARNING] Thanh toán trừ balance thất bại cho user " + winnerId);
             }
 
             System.out.println(
