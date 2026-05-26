@@ -40,12 +40,16 @@ public class ProductRepository {
     }
 
     /**
-     * Lấy sản phẩm hiển thị trên MÀN HÌNH CHÍNH
-     * Tự động ẩn các phiên đã kết thúc quá 12h và ưu tiên phiên Đang diễn ra lên đầu.
+     * Lấy sản phẩm hiển thị trên MÀN HÌNH CHÍNH.
+     * Hiển thị:
+     *   - Các phiên đang/sắp diễn ra (status = 'OPENING')
+     *   - Các phiên đã kết thúc (status = 'FINISHED') nhưng chưa quá 18:00 ngày kết thúc
+     * Sau 18:00 ngày kết thúc, phiên tự ẩn khỏi màn hình chính.
      */
     public List<Auction> getAllActiveProducts() {
-        String sql = "SELECT * FROM products WHERE status = 'OPENING' " +
-                     "AND end_time >= DATE_SUB(NOW(), INTERVAL 12 HOUR) " +
+        String sql = "SELECT * FROM products " +
+                     "WHERE (status = 'OPENING') " +
+                     "   OR (status IN ('FINISHED', 'NO_BID') AND NOW() < DATE(end_time) + INTERVAL 18 HOUR) " +
                      "ORDER BY " +
                      "  CASE " +
                      "    WHEN start_time <= NOW() AND end_time > NOW() THEN 1 " + // Đang diễn ra
@@ -156,6 +160,15 @@ public class ProductRepository {
                     break;
                 case "CLOSED":
                     auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.CLOSED);
+                    break;
+                case "FINISHED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.FINISHED);
+                    break;
+                case "NO_BID":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.NO_BID);
+                    break;
+                case "EXPIRED":
+                    auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.EXPIRED);
                     break;
                 case "CANCELLED":
                     auction.setStatus(Team2_CS2_Auction.Model.auction.AuctionStatus.CANCELLED);
