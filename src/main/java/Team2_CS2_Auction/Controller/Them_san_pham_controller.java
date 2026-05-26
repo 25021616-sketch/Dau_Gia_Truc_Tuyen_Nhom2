@@ -5,6 +5,7 @@ import Team2_CS2_Auction.Service.AuctionService;
 import Team2_CS2_Auction.Service.AuctionServiceImpl;
 import Team2_CS2_Auction.Session.Session;
 import Team2_CS2_Auction.Networking.NetworkManager;
+import com.google.gson.JsonObject;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,6 +35,7 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     private String selectedImagePath = "";
     private File selectedFile = null;
+    private String oldAuctionIdForRelist = null;
 
     private final AuctionService auctionService = new AuctionServiceImpl();
 
@@ -75,13 +77,27 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
             auctionService.createAuction(seller, ten, loai, moTa, finalImagePath, giaKhoi, buocGia, start, end);
 
-            showSuccessAlert("Đăng sản phẩm thành công!");
+            showSuccessAlert(oldAuctionIdForRelist != null ? "Đăng lại sản phẩm thành công!" : "Đăng sản phẩm thành công!");
 
-            // Báo cho toàn mạng biết có sản phẩm mới được đăng (chờ Admin duyệt)
-            NetworkManager.getInstance().send("PRODUCT_UPDATED", "");
+            if (oldAuctionIdForRelist != null) {
+                // Xóa phiên cũ và thông báo "đăng lại" cho các người tham gia cũ
+                JsonObject payload = new JsonObject();
+                payload.addProperty("auctionId", oldAuctionIdForRelist);
+                payload.addProperty("sellerId", seller.getId());
+                payload.addProperty("productName", ten);
+                payload.addProperty("relist", true); // Đánh dấu là đăng lại
+                NetworkManager.getInstance().send("CANCEL_AUCTION", payload);
+                oldAuctionIdForRelist = null;
+            } else {
+                // Báo cho toàn mạng biết có sản phẩm mới được đăng (chờ Admin duyệt)
+                NetworkManager.getInstance().send("PRODUCT_UPDATED", "");
+            }
 
             // THAY ĐỔI Ở ĐÂY: Gọi hàm xóa sạch dữ liệu trên giao diện thay vì chuyển trang
             clearAllFields();
+            
+            // Chuyển về màn hình sản phẩm của tôi
+            handleBackToHome(event);
 
         } catch (NumberFormatException e) {
             showErrorAlert("Giờ/Phút hoặc Giá phải là chữ số hợp lệ!");
@@ -118,6 +134,36 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         imgPreview.setVisible(false);
         vboxPlaceholder.setVisible(true);
         btnDeleteImage.setVisible(false);
+        txtTenSanPham.setDisable(false);
+        loaiSanPhamCombo.setDisable(false);
+    }
+
+    public void setRelistData(Team2_CS2_Auction.Model.auction.Auction oldAuction) {
+        this.oldAuctionIdForRelist = oldAuction.getAuctionId();
+
+        txtTenSanPham.setText(oldAuction.getItem().getTenSanPham());
+        txtTenSanPham.setDisable(true); // Không cho sửa tên
+
+        loaiSanPhamCombo.setValue(oldAuction.getItem().getLoaiSanPham());
+        loaiSanPhamCombo.setDisable(true); // Không cho sửa danh mục
+
+        txtGiaKhoiDiem.setText(String.valueOf((long) oldAuction.getCurrentPrice()));
+        txtBuocGia.setText(String.valueOf((long) oldAuction.getStepPrice()));
+        txtMoTa.setText(oldAuction.getItem().getMoTa());
+
+        // Hỗ trợ ảnh
+        String oldImg = oldAuction.getItem().getImagePath();
+        if (oldImg != null && !oldImg.isEmpty()) {
+            selectedImagePath = oldImg;
+            try {
+                imgPreview.setImage(new Image(oldImg, true));
+                imgPreview.setVisible(true);
+                vboxPlaceholder.setVisible(false);
+                btnDeleteImage.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private User getCurrentUser() throws Exception {

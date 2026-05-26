@@ -46,6 +46,12 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     @FXML private TextField autoLimitField;
     @FXML private Button btnActivateAutoBid;
 
+    // ===== OWNER MANAGEMENT =====
+    @FXML private javafx.scene.layout.VBox ownerActionsBox;
+    @FXML private Button btnXoa;
+    @FXML private Button btnDangLai;
+    private boolean isOwnerView = false;
+
     private XYChart.Series<String, Number> bidSeries;
     private Timeline timeline;
 
@@ -205,6 +211,19 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                    } else if ("CANCEL_SUCCESS".equals(message.getAction())) {
+                        // Server xác nhận xóa thành công
+                        showStyledAlert("Thành công", "Phiên đấu giá đã được xóa thành công!", Alert.AlertType.INFORMATION);
+                        if (timeline != null) timeline.stop();
+                        nm.removeListener(networkListener);
+                    } else if ("CANCEL_FAILED".equals(message.getAction())) {
+                        showStyledAlert("Lỗi", message.getPayload(), Alert.AlertType.ERROR);
+                    } else if ("RELIST_SUCCESS".equals(message.getAction())) {
+                        showStyledAlert("Thành công", "Đã đăng lại phiên đấu giá thành công! Vui lòng đợi Admin duyệt.", Alert.AlertType.INFORMATION);
+                        if (timeline != null) timeline.stop();
+                        nm.removeListener(networkListener);
+                    } else if ("RELIST_FAILED".equals(message.getAction())) {
+                        showStyledAlert("Lỗi", message.getPayload(), Alert.AlertType.ERROR);
                     }
                 });
             }
@@ -277,6 +296,16 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
         updateTargetPrice();
         startCountdown();
+
+        // Hiện phần quản lý nếu user là chủ sản phẩm
+        if (Session.currentUser != null && auction.getSeller() != null
+                && Session.currentUser.getId() == auction.getSeller().getId()) {
+            isOwnerView = true;
+            if (ownerActionsBox != null) {
+                ownerActionsBox.setVisible(true);
+                ownerActionsBox.setManaged(true);
+            }
+        }
 
         // Lấy cấu hình Đấu giá tự động của người dùng nếu có
         if (Session.currentUser != null) {
@@ -386,6 +415,45 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             nm.removeListener(networkListener);
         }
         switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
+    }
+
+    @FXML
+    private void handleXoa(javafx.event.ActionEvent event) {
+        if (currentAuction == null || Session.currentUser == null) return;
+
+        // Xác nhận trước khi xóa
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận xóa");
+        confirm.setHeaderText(null);
+        confirm.setContentText("Bạn có chắc muốn XÓA phiên đấu giá này?\nHành động không thể hoàn tác. Tất cả bidders sẽ được thông báo.");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == javafx.scene.control.ButtonType.OK) {
+                if (!nm.isConnected()) {
+                    showStyledAlert("Lỗi", "Mất kết nối tới Server!", Alert.AlertType.ERROR);
+                    return;
+                }
+                JsonObject payload = new JsonObject();
+                payload.addProperty("auctionId", currentAuction.getAuctionId());
+                payload.addProperty("sellerId", Session.currentUser.getId());
+                payload.addProperty("productName", currentAuction.getItem().getTenSanPham());
+                nm.send("CANCEL_AUCTION", payload);
+                // Quay lại trang chủ sau khi gửi lệnh (response CANCEL_SUCCESS sẽ show alert)
+                if (timeline != null) timeline.stop();
+                if (networkListener != null) nm.removeListener(networkListener);
+                switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
+            }
+        });
+    }
+
+    @FXML
+    private void handleDangLai(javafx.event.ActionEvent event) {
+        if (currentAuction == null || Session.currentUser == null) return;
+
+        if (timeline != null) timeline.stop();
+        if (networkListener != null) nm.removeListener(networkListener);
+
+        // Chuyển sang màn hình thêm sản phẩm và truyền dữ liệu phiên cũ
+        switchSceneWithData(event, "them_san_pham.fxml", "Đăng lại sản phẩm", this.currentAuction);
     }
 
     @FXML

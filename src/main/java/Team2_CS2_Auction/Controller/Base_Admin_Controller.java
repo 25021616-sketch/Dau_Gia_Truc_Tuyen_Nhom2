@@ -162,6 +162,9 @@ public abstract class Base_Admin_Controller {
         if (controller instanceof Phien_Dau_Gia_Controller && data instanceof Auction) {
             Phien_Dau_Gia_Controller targetController = (Phien_Dau_Gia_Controller) controller;
             targetController.setAuctionData((Auction) data);
+        } else if (controller instanceof Them_san_pham_controller && data instanceof Auction) {
+            Them_san_pham_controller targetController = (Them_san_pham_controller) controller;
+            targetController.setRelistData((Auction) data);
         }
     }
 
