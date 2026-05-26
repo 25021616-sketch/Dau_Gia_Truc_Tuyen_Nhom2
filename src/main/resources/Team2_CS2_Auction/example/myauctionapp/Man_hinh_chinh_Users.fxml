@@ -5,10 +5,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #FFFFFF;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Man_hinh_chinh_Users_Controller">
-
-    <top>
-        <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="30.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
+<StackPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #FFFFFF;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Man_hinh_chinh_Users_Controller">
+    <children>
+        <BorderPane prefHeight="900.0" prefWidth="1300.0">
+            <top>
+                <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="30.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #E9ECEF; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
             </padding>
@@ -39,9 +40,15 @@
                         </Label>
                     </children>
                 </HBox>
-                <Label style="-fx-cursor: hand;" text="🔔" textFill="#1A237E">
-                    <font><Font size="18.0" /></font>
-                </Label>
+                <!-- Bell button + badge -->
+                <StackPane onMouseClicked="#handleToggleNotifications">
+                    <Button fx:id="btnChuong" mnemonicParsing="false"
+                            style="-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 18px;"
+                            text="🔔" />
+                    <Label fx:id="lblBadgeChuong" alignment="CENTER" style="-fx-background-color: #D32F2F; -fx-text-fill: white; -fx-background-radius: 10; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 1 4;" text="0" visible="false" managed="false">
+                        <StackPane.margin><Insets top="0.0" left="15.0" /></StackPane.margin>
+                    </Label>
+                </StackPane>
                 <Button mnemonicParsing="false" onAction="#handleGoToDangNhap" style="-fx-background-color: #b10303; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;" text="ĐĂNG XUẤT">
                     <font><Font name="System Bold" size="12.0" /></font>
                     <padding><Insets bottom="8.0" left="20.0" right="20.0" top="8.0" /></padding>
@@ -88,7 +95,6 @@
             </children>
         </VBox>
     </left>
-
     <center>
         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #FFFFFF;" BorderPane.alignment="CENTER">
             <content>
@@ -138,3 +144,28 @@
         </ScrollPane>
     </center>
 </BorderPane>
+
+<!-- Notification popup overlay centered on screen -->
+<VBox fx:id="notificationPopup" visible="false" managed="false"
+      maxWidth="450.0" maxHeight="500.0"
+      style="-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 12; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.18), 20, 0, 0, 8); -fx-padding: 0;"
+      StackPane.alignment="CENTER">
+    <children>
+        <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1A237E; -fx-background-radius: 12 12 0 0; -fx-padding: 14 20;">
+            <children>
+                <Label text="🔔 Thông báo" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15px;" HBox.hgrow="ALWAYS" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button onAction="#handleClearNotifications" style="-fx-background-color: transparent; -fx-text-fill: #90CAF9; -fx-cursor: hand; -fx-font-size: 11px;" text="Xóa tất cả" mnemonicParsing="false" />
+                <Button onAction="#handleCloseNotifications" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand; -fx-font-size: 14px;" text="✕" mnemonicParsing="false" />
+            </children>
+        </HBox>
+        <ScrollPane fitToWidth="true" maxHeight="400.0" style="-fx-background: white; -fx-background-color: white;">
+            <content>
+                <VBox fx:id="notificationList" spacing="0.0" />
+            </content>
+        </ScrollPane>
+        <Label fx:id="lblNoNotifications" alignment="CENTER" maxWidth="Infinity" style="-fx-text-fill: #9E9E9E; -fx-font-size: 13px; -fx-padding: 20;" text="Không có thông báo nào" visible="true" />
+    </children>
+</VBox>
+    </children>
+</StackPane>

@@ -128,6 +128,27 @@
                                     <Button fx:id="btnActivateAutoBid" maxWidth="Infinity" onAction="#handleActivateAutoBid" prefHeight="45.0" style="-fx-border-color: #1A237E; -fx-border-radius: 5; -fx-background-color: transparent; -fx-text-fill: #1A237E; -fx-font-weight: bold; -fx-cursor: hand;" text="KÍCH HOẠT" />
                                 </VBox>
 
+                                <!-- ===== QUẢN LÝ SẢN PHẨM (chỉ hiện với chủ sở hữu) ===== -->
+                                <VBox fx:id="ownerActionsBox" spacing="12.0" visible="false" managed="false">
+                                    <Separator />
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #B71C1C;" text="⚙ QUẢN LÝ SẢN PHẨM CỦA BẠN" />
+                                    <HBox spacing="12.0">
+                                        <children>
+                                            <Button fx:id="btnXoa" maxWidth="Infinity" onAction="#handleXoa"
+                                                    prefHeight="50.0" prefWidth="160.0"
+                                                    style="-fx-background-color: #D32F2F; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15px; -fx-background-radius: 10; -fx-cursor: hand;"
+                                                    text="🗑 XÓA" HBox.hgrow="ALWAYS" />
+                                            <Button fx:id="btnDangLai" maxWidth="Infinity" onAction="#handleDangLai"
+                                                    prefHeight="50.0" prefWidth="160.0"
+                                                    style="-fx-background-color: #F57F17; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15px; -fx-background-radius: 10; -fx-cursor: hand;"
+                                                    text="🔄 ĐĂNG LẠI" HBox.hgrow="ALWAYS" />
+                                        </children>
+                                    </HBox>
+                                    <Label style="-fx-text-fill: #757575; -fx-font-size: 12px; -fx-wrap-text: true;"
+                                           text="⚠ Xóa: hủy phiên vĩnh viễn. Đăng lại: hủy và đăng phiên mới với thời gian bạn chọn."
+                                           wrapText="true" />
+                                </VBox>
+
                             </children>
                         </VBox>
 
