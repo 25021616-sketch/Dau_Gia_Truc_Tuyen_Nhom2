@@ -156,6 +156,102 @@ public class ClientHandler {
                     sendMessage(gson.toJson(new NetworkMessage("AUTO_BID_FAILED", "Lỗi: " + e.getMessage())));
                 }
                 break;
+            case "CANCEL_AUCTION":
+                // Chủ sản phẩm xóa phiên đấu giá
+                try {
+                    JsonObject cancelPayload = gson.fromJson(message.getPayload(), JsonObject.class);
+                    String cancelAuctionId = cancelPayload.get("auctionId").getAsString();
+                    int cancelSellerId = cancelPayload.get("sellerId").getAsInt();
+
+                    // 1. Lấy danh sách bidders trước khi hủy để thông báo
+                    List<Integer> bidders = auctionRepository.getDistinctBidderIds(cancelAuctionId);
+
+                    // 2. Hủy phiên
+                    auctionService.cancelAuction(cancelAuctionId);
+
+                    // 3. Thông báo cho từng bidder biết SP bị xóa / đăng lại
+                    String productName = cancelPayload.has("productName") ? cancelPayload.get("productName").getAsString() : "Không rõ";
+                    String type = (cancelPayload.has("relist") && cancelPayload.get("relist").getAsBoolean()) ? "RELISTED" : "DELETED";
+                    
+                    JsonObject notif = new JsonObject();
+                    notif.addProperty("auctionId", cancelAuctionId);
+                    notif.addProperty("type", type);
+                    notif.addProperty("productName", productName);
+                    for (int bidderId : bidders) {
+                        if (bidderId != cancelSellerId) {
+                            server.sendToUser(bidderId, "PRODUCT_DELETED", notif);
+                        }
+                    }
+
+                    // 4. Thông báo cho toàn bộ để reload danh sách
+                    server.broadcast("PRODUCT_UPDATED", "");
+
+                    // 5. Xác nhận cho seller
+                    sendMessage(gson.toJson(new NetworkMessage("CANCEL_SUCCESS", cancelAuctionId)));
+                    System.out.println("[EVENT] Phiên " + cancelAuctionId + " đã bị hủy bởi seller " + cancelSellerId);
+                } catch (Exception e) {
+                    sendMessage(gson.toJson(new NetworkMessage("CANCEL_FAILED", "Lỗi: " + e.getMessage())));
+                }
+                break;
+
+            case "RELIST_AUCTION":
+                // Chủ sản phẩm đăng lại phiên đấu giá với thời gian mới
+                try {
+                    JsonObject relistPayload = gson.fromJson(message.getPayload(), JsonObject.class);
+                    String oldAuctionId = relistPayload.get("auctionId").getAsString();
+                    int relistSellerId = relistPayload.get("sellerId").getAsInt();
+
+                    // 1. Lấy danh sách bidders cũ để thông báo
+                    List<Integer> oldBidders = auctionRepository.getDistinctBidderIds(oldAuctionId);
+
+                    // 2. Lấy thông tin SP gốc
+                    Auction oldAuction = auctionService.getAuctionById(oldAuctionId);
+                    if (oldAuction == null) throw new Exception("Không tìm thấy phiên đấu giá!");
+
+                    // 3. Hủy phiên cũ
+                    auctionService.cancelAuction(oldAuctionId);
+
+                    // 4. Tạo phiên mới với thời gian mới
+                    String newStartStr = relistPayload.get("startTime").getAsString();
+                    String newEndStr   = relistPayload.get("endTime").getAsString();
+                    java.time.LocalDateTime newStart = java.time.LocalDateTime.parse(newStartStr);
+                    java.time.LocalDateTime newEnd   = java.time.LocalDateTime.parse(newEndStr);
+
+                    Team2_CS2_Auction.Model.user.Member seller = new Member(relistSellerId, "Seller_" + relistSellerId, "HIDDEN", "000");
+                    auctionService.createAuction(
+                        seller,
+                        oldAuction.getItem().getTenSanPham(),
+                        oldAuction.getItem().getLoaiSanPham(),
+                        oldAuction.getItem().getMoTa(),
+                        oldAuction.getItem().getImagePath(),
+                        String.valueOf((long) oldAuction.getCurrentPrice()),
+                        String.valueOf((long) oldAuction.getStepPrice()),
+                        newStart,
+                        newEnd
+                    );
+
+                    // 5. Thông báo bidders cũ biết SP đã thay đổi
+                    JsonObject notifRelist = new JsonObject();
+                    notifRelist.addProperty("auctionId", oldAuctionId);
+                    notifRelist.addProperty("type", "RELISTED");
+                    notifRelist.addProperty("productName", oldAuction.getItem().getTenSanPham());
+                    for (int bidderId : oldBidders) {
+                        if (bidderId != relistSellerId) {
+                            server.sendToUser(bidderId, "PRODUCT_DELETED", notifRelist);
+                        }
+                    }
+
+                    // 6. Broadcast toàn mạng để Admin thấy SP mới (chờ duyệt)
+                    server.broadcast("PRODUCT_UPDATED", "");
+
+                    // 7. Xác nhận cho seller
+                    sendMessage(gson.toJson(new NetworkMessage("RELIST_SUCCESS", "Đã đăng lại thành công!")));
+                    System.out.println("[EVENT] Phiên " + oldAuctionId + " đã được đăng lại bởi seller " + relistSellerId);
+                } catch (Exception e) {
+                    sendMessage(gson.toJson(new NetworkMessage("RELIST_FAILED", "Lỗi: " + e.getMessage())));
+                }
+                break;
+
             case "PRODUCT_UPDATED":
                 // Nhận tín hiệu từ 1 client (Admin duyệt/từ chối, User đăng SP)
                 // và phát thanh (Broadcast) lại cho TẤT CẢ client biết để reload danh sách

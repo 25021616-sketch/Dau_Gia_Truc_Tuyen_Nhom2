@@ -741,4 +741,39 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             }
         }
     }
+
+    @Override
+    public List<Integer> getDistinctBidderIds(String auctionId) throws Exception {
+        String numericId = auctionId.replace("AUC_", "").replace("AUC", "");
+        List<Integer> bidderIds = new ArrayList<>();
+        String sql = "SELECT DISTINCT user_id FROM bid WHERE product_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, Integer.parseInt(numericId));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bidderIds.add(rs.getInt("user_id"));
+                }
+            }
+        }
+        return bidderIds;
+    }
+
+    @Override
+    public boolean updateAuctionStatus(String auctionId, String status) throws Exception {
+        String numericId = auctionId.replace("AUC_", "").replace("AUC", "");
+        String sql = "UPDATE products SET status = ? WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, Integer.parseInt(numericId));
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    @Override
+    public Auction getAuctionById(String auctionId) throws Exception {
+        // Dùng lại findById đã có
+        return findById(auctionId);
+    }
 }

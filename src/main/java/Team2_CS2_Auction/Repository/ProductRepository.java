@@ -60,7 +60,7 @@ public class ProductRepository {
      * Tự động ẩn các phiên đã kết thúc quá 12h và ưu tiên phiên Đang diễn ra lên đầu.
      */
     public List<Auction> getProductsBySellerId(int sellerId) {
-        String sql = "SELECT * FROM products WHERE seller_id = ? " +
+        String sql = "SELECT * FROM products WHERE seller_id = ? AND status != 'CANCELLED' " +
                      "ORDER BY " +
                      "  CASE " +
                      "    WHEN start_time <= NOW() AND end_time > NOW() THEN 1 " +

@@ -121,5 +121,16 @@ public class AuctionServiceImpl implements AuctionService {
         return auctionRepo.getBidHistory(auctionId);
     }
 
+    @Override
+    public void cancelAuction(String auctionId) throws Exception {
+        // Dùng lại updateAuctionStatus đã có, đặt status = CANCELLED
+        boolean ok = auctionRepo.updateAuctionStatus(auctionId, "CANCELLED");
+        if (!ok) throw new Exception("Không thể hủy phiên đấu giá!");
+    }
+
+    @Override
+    public Auction getAuctionById(String auctionId) throws Exception {
+        return auctionRepo.getAuctionById(auctionId);
+    }
 
 }

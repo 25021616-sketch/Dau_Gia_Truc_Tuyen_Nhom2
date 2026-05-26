@@ -29,4 +29,10 @@ public interface AuctionService {
     List<Auction> getAuctionsByBidder(int bidderId) throws Exception;
 
     List<Bid> getBidHistory(String auctionId) throws Exception;
+
+    // Chủ sản phẩm hủy/xóa phiên đấu giá
+    void cancelAuction(String auctionId) throws Exception;
+
+    // Lấy phiên đấu giá theo ID (dùng khi cần thông tin item để đăng lại)
+    Auction getAuctionById(String auctionId) throws Exception;
 }

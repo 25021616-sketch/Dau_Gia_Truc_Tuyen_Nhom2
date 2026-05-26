@@ -29,4 +29,13 @@ public interface AuctionRepository {
      * Lấy lịch sử đặt giá của một phiên đấu giá cụ thể.
      */
     List<Bid> getBidHistory(String auctionId) throws Exception;
-}
+
+    /** Lấy danh sách user_id khác nhau đã đặt giá cho 1 phiên đấu giá */
+    List<Integer> getDistinctBidderIds(String auctionId) throws Exception;
+
+    /** Cập nhật trạng thái phiên (CANCELLED, OPENING, PENDING, ...) */
+    boolean updateAuctionStatus(String auctionId, String status) throws Exception;
+
+    /** Lấy thông tin phiên đấu giá theo ID */
+    Auction getAuctionById(String auctionId) throws Exception;
+}
