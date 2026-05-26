@@ -62,6 +62,7 @@ public class Auction implements Serializable {
     public double getStepPrice() { return stepPrice; }
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
     public synchronized AuctionStatus getStatus() { return status; }
     public synchronized List<Bid> getBidHistory() { return new ArrayList<>(bidHistory); }
     public void setId(String id) { this.id = id; }

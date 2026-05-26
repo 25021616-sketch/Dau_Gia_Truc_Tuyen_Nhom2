@@ -41,11 +41,11 @@
                     </children>
                 </HBox>
                 <!-- Bell button + badge -->
-                <StackPane onMouseClicked="#handleToggleNotifications">
-                    <Button fx:id="btnChuong" mnemonicParsing="false"
+                <StackPane>
+                    <Button fx:id="btnChuong" mnemonicParsing="false" onAction="#handleToggleNotifications"
                             style="-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 18px;"
                             text="🔔" />
-                    <Label fx:id="lblBadgeChuong" alignment="CENTER" style="-fx-background-color: #D32F2F; -fx-text-fill: white; -fx-background-radius: 10; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 1 4;" text="0" visible="false" managed="false">
+                    <Label fx:id="lblBadgeChuong" mouseTransparent="true" alignment="CENTER" style="-fx-background-color: #D32F2F; -fx-text-fill: white; -fx-background-radius: 10; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 1 4;" text="0" visible="false" managed="false">
                         <StackPane.margin><Insets top="0.0" left="15.0" /></StackPane.margin>
                     </Label>
                 </StackPane>

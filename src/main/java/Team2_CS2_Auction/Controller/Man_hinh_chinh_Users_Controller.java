@@ -255,7 +255,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
     }
 
     @FXML
-    public void handleToggleNotifications(javafx.scene.input.MouseEvent event) {
+    public void handleToggleNotifications(javafx.event.Event event) {
         if (notificationPopup == null) return;
         boolean isVisible = notificationPopup.isVisible();
         notificationPopup.setVisible(!isVisible);

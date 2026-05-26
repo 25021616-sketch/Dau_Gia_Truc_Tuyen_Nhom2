@@ -19,8 +19,10 @@ public interface AuctionService {
     // MỚI: Lấy danh sách sản phẩm của riêng tôi (Cho trang Sản phẩm của tôi)
     List<Auction> getAuctionsBySeller(int sellerId) throws Exception;
 
-    // Đặt giá thầu
-    void placeBid(User bidder, String auctionId, double bidAmount) throws Exception;
+    /**
+     * @return Thời gian kết thúc mới nếu có gia hạn (Anti-sniping), ngược lại trả về null.
+     */
+    java.time.LocalDateTime placeBid(User bidder, String auctionId, double bidAmount) throws Exception;
    // Admin duyệt
     List<Auction> getPendingAuctions() throws Exception;
     void approveAuction(String auctionId) throws Exception;

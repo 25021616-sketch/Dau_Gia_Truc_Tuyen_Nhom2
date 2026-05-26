@@ -71,17 +71,12 @@ public class AuctionServiceImpl implements AuctionService {
      * HÀM ĐẶT GIÁ THỐNG NHẤT - ĐÃ SỬA LOGIC CHUẨN
      */
     @Override
-    public void placeBid(
-            User bidder,
-            String auctionId,
-            double bidAmount
-    ) throws Exception {
-
+    public java.time.LocalDateTime placeBid(User bidder, String auctionId, double bidAmount) throws Exception {
         System.out.println("========== DEBUG BID ==========");
         System.out.println("Bắt đầu đặt giá sử dụng Transaction cho Auction: " + auctionId);
 
         // Gọi Transaction duy nhất từ Repo
-        auctionRepo.executeBidTransaction(bidder.getId(), auctionId, bidAmount);
+        java.time.LocalDateTime newEndTime = auctionRepo.executeBidTransaction(bidder.getId(), auctionId, bidAmount);
 
         System.out.println("✅ Đặt giá thành công bằng Transaction");
 
@@ -91,6 +86,8 @@ public class AuctionServiceImpl implements AuctionService {
                         bidder.getId()
                 )
         );
+        
+        return newEndTime;
     }
 
     @Override

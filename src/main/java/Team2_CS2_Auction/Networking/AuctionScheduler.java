@@ -21,6 +21,7 @@ public class AuctionScheduler {
             // scheduleAtFixedRate sẽ DỪNG HẲN nếu Runnable ném bất kỳ exception nào
             // (kể cả RuntimeException) mà không được bắt => scheduler chết âm thầm
             try {
+                expirePendingAuctions();
                 checkEndedAuctions();
             } catch (Throwable t) {
                 System.err.println("[SCHEDULER] ❌ Lỗi khi check phiên đấu giá: " + t.getMessage());
@@ -29,6 +30,22 @@ public class AuctionScheduler {
         }, 0, 5, TimeUnit.SECONDS);
 
         System.out.println("[SCHEDULER] ✅ Đã khởi động, kiểm tra mỗi 5 giây.");
+    }
+
+    private void expirePendingAuctions() {
+        String sql = "UPDATE products SET status = 'EXPIRED' WHERE status = 'PENDING' AND end_time < NOW()";
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            int expiredCount = ps.executeUpdate();
+            if (expiredCount > 0) {
+                System.out.println("[SCHEDULER] Đã tự động EXPIRED " + expiredCount + " phiên đấu giá (chưa duyệt nhưng hết hạn).");
+            }
+        } catch (Exception e) {
+            System.err.println("[SCHEDULER] ❌ Lỗi khi expire PENDING auctions: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void checkEndedAuctions() throws Exception {

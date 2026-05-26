@@ -70,14 +70,17 @@ public class ClientHandler {
                     // Tạo dummy Member chỉ với ID để qua bài test của Service
                     Member dummyBidder = new Member(userId, "Dummy", "HIDDEN", "000");
 
-                    // Gọi Database
-                    auctionService.placeBid(dummyBidder, auctionId, bidAmount);
+                    // Gọi Database và nhận newEndTime (nếu có gia hạn)
+                    java.time.LocalDateTime newEndTime = auctionService.placeBid(dummyBidder, auctionId, bidAmount);
 
                     // THÀNH CÔNG: BROADCAST GIÁ MỚI cho toàn mạng
                     JsonObject broadcastPayload = new JsonObject();
                     broadcastPayload.addProperty("auctionId", auctionId);
                     broadcastPayload.addProperty("newPrice", bidAmount);
                     broadcastPayload.addProperty("winnerId", userId);
+                    if (newEndTime != null) {
+                        broadcastPayload.addProperty("newEndTime", newEndTime.toString());
+                    }
 
                     server.broadcast("NEW_BID", broadcastPayload);
                     System.out.println("Đã broadcast giá mới cho " + auctionId + ": $" + bidAmount);
@@ -335,12 +338,15 @@ public class ClientHandler {
                 // Hợp lệ → Đặt thầu tự động
                 Member activeBidder = new Member(activeBid.getUserId(), "User_" + activeBid.getUserId(), "123456", "000");
                 try {
-                    auctionService.placeBid(activeBidder, auctionId, targetPrice);
+                    java.time.LocalDateTime newEndTime = auctionService.placeBid(activeBidder, auctionId, targetPrice);
 
                     JsonObject broadcastPayload = new JsonObject();
                     broadcastPayload.addProperty("auctionId", auctionId);
                     broadcastPayload.addProperty("newPrice", targetPrice);
                     broadcastPayload.addProperty("winnerId", activeBid.getUserId());
+                    if (newEndTime != null) {
+                        broadcastPayload.addProperty("newEndTime", newEndTime.toString());
+                    }
                     server.broadcast("NEW_BID", broadcastPayload);
 
                     server.sendToUser(activeBid.getUserId(), "AUTO_BID_PLACED", String.valueOf(targetPrice));

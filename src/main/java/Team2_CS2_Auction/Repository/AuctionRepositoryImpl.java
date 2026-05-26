@@ -234,7 +234,7 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     }
 
     @Override
-    public void executeBidTransaction(int bidderId, String auctionId, double bidAmount) throws Exception {
+    public java.time.LocalDateTime executeBidTransaction(int bidderId, String auctionId, double bidAmount) throws Exception {
         String numericId = auctionId.replace("AUC_", "");
         int productId = Integer.parseInt(numericId);
 
@@ -244,12 +244,13 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             conn.setAutoCommit(false);
 
             // 1. Get auction info with FOR UPDATE
-            String sqlProduct = "SELECT seller_id, current_price, step_price, last_bidder_id, status FROM products WHERE id = ? FOR UPDATE";
+            String sqlProduct = "SELECT seller_id, current_price, step_price, last_bidder_id, status, end_time FROM products WHERE id = ? FOR UPDATE";
             double currentPrice = 0;
             double stepPrice = 0;
             int sellerId = 0;
             int lastBidderId = 0;
             String status = "";
+            java.time.LocalDateTime endTime = null;
 
             try (PreparedStatement psProduct = conn.prepareStatement(sqlProduct)) {
                 psProduct.setInt(1, productId);
@@ -260,6 +261,10 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                         stepPrice = rs.getDouble("step_price");
                         lastBidderId = rs.getInt("last_bidder_id");
                         status = rs.getString("status");
+                        java.sql.Timestamp ts = rs.getTimestamp("end_time");
+                        if (ts != null) {
+                            endTime = ts.toLocalDateTime();
+                        }
                     } else {
                         throw new Exception("Không tìm thấy phiên đấu giá!");
                     }
@@ -342,13 +347,32 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                 }
             }
 
-            // 5. Update Product Price and Last Bidder
-            String updateProductSql = "UPDATE products SET current_price = ?, last_bidder_id = ? WHERE id = ?";
-            try (PreparedStatement psUpdateProduct = conn.prepareStatement(updateProductSql)) {
-                psUpdateProduct.setDouble(1, bidAmount);
-                psUpdateProduct.setInt(2, bidderId);
-                psUpdateProduct.setInt(3, productId);
-                psUpdateProduct.executeUpdate();
+            // 5. Check Anti-Sniping & Update Product
+            java.time.LocalDateTime newEndTime = null;
+            if (endTime != null) {
+                long secondsLeft = java.time.Duration.between(java.time.LocalDateTime.now(), endTime).getSeconds();
+                if (secondsLeft >= 0 && secondsLeft <= 45) {
+                    newEndTime = endTime.plusSeconds(45);
+                }
+            }
+
+            if (newEndTime != null) {
+                String updateProductSql = "UPDATE products SET current_price = ?, last_bidder_id = ?, end_time = ? WHERE id = ?";
+                try (PreparedStatement psUpdateProduct = conn.prepareStatement(updateProductSql)) {
+                    psUpdateProduct.setDouble(1, bidAmount);
+                    psUpdateProduct.setInt(2, bidderId);
+                    psUpdateProduct.setTimestamp(3, java.sql.Timestamp.valueOf(newEndTime));
+                    psUpdateProduct.setInt(4, productId);
+                    psUpdateProduct.executeUpdate();
+                }
+            } else {
+                String updateProductSql = "UPDATE products SET current_price = ?, last_bidder_id = ? WHERE id = ?";
+                try (PreparedStatement psUpdateProduct = conn.prepareStatement(updateProductSql)) {
+                    psUpdateProduct.setDouble(1, bidAmount);
+                    psUpdateProduct.setInt(2, bidderId);
+                    psUpdateProduct.setInt(3, productId);
+                    psUpdateProduct.executeUpdate();
+                }
             }
 
             // 6. Insert Bid History
@@ -361,6 +385,7 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             }
 
             conn.commit();
+            return newEndTime;
         } catch (Exception e) {
             if (conn != null) {
                 try { conn.rollback(); } catch (Exception ignored) {}
@@ -562,8 +587,8 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                 try (ResultSet checkRs = checkPs.executeQuery()) {
                     if (checkRs.next()) {
                         String status = checkRs.getString("status");
-                        if ("FINISHED".equals(status)) {
-                            System.out.println("[SCHEDULER] Product " + productId + " đã kết thúc trước đó.");
+                        if ("FINISHED".equals(status) || "NO_BID".equals(status)) {
+                            System.out.println("[SCHEDULER] Product " + productId + " đã kết thúc trước đó với trạng thái " + status);
                             conn.rollback();
                             return;
                         }
@@ -584,15 +609,15 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             try (PreparedStatement psWinner = conn.prepareStatement(findWinnerSql)) {
                 psWinner.setInt(1, productId);
                 try (ResultSet rs = psWinner.executeQuery()) {
-                    // Không có ai bid => chỉ đủi cập nhật status
+                    // Không có ai bid => chỉ đủi cập nhật status thành NO_BID
                     if (!rs.next()) {
-                        String updateSql = "UPDATE products SET status = 'FINISHED' WHERE id = ?";
+                        String updateSql = "UPDATE products SET status = 'NO_BID' WHERE id = ?";
                         try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
                             psUpdate.setInt(1, productId);
                             psUpdate.executeUpdate();
                         }
                         conn.commit();
-                        System.out.println("[SCHEDULER] Product " + productId + ": không có người tham gia => FINISHED.");
+                        System.out.println("[SCHEDULER] Product " + productId + ": không có người tham gia => NO_BID.");
                         return;
                     }
                     winnerId = rs.getInt("user_id");

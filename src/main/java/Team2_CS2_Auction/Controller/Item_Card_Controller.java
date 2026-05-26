@@ -245,14 +245,25 @@ public class Item_Card_Controller extends Base_Admin_Controller {
             case PENDING:
                 setLeftBadge("CHỜ DUYỆT", "#F39C12");      // 🟠 Cam
                 break;
+            case EXPIRED:
+                setLeftBadge("HẾT HẠN DUYỆT", "#34495e"); // ⚫ Xám đậm
+                break;
             case APPROVED:
             case OPEN:
-            case CLOSED:
                 setLeftBadge("ĐÃ DUYỆT", "#27ae60");       // 🟢 Xanh lá
+                break;
+            case FINISHED:
+                setLeftBadge("ĐẤU GIÁ THÀNH CÔNG", "#2980b9"); // 🔵 Xanh dương
+                break;
+            case NO_BID:
+                setLeftBadge("KHÔNG CÓ NGƯỜI ĐẤU", "#95a5a6"); // ⚪ Xám nhạt
+                break;
+            case CLOSED:
+                setLeftBadge("ĐÃ KẾT THÚC", "#7f8c8d");
                 break;
             case REJECTED:
             case CANCELLED:
-                setLeftBadge("KHÔNG ĐƯỢC DUYỆT", "#e74c3c"); // 🔴 Đỏ
+                setLeftBadge("ĐÃ HỦY / TỪ CHỐI", "#e74c3c"); // 🔴 Đỏ
                 break;
             default:
                 setLeftBadge("KHÔNG RÕ", "#95a5a6");
