@@ -98,6 +98,12 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                             if (currentAuction != null && currentAuction.getAuctionId().equals(rcvAuctionId)) {
                                 double newPrice = payload.get("newPrice").getAsDouble();
                                 
+                                // Kiểm tra xem có gia hạn thời gian không (Anti-sniping)
+                                if (payload.has("newEndTime")) {
+                                    String newEndTimeStr = payload.get("newEndTime").getAsString();
+                                    currentAuction.setEndTime(java.time.LocalDateTime.parse(newEndTimeStr));
+                                }
+
                                 // Cập nhật UI
                                 currentAuction.setCurrentPrice(newPrice);
                                 currentPrice = newPrice;
