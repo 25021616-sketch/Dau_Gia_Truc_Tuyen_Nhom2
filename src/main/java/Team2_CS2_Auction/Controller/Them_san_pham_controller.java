@@ -36,6 +36,7 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     private String selectedImagePath = "";
     private File selectedFile = null;
     private String oldAuctionIdForRelist = null;
+    private boolean isRelist = false;
 
     private final AuctionService auctionService = new AuctionServiceImpl();
 
@@ -136,10 +137,21 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         btnDeleteImage.setVisible(false);
         txtTenSanPham.setDisable(false);
         loaiSanPhamCombo.setDisable(false);
+        oldAuctionIdForRelist = null;
+    }
+
+    @Override
+    protected void onResume() {
+        if (!isRelist) {
+            clearAllFields();
+        }
+        isRelist = false; // Reset cờ cho lần vào trang tiếp theo
     }
 
     public void setRelistData(Team2_CS2_Auction.Model.auction.Auction oldAuction) {
+        clearAllFields(); // Xóa rác cũ trước khi điền dữ liệu mới
         this.oldAuctionIdForRelist = oldAuction.getAuctionId();
+        this.isRelist = true; // Đánh dấu đây là hành động đăng lại để onResume không xóa dữ liệu
 
         txtTenSanPham.setText(oldAuction.getItem().getTenSanPham());
         txtTenSanPham.setDisable(true); // Không cho sửa tên
