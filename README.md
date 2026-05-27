@@ -398,8 +398,8 @@ Hệ thống được thiết kế theo nguyên lý phân lớp rõ ràng (Separ
 
 ## 5. Vị trí các file .jar
 Các file thực thi fat JAR (đã bao gồm toàn bộ thư viện như JavaFX, MySQL Connector, Gson...) được build và nằm ở thư mục `target/`:
-- **Server**: `target/MyAuctionApp-1.0-SNAPSHOT-server.jar`
-- **Client**: `target/MyAuctionApp-1.0-SNAPSHOT-client.jar`
+- **Server**: `target/server.jar`
+- **Client**: `target/client.jar`
 
 ## 6. Hướng dẫn chạy Server/Client theo thứ tự cụ thể
 Để hệ thống hoạt động chính xác, **bạn phải chạy Server trước, sau đó mới chạy Client**.
@@ -407,19 +407,20 @@ Các file thực thi fat JAR (đã bao gồm toàn bộ thư viện như JavaFX,
 ### Bước 1: Khởi động Server
 Mở terminal tại thư mục gốc của dự án và chạy lệnh sau:
 ```bash
-java -jar target/MyAuctionApp-1.0-SNAPSHOT-server.jar
+java -jar target/server.jar
 ```
 *Lưu ý: Terminal của Server sẽ in ra địa chỉ IP LAN của máy chủ. Bạn hãy copy hoặc ghi nhớ IP này để Client kết nối.*
 
 ### Bước 2: Khởi động Client
 Mở một terminal khác (có thể trên cùng một máy hoặc máy tính khác trong mạng) và chạy lệnh sau:
 ```bash
-java -jar target/MyAuctionApp-1.0-SNAPSHOT-client.jar
+java -jar target/client.jar
 ```
 *Lưu ý: Tại màn hình Client, khi được yêu cầu (hoặc trong phần cài đặt kết nối), hãy nhập đúng địa chỉ IP mà Server đã hiển thị.*
 
 ### Hướng dẫn tự Build lại file JAR (Dành cho nhà phát triển)
 Nếu bạn có thay đổi mã nguồn và muốn tạo lại file JAR, hãy chạy lệnh Maven sau:
+
 ```bash
 # Trên Windows
 .\mvnw.cmd clean package -DskipTests
