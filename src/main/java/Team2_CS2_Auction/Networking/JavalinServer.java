@@ -10,8 +10,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class JavalinServer {
+    private static JavalinServer instance;
     private Javalin app;
     private final Map<WsContext, ClientHandler> clients = new ConcurrentHashMap<>();
+
+    public JavalinServer() {
+        instance = this;
+    }
+
+    public static JavalinServer getInstance() {
+        return instance;
+    }
     private final Gson gson = GsonUtil.getGson();
     private final UserService userService = new UserService();
 

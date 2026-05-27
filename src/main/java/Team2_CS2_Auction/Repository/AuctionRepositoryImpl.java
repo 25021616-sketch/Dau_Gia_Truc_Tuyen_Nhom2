@@ -667,6 +667,8 @@ public class AuctionRepositoryImpl implements AuctionRepository {
 
             System.out.println("[SCHEDULER] Đã trừ tiền người thắng " + winnerId + " (Balance còn: " + newWinnerBalance + ")");
 
+            double newSellerBalance = -1;
+
             // ===============================
             // THANH TOÁN CHO NGƯỜI BÁN
             // ===============================
@@ -678,6 +680,16 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                     psSeller.executeUpdate();
                 }
                 System.out.println("[SCHEDULER] Đã cộng tiền cho người bán " + sellerId + " số tiền: " + finalPrice);
+
+                String getBalanceSql = "SELECT balance FROM user WHERE id = ?";
+                try (PreparedStatement psGet = conn.prepareStatement(getBalanceSql)) {
+                    psGet.setInt(1, sellerId);
+                    try (ResultSet rsGet = psGet.executeQuery()) {
+                        if (rsGet.next()) {
+                            newSellerBalance = rsGet.getDouble("balance");
+                        }
+                    }
+                }
             }
 
             // ===============================
@@ -728,6 +740,21 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             // Tất cả thành công => commit
             conn.commit();
             System.out.println("[SCHEDULER] ✅ finish auction thành công cho product " + productId);
+
+            // Gửi WebSocket thông báo cho người mua và người bán sau khi đã COMMIT dữ liệu xuống DB
+            if (Team2_CS2_Auction.Networking.JavalinServer.getInstance() != null) {
+                com.google.gson.JsonObject winPayload = new com.google.gson.JsonObject();
+                winPayload.addProperty("userId", winnerId);
+                winPayload.addProperty("balance", newWinnerBalance);
+                Team2_CS2_Auction.Networking.JavalinServer.getInstance().sendToUser(winnerId, "BALANCE_UPDATED", winPayload);
+
+                if (sellerId != -1 && newSellerBalance != -1) {
+                    com.google.gson.JsonObject sellPayload = new com.google.gson.JsonObject();
+                    sellPayload.addProperty("userId", sellerId);
+                    sellPayload.addProperty("balance", newSellerBalance);
+                    Team2_CS2_Auction.Networking.JavalinServer.getInstance().sendToUser(sellerId, "BALANCE_UPDATED", sellPayload);
+                }
+            }
 
         } catch (Exception e) {
             System.err.println("[SCHEDULER] ❌ Lỗi finish auction (product " + productId + "): " + e.getMessage());
