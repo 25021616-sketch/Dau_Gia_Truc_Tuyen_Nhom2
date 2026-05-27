@@ -35,7 +35,6 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
 
     @FXML private FlowPane pnlItems;
 
-    // ===== NOTIFICATION BELL =====
     @FXML private Button btnChuong;
     @FXML private Label lblBadgeChuong;
     @FXML private VBox notificationPopup;
@@ -58,8 +57,7 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
     }
 
     private void setupNetworkListener() {
-        // FIX BUG #1: Luôn xóa listener cũ trước khi tạo listener mới
-        // Tránh tình trạng listener bị nhân bản mỗi lần onResume() được gọi
+        // Xóa listener cũ trước khi tạo listener mới để tránh bị nhân bản mỗi lần onResume() được gọi
         if (networkListener != null) {
             nm.removeListener(networkListener);
             networkListener = null;
@@ -88,12 +86,10 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                             break;
 
                         case "PRODUCT_UPDATED":
-                            // Sản phẩm mới được duyệt hoặc bị từ chối -> Tải lại danh sách ngay
                             loadDataFromServer();
                             break;
 
                         case "PRODUCT_DELETED":
-                            // Chủ sản phẩm đã xóa hoặc đăng lại phiên mà bạn đã đặt giá
                             try {
                                 Gson gson = GsonUtil.getGson();
                                 JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
@@ -103,23 +99,21 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                                         ? "🔄 Sản phẩm \u201c" + productName + "\u201d đã được đăng lại bởi chủ phiên. Phiên cũ không còn hiệu lực."
                                         : "🔴 Sản phẩm \u201c" + productName + "\u201d đã bị chủ phiên xóa. Phiên đấu giá đã kết thúc.";
                                 addNotification(notifText);
-                                loadDataFromServer(); // Cập nhật lại danh sách
+                                loadDataFromServer();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                             break;
 
                         case "BALANCE_UPDATED":
-                            // Server báo số dư thay đổi (do đặt giá / auto-bid) -> Cập nhật ngay
                             try {
                                 Gson gson = GsonUtil.getGson();
                                 JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
                                 double newBalance = payload.get("balance").getAsDouble();
-                                // Cập nhật Session để các màn hình khác cũng nhất quán
                                 if (Team2_CS2_Auction.Session.Session.currentUser != null) {
                                     Team2_CS2_Auction.Session.Session.currentUser.setBalance(newBalance);
                                 }
-                                updateBalanceDisplay(); // Cập nhật UI ngay lập tức
+                                updateBalanceDisplay();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -141,12 +135,10 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
 
     @Override
     protected void cleanup() {
-        // Xóa listener khi rời màn hình
         if (networkListener != null) {
             nm.removeListener(networkListener);
             networkListener = null;
         }
-        // Dừng tất cả các đồng hồ đếm ngược của thẻ sản phẩm
         activeControllers.forEach(ctrl -> {
             if (ctrl != null) ctrl.stopTimeline();
         });
@@ -154,19 +146,16 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
 
     @Override
     protected void onResume() {
-        // Gọi lại khi màn hình thức dậy từ Cache
-        setupNetworkListener(); // Mở lại kết nối Socket (đã có guard xóa listener cũ bên trong)
-        loadDataFromServer();   // Chạy ngầm fetch data mới và cập nhật UI mượt mà
-        updateBalanceDisplay(); // Cập nhật lại số dư mới nhất
+        setupNetworkListener();
+        loadDataFromServer();
+        updateBalanceDisplay();
     }
 
     private void loadDataFromServer() {
-        // Chạy ngầm (Background Thread) để không làm đơ nút bấm
         new Thread(() -> {
             try {
                 List<Auction> list = auctionService.getActiveAuctions();
 
-                // Tải trước FXML trong Background Thread để không làm đơ UI
                 List<Parent> cards = new ArrayList<>();
                 List<Item_Card_Controller> controllers = new ArrayList<>();
 
@@ -181,7 +170,6 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                     }
                 }
 
-                // Cập nhật UI phải được đẩy về JavaFX Thread
                 javafx.application.Platform.runLater(() -> renderAuctionList(list, cards, controllers));
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() -> System.err.println("Lỗi load dữ liệu: " + e.getMessage()));
@@ -203,8 +191,6 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                 Parent card = cards.get(i);
                 Item_Card_Controller cardController = controllers.get(i);
 
-                // setData() tự động phát hiện ownership qua checkOwnership() bên trong,
-                // KHÔNG cần gọi setOwnerView() từ ngoài nữa.
                 cardController.setData(auctions.get(i));
 
                 activeControllers.add(cardController);
@@ -215,38 +201,30 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         }
     }
 
-    // =========================================================
-    // HÀM NẠP TIỀN THÀNH CÔNG
-    // =========================================================
     @Override
     protected void onNapTienSuccess() {
         super.onNapTienSuccess();
         loadDataFromServer();
     }
 
-    // ================== CÁC HÀM ĐIỀU HƯỚNG KHÁC ==================
     @FXML public void handleGoTothemsanpham(ActionEvent event) { switchScene(event, "them_san_pham.fxml", "Thêm sản phẩm"); }
     @FXML public void handleGoToSanPhamCuaToi(ActionEvent event) { switchScene(event, "san_pham_cua_toi.fxml", "Sản phẩm của tôi"); }
     @FXML public void handleGoToLichSu(ActionEvent event) { switchScene(event, "Phien_Da_Tham_Gia.fxml", "Lịch sử giao dịch"); }
     @FXML public void handleGoToDangNhap(ActionEvent event) { switchScene(event, "dang_nhap.fxml", "Đăng nhập"); }
 
-    // ===== NOTIFICATION METHODS =====
-
     private void addNotification(String text) {
         unreadCount++;
-        // Tạo một dòng thông báo
         Label notif = new Label(text);
         notif.setWrapText(true);
         notif.setMaxWidth(330);
         notif.setStyle("-fx-padding: 12 16; -fx-border-color: #F5F5F5; -fx-border-width: 0 0 1 0; -fx-font-size: 13px; -fx-text-fill: #212121;");
         if (notificationList != null) {
-            notificationList.getChildren().add(0, notif); // Thả vào đầu list (mới nhất trên cùng)
+            notificationList.getChildren().add(0, notif);
         }
         if (lblNoNotifications != null) {
             lblNoNotifications.setVisible(false);
             lblNoNotifications.setManaged(false);
         }
-        // Cập nhật badge
         if (lblBadgeChuong != null) {
             lblBadgeChuong.setText(String.valueOf(unreadCount));
             lblBadgeChuong.setVisible(true);
@@ -261,7 +239,6 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
         notificationPopup.setVisible(!isVisible);
         notificationPopup.setManaged(!isVisible);
 
-        // Reset badge khi mở xem
         if (!isVisible) {
             unreadCount = 0;
             if (lblBadgeChuong != null) {
