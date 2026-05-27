@@ -27,7 +27,7 @@
                         <Label prefHeight="20.0" prefWidth="22.0" text="👤" textFill="#1A237E">
                             <font><Font size="14.0" /></font>
                         </Label>
-                        <Label fx:id="lblUsername" prefHeight="19.0" prefWidth="66.0" text="User" textFill="#1A237E">
+                        <Label fx:id="lblUsername" minWidth="-Infinity" prefHeight="19.0" text="User" textFill="#1A237E">
                             <font><Font name="System Bold" size="13.0" /></font>
                         </Label>
                         <Label text="|" textFill="#9FA8DA" />
