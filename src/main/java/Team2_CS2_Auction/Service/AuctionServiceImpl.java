@@ -16,13 +16,9 @@ import java.util.List;
 public class AuctionServiceImpl implements AuctionService {
     private final ProductRepository productRepo = new ProductRepository();
     private final AuctionRepository auctionRepo = new AuctionRepositoryImpl();
-    private final UserRepository userRepo = new UserRepository(); // Thêm để check số dư chuẩn
-
-    public AuctionServiceImpl(AuctionRepositoryImpl auctionRepo) {
-    }
+    private final UserRepository userRepo = new UserRepository();
 
     public AuctionServiceImpl() {
-
     }
 
     @Override
@@ -36,6 +32,7 @@ public class AuctionServiceImpl implements AuctionService {
         double step = Double.parseDouble(stepPrice);
 
         if (price <= 0) throw new Exception("Giá khởi điểm phải > 0!");
+        if (step <= 0) throw new Exception("Bước giá phải > 0!");
         if (startTime.isAfter(endTime)) throw new Exception("Thời gian không hợp lệ!");
 
         Item newItem = ItemFactory.createItem(null, name, category, description, imagePath);
@@ -68,19 +65,14 @@ public class AuctionServiceImpl implements AuctionService {
     }
 
     /**
-     * HÀM ĐẶT GIÁ THỐNG NHẤT - ĐÃ SỬA LOGIC CHUẨN
+     * Đặt giá cho một phiên đấu giá. Thực thi toàn bộ trong một DB Transaction để đảm bảo tính nguyên tử.
+     * @return Thời gian kết thúc mới nếu có gia hạn chống sniping, ngược lại trả về null.
      */
     @Override
     public java.time.LocalDateTime placeBid(User bidder, String auctionId, double bidAmount) throws Exception {
-        System.out.println("========== DEBUG BID ==========");
-        System.out.println("Bắt đầu đặt giá sử dụng Transaction cho Auction: " + auctionId);
-
-        // Gọi Transaction duy nhất từ Repo
         java.time.LocalDateTime newEndTime = auctionRepo.executeBidTransaction(bidder.getId(), auctionId, bidAmount);
 
-        System.out.println("✅ Đặt giá thành công bằng Transaction");
-
-        // Cập nhật lại Locked Balance lên object User trên bộ nhớ (để UI cập nhật)
+        // Đồng bộ lại số dư bị khóa trên object User trong bộ nhớ để UI cập nhật ngay
         bidder.setLockedBalance(
                 userRepo.getLockedBalance(
                         bidder.getId()
@@ -109,7 +101,6 @@ public class AuctionServiceImpl implements AuctionService {
     }
     @Override
     public List<Auction> getAuctionsByBidder(int bidderId) throws Exception {
-        System.out.println("DEBUG SERVICE: Đang gọi Repo lấy danh sách cho bidder: " + bidderId);
         return auctionRepo.findAuctionsByBidderId(bidderId);
     }
 
@@ -120,7 +111,6 @@ public class AuctionServiceImpl implements AuctionService {
 
     @Override
     public void cancelAuction(String auctionId) throws Exception {
-        // Dùng lại updateAuctionStatus đã có, đặt status = CANCELLED
         boolean ok = auctionRepo.updateAuctionStatus(auctionId, "CANCELLED");
         if (!ok) throw new Exception("Không thể hủy phiên đấu giá!");
     }

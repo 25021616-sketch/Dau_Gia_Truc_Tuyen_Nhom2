@@ -45,7 +45,6 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
         loaiSanPhamCombo.setItems(FXCollections.observableArrayList(
                 "Đồ điện tử", "Tác phẩm nghệ thuật", "Bất động sản", "Xe hơi", "Khác"
         ));
-        // Đảm bảo nút xóa ảnh ẩn lúc ban đầu
         if (btnDeleteImage != null) btnDeleteImage.setVisible(false);
     }
 
@@ -65,7 +64,6 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
             LocalDateTime start = parseDateTime(ngayBatDauPicker, gioBatDau, phutBatDau);
             LocalDateTime end = parseDateTime(ngayKetThucPicker, gioKetThuc, phutKetThuc);
 
-            // Kiểm tra thời gian hợp lệ
             if (start.isBefore(LocalDateTime.now())) {
                 throw new Exception("Thời gian bắt đầu phải lớn hơn thời gian hiện tại!");
             }
@@ -81,23 +79,19 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
             showSuccessAlert(oldAuctionIdForRelist != null ? "Đăng lại sản phẩm thành công!" : "Đăng sản phẩm thành công!");
 
             if (oldAuctionIdForRelist != null) {
-                // Xóa phiên cũ và thông báo "đăng lại" cho các người tham gia cũ
+                // Thông báo cho các user đang xem phiên cũ biết phiên đó đã được tái đăng
                 JsonObject payload = new JsonObject();
                 payload.addProperty("auctionId", oldAuctionIdForRelist);
                 payload.addProperty("sellerId", seller.getId());
                 payload.addProperty("productName", ten);
-                payload.addProperty("relist", true); // Đánh dấu là đăng lại
+                payload.addProperty("relist", true);
                 NetworkManager.getInstance().send("CANCEL_AUCTION", payload);
                 oldAuctionIdForRelist = null;
             } else {
-                // Báo cho toàn mạng biết có sản phẩm mới được đăng (chờ Admin duyệt)
                 NetworkManager.getInstance().send("PRODUCT_UPDATED", "");
             }
 
-            // THAY ĐỔI Ở ĐÂY: Gọi hàm xóa sạch dữ liệu trên giao diện thay vì chuyển trang
             clearAllFields();
-            
-            // Chuyển về màn hình sản phẩm của tôi
             handleBackToHome(event);
 
         } catch (NumberFormatException e) {
@@ -108,27 +102,23 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
     }
 
     /**
-     * Hàm dọn dẹp sạch sẽ dữ liệu trên toàn bộ giao diện
+     * Xóa sạch toàn bộ dữ liệu trên form và khôi phục trạng thái ban đầu.
      */
     private void clearAllFields() {
-        // 1. Xóa các ô nhập văn bản và số số
         txtTenSanPham.clear();
         txtGiaKhoiDiem.clear();
         txtBuocGia.clear();
         txtMoTa.clear();
 
-        // 2. Xóa các ô nhập giờ và phút
         gioBatDau.clear();
         phutBatDau.clear();
         gioKetThuc.clear();
         phutKetThuc.clear();
 
-        // 3. Reset các bộ chọn ngày và combobox danh mục
         loaiSanPhamCombo.setValue(null);
         ngayBatDauPicker.setValue(null);
         ngayKetThucPicker.setValue(null);
 
-        // 4. Khôi phục lại trạng thái khung ảnh như ban đầu
         selectedFile = null;
         selectedImagePath = "";
         imgPreview.setImage(null);
@@ -142,28 +132,29 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     @Override
     protected void onResume() {
+        // Nếu không phải luồng đăng lại, xóa form để tránh dữ liệu cũ bị tồn dư khi cache
         if (!isRelist) {
             clearAllFields();
         }
-        isRelist = false; // Reset cờ cho lần vào trang tiếp theo
+        isRelist = false;
     }
 
     public void setRelistData(Team2_CS2_Auction.Model.auction.Auction oldAuction) {
-        clearAllFields(); // Xóa rác cũ trước khi điền dữ liệu mới
+        clearAllFields();
         this.oldAuctionIdForRelist = oldAuction.getAuctionId();
-        this.isRelist = true; // Đánh dấu đây là hành động đăng lại để onResume không xóa dữ liệu
+        // Đánh dấu đây là luồng đăng lại để onResume không xóa dữ liệu vừa điền
+        this.isRelist = true;
 
         txtTenSanPham.setText(oldAuction.getItem().getTenSanPham());
-        txtTenSanPham.setDisable(true); // Không cho sửa tên
+        txtTenSanPham.setDisable(true);
 
         loaiSanPhamCombo.setValue(oldAuction.getItem().getLoaiSanPham());
-        loaiSanPhamCombo.setDisable(true); // Không cho sửa danh mục
+        loaiSanPhamCombo.setDisable(true);
 
         txtGiaKhoiDiem.setText(String.valueOf((long) oldAuction.getCurrentPrice()));
         txtBuocGia.setText(String.valueOf((long) oldAuction.getStepPrice()));
         txtMoTa.setText(oldAuction.getItem().getMoTa());
 
-        // Hỗ trợ ảnh
         String oldImg = oldAuction.getItem().getImagePath();
         if (oldImg != null && !oldImg.isEmpty()) {
             selectedImagePath = oldImg;
@@ -212,11 +203,9 @@ public class Them_san_pham_controller extends Base_Admin_Controller implements I
 
     private String uploadSelectedImage() throws Exception {
         if (selectedFile == null) {
-            return "";
+            return selectedImagePath; // Trả về URL ảnh cũ nếu đang đăng lại mà không đổi ảnh
         }
-        System.out.println("Đang upload ảnh lên mạng...");
         String uploadedUrl = Team2_CS2_Auction.util.ImgBBUploader.uploadImage(selectedFile);
-
         if (uploadedUrl == null) {
             throw new Exception("Lỗi tải ảnh lên server ImgBB! Vui lòng thử lại.");
         }

@@ -631,86 +631,47 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             // THANH TOÁN NGƯỜI THẮNG
             // ===============================
 
-            // Lấy số tiền đang bị lock
-            double lockedMoney = userRepo.getLockedBalance(winnerId);
+            // Lấy số dư hiện tại và locked_balance của người thắng bằng FOR UPDATE để giữ Transaction
+            String winnerSql = "SELECT balance, locked_balance FROM user WHERE id = ? FOR UPDATE";
+            double winnerLocked = 0;
+            double winnerBalance = 0;
+            try (PreparedStatement psWinner = conn.prepareStatement(winnerSql)) {
+                psWinner.setInt(1, winnerId);
+                try (ResultSet rsWinner = psWinner.executeQuery()) {
+                    if (rsWinner.next()) {
+                        winnerBalance = rsWinner.getDouble("balance");
+                        winnerLocked = rsWinner.getDouble("locked_balance");
+                    }
+                }
+            }
 
             // Nếu lock nhỏ hơn giá thắng thì cảnh báo thay vì báo lỗi để không treo hệ thống
-            if (lockedMoney < finalPrice) {
+            if (winnerLocked < finalPrice) {
                 System.err.println("[WARNING] Người thắng " + winnerId + " không đủ locked_balance. Vẫn trừ vào số dư thật.");
             }
 
-            // Trừ locked_balance
-            double newWinnerLocked = Math.max(0, lockedMoney - finalPrice);
-            boolean unlockSuccess = userRepo.updateLockedBalance(winnerId, newWinnerLocked);
+            // Tính toán số dư mới
+            double newWinnerLocked = Math.max(0, winnerLocked - finalPrice);
+            double newWinnerBalance = winnerBalance - finalPrice;
 
-            if (!unlockSuccess) {
-                System.err.println("[WARNING] Không thể cập nhật locked balance!");
+            // Trừ tiền bằng chung một Connection trong Transaction
+            String updateWinnerUserSql = "UPDATE user SET balance = ?, locked_balance = ? WHERE id = ?";
+            try (PreparedStatement psUpdateWinner = conn.prepareStatement(updateWinnerUserSql)) {
+                psUpdateWinner.setDouble(1, newWinnerBalance);
+                psUpdateWinner.setDouble(2, newWinnerLocked);
+                psUpdateWinner.setInt(3, winnerId);
+                psUpdateWinner.executeUpdate();
             }
 
-            // Trừ tiền thật khỏi balance
-            boolean paySuccess = userRepo.updateBalance(winnerId, userRepo.getBalance(winnerId) - finalPrice);
-
-            if (!paySuccess) {
-                System.err.println("[WARNING] Thanh toán thất bại!");
-            }
-
-            System.out.println(
-                    "[SCHEDULER] Đã trừ tiền người thắng"
-            );
-
-            
+            System.out.println("[SCHEDULER] Đã trừ tiền người thắng " + winnerId + " (Balance còn: " + newWinnerBalance + ")");
 
             // ===============================
-// UNLOCK NGƯỜI THUA
-// ===============================
-
-            String loserSql =
-                    "SELECT DISTINCT user_id, bid_amount " +
-                            "FROM bid " +
-                            "WHERE product_id = ? " +
-                            "AND user_id != ?";
-
-            try (
-                    PreparedStatement psLoser =
-                            conn.prepareStatement(loserSql)
-            ) {
-
-                psLoser.setInt(1, productId);
-
-                psLoser.setInt(2, winnerId);
-
-                ResultSet rsLoser =
-                        psLoser.executeQuery();
-
-                while (rsLoser.next()) {
-
-                    int loserId =
-                            rsLoser.getInt("user_id");
-
-                    double loserBid =
-                            rsLoser.getDouble("bid_amount");
-
-                    double currentLocked =
-                            userRepo.getLockedBalance(loserId);
-
-                    double newLocked =
-                            currentLocked - loserBid;
-
-                    if (newLocked < 0) {
-                        newLocked = 0;
-                    }
-
-                    userRepo.updateLockedBalance(
-                            loserId,
-                            newLocked
-                    );
-
-                    System.out.println(
-                            "[SCHEDULER] Unlock tiền user " +
-                                    loserId
-                    );
-                }
-            }
+            // LƯU Ý: KHÔNG CẦN UNLOCK NGƯỜI THUA
+            // ===============================
+            // Vì trong hàm executeBidTransaction, mỗi khi có người mới đặt giá cao hơn,
+            // hệ thống đã lập tức unlock tiền cho người giữ giá cao nhất cũ rồi.
+            // Nên khi phiên đấu giá kết thúc, CHỈ CÓ NGƯỜI THẮNG là còn bị lock tiền.
+            // Việc tiếp tục trừ locked_balance của người thua ở đây sẽ làm sai số dư của họ.
 
             // 3. Kiểm tra `transaction` đã tồn tại chưa
             String checkTransactionSql = "SELECT id FROM `transaction` WHERE product_id = ?";
