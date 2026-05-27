@@ -667,6 +667,13 @@ public class AuctionRepositoryImpl implements AuctionRepository {
 
             System.out.println("[SCHEDULER] Đã trừ tiền người thắng " + winnerId + " (Balance còn: " + newWinnerBalance + ")");
 
+            if (Team2_CS2_Auction.Networking.JavalinServer.getInstance() != null) {
+                com.google.gson.JsonObject balPayload = new com.google.gson.JsonObject();
+                balPayload.addProperty("userId", winnerId);
+                balPayload.addProperty("balance", newWinnerBalance);
+                Team2_CS2_Auction.Networking.JavalinServer.getInstance().sendToUser(winnerId, "BALANCE_UPDATED", balPayload);
+            }
+
             // ===============================
             // THANH TOÁN CHO NGƯỜI BÁN
             // ===============================
@@ -678,6 +685,22 @@ public class AuctionRepositoryImpl implements AuctionRepository {
                     psSeller.executeUpdate();
                 }
                 System.out.println("[SCHEDULER] Đã cộng tiền cho người bán " + sellerId + " số tiền: " + finalPrice);
+
+                if (Team2_CS2_Auction.Networking.JavalinServer.getInstance() != null) {
+                    String getBalanceSql = "SELECT balance FROM user WHERE id = ?";
+                    try (PreparedStatement psGet = conn.prepareStatement(getBalanceSql)) {
+                        psGet.setInt(1, sellerId);
+                        try (ResultSet rsGet = psGet.executeQuery()) {
+                            if (rsGet.next()) {
+                                double newBalance = rsGet.getDouble("balance");
+                                com.google.gson.JsonObject balPayload = new com.google.gson.JsonObject();
+                                balPayload.addProperty("userId", sellerId);
+                                balPayload.addProperty("balance", newBalance);
+                                Team2_CS2_Auction.Networking.JavalinServer.getInstance().sendToUser(sellerId, "BALANCE_UPDATED", balPayload);
+                            }
+                        }
+                    }
+                }
             }
 
             // ===============================
