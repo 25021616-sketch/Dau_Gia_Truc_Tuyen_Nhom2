@@ -27,10 +27,6 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) {
-
-        // =========================================================
-        // Hiển thị màn hình loading ngay lập tức (không bị treo)
-        // =========================================================
         Label statusLabel = new Label("🔍 Đang tìm kiếm máy chủ trong mạng LAN...");
         statusLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #20335e; -fx-font-family: 'Segoe UI';");
         VBox loadingPane = new VBox(statusLabel);
@@ -40,16 +36,10 @@ public class Main extends Application {
         stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - Đang khởi động...");
         stage.show();
 
-        // =========================================================
-        // TỰ ĐỘNG KẾT NỐI: đọc IP từ Database (Server ghi khi khởi động)
-        // =========================================================
+        // Tự động kết nối: ưu tiên DB, sau đó UDP broadcast, cuối cùng mới yêu cầu nhập tay
         new Thread(() -> {
-            String serverAddress = null;
-
-            // Bước 1: Đọc IP từ Database (Server đã ghi sẵn khi chạy ServerMain)
-            serverAddress = readServerAddressFromDb();
+            String serverAddress = readServerAddressFromDb();
             if (serverAddress != null) {
-                System.out.println("[DB] ✅ Tìm thấy Server trong DB: " + serverAddress);
                 final String addr1 = serverAddress;
                 Platform.runLater(() -> {
                     statusLabel.setText("✅ Tìm thấy máy chủ: " + addr1 + " — Đang kết nối...");
@@ -58,11 +48,8 @@ public class Main extends Application {
                 return;
             }
 
-            // Bước 2: Fallback — UDP Broadcast trong LAN
-            System.out.println("[Discovery] DB chưa có IP. Đang tìm qua UDP LAN...");
             String discoveredIp = Team2_CS2_Auction.Networking.DiscoveryClient.discoverServerIp();
             if (discoveredIp != null && !discoveredIp.trim().isEmpty()) {
-                System.out.println("[Discovery] ✅ Tìm thấy qua UDP: " + discoveredIp);
                 final String addr2 = discoveredIp;
                 Platform.runLater(() -> {
                     statusLabel.setText("✅ Tìm thấy máy chủ: " + addr2 + " — Đang kết nối...");
@@ -71,8 +58,6 @@ public class Main extends Application {
                 return;
             }
 
-            // Bước 3: Fallback cuối — nhập tay (chỉ khi cả DB lẫn UDP đều thất bại)
-            System.out.println("[Discovery] Không tìm thấy tự động. Yêu cầu nhập tay.");
             Platform.runLater(() -> {
                 TextInputDialog dialog = new TextInputDialog("127.0.0.1");
                 dialog.setTitle("Kết nối đến Máy Chủ");
@@ -108,7 +93,6 @@ public class Main extends Application {
             if (rs.next()) {
                 String ip = rs.getString("ip_address");
                 int port = rs.getInt("port");
-                // Chỉ dùng nếu IP là địa chỉ thật (không phải localhost mặc định)
                 if (ip != null && !ip.equals("127.0.0.1") && !ip.isEmpty()) {
                     return ip + ":" + port;
                 }
@@ -121,7 +105,6 @@ public class Main extends Application {
 
     /** Kết nối tới server và tải giao diện đăng nhập */
     private void connectAndLoadUI(Stage stage, String input) {
-        // Tách host và port nếu người dùng nhập dạng host:port
         if (input.contains(":")) {
             String[] parts = input.split(":");
             lastServerHost = parts[0].trim();
@@ -134,8 +117,7 @@ public class Main extends Application {
         final String host = lastServerHost;
         final int port = lastServerPort;
 
-        // Chỉ load giao diện đăng nhập, KHÔNG kết nối WebSocket tại đây.
-        // WebSocket sẽ được kết nối sau khi đăng nhập thành công trong Dang_nhap_Controller.
+        // WebSocket sẽ được kết nối sau khi đăng nhập thành công trong Dang_nhap_Controller
         Platform.runLater(() -> {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(
@@ -155,7 +137,6 @@ public class Main extends Application {
                 e.printStackTrace();
             }
         });
-
     }
 
     @Override
