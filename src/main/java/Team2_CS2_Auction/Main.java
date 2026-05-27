@@ -125,9 +125,10 @@ public class Main extends Application {
                 Parent root = fxmlLoader.load();
 
                 Scene scene = new Scene(root);
+                stage.hide();
                 stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - ĐHQGHN");
-                stage.setMaximized(true);
                 stage.setScene(scene);
+                stage.setMaximized(true);
                 stage.show();
 
             } catch (IOException e) {
