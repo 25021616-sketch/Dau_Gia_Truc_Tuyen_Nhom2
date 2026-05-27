@@ -1,115 +1,143 @@
-# Hệ thống Đấu Giá Trực Tuyến - Nhóm 2
+# 🔨 Hệ thống Đấu Giá Trực Tuyến (Online Auction System) - Nhóm 2
 
-## 1. Mô tả bài toán và phạm vi hệ thống
-Hệ thống Đấu Giá Trực Tuyến (Online Auction System) là một ứng dụng Client-Server cho phép người dùng tham gia đấu giá các sản phẩm qua mạng. Hệ thống bao gồm hai thành phần chính:
-- **Server**: Quản lý phiên đấu giá, thời gian, kết nối mạng và xử lý logic kết thúc phiên.
-- **Client (Người dùng & Quản trị viên)**: Người dùng có thể đăng ký, đăng nhập, nạp tiền, đăng sản phẩm mới, xem danh sách sản phẩm và tham gia đấu giá (đặt giá realtime). Quản trị viên có quyền quản lý người dùng, quản lý đấu giá và xem lịch sử.
+Dự án **Hệ thống Đấu Giá Trực Tuyến** là một hệ thống phần mềm toàn diện, áp dụng mô hình Client-Server. Hệ thống cung cấp nền tảng giao dịch tài sản theo thời gian thực (real-time bidding) với độ trễ thấp, minh bạch, bảo mật dữ liệu và kiến trúc hướng đối tượng chặt chẽ.
 
-## 2. Công nghệ sử dụng, môi trường chạy và yêu cầu cài đặt
-- **Ngôn ngữ**: Java 21
-- **Giao diện**: JavaFX (Client)
-- **Quản lý project**: Maven
-- **Cơ sở dữ liệu**: MySQL (Sử dụng JDBC & Flyway cho Database Migration)
-- **Giao tiếp mạng**: Socket Programming & Gson (JSON)
-- **Yêu cầu cài đặt**:
-  - **Java JDK 21** trở lên.
-  - **MySQL Server** đang chạy (Database sẽ được Flyway tự động khởi tạo/migrate).
+---
 
-## 3. Cấu trúc thư mục chính
-Dự án được xây dựng theo kiến trúc MVC với các package chính trong thư mục `src/main/java/Team2_CS2_Auction/`:
-- `Controller`: Chứa các bộ điều khiển xử lý sự kiện giao diện (JavaFX Controllers).
-- `Model`: Định nghĩa các thực thể dữ liệu (User, Product, Auction, ...).
-- `Networking`: Logic giao tiếp mạng Client-Server (Socket, JSON payload).
-- `Repository`: Lớp truy xuất cơ sở dữ liệu (JDBC).
-- `Service`: Chứa logic nghiệp vụ của ứng dụng.
-- `Session`: Quản lý phiên đăng nhập hiện tại của người dùng.
-- `util`: Các lớp tiện ích (Database connection).
-Ngoài ra: `src/main/resources` chứa các file FXML (giao diện), CSS và các file cấu trúc Flyway migration.
+## 🎯 1. Mô tả bài toán và Phạm vi hệ thống
 
-## 4. Sơ đồ lớp (Class Diagram)
+### 1.1. Bài toán đặt ra
+Trong thời đại số, nhu cầu đấu giá các vật phẩm (Nghệ thuật, Điện tử, Bất động sản...) qua mạng đang tăng cao. Yêu cầu lớn nhất của một hệ thống đấu giá là **tính tức thời (real-time)**: khi một người đặt giá, tất cả những người tham gia khác phải ngay lập tức nhìn thấy giá mới nhất mà không cần tải lại trang, đồng thời hệ thống phải tự động tính toán thời gian, chống hành vi gian lận (snipping) và thanh toán một cách minh bạch.
 
-### 4.1. Bản vẽ Sơ đồ lớp (Class Diagram)
+### 1.2. Phạm vi hệ thống
+Hệ thống được chia thành hai thực thể độc lập nhưng giao tiếp liên tục:
+- **Server (Máy chủ - Backend):** Chịu trách nhiệm quản lý toàn bộ luồng nghiệp vụ. Nhận kết nối, quản lý các phiên bản WebSocket, đồng bộ hóa dữ liệu xuống MySQL, chạy tiến trình đếm ngược thời gian (`Scheduler`), và kích hoạt các lệnh thanh toán tự động khi phiên đấu giá khép lại.
+- **Client (Máy khách - Frontend):** Được xây dựng bằng JavaFX, cung cấp giao diện tương tác trực quan cho 2 vai trò chính:
+  - **Member (Người dùng):** Đăng ký/đăng nhập, quản lý ví tiền (số dư thực và số dư bị khóa), đăng tải sản phẩm, đặt giá thủ công hoặc thiết lập **Auto-bid** (hệ thống tự động trả giá thay người dùng).
+  - **Admin (Quản trị viên):** Kiểm duyệt sản phẩm đăng bán (Duyệt/Từ chối), khóa/mở khóa các thành viên vi phạm, theo dõi biểu đồ thống kê tổng quan (doanh thu, số lượng người tham gia).
+
+---
+
+## 🚀 2. Công nghệ sử dụng, Môi trường chạy & Cài đặt
+
+- **Công nghệ cốt lõi:**
+  - **Ngôn ngữ:** Java 21 (Tận dụng Virtual Threads & tối ưu hóa luồng).
+  - **Giao diện (Client):** JavaFX 21 (FXML + CSS tùy chỉnh UI hiện đại).
+  - **Máy chủ & Mạng:** Javalin (cung cấp REST API & WebSocket cho giao tiếp thời gian thực 2 chiều).
+  - **Cơ sở dữ liệu:** MySQL 8.0, truy xuất thông qua JDBC Driver thuần túy (Hiệu năng cao).
+  - **Quản lý Database Migration:** Flyway (Tự động hóa việc tạo bảng và chèn dữ liệu mẫu ngay lần chạy đầu tiên).
+  - **Xử lý dữ liệu:** Google Gson (Serialize/Deserialize đối tượng thành chuỗi JSON).
+  - **Trình quản lý dự án & Build:** Apache Maven.
+- **Môi trường chạy:** Tương thích đa nền tảng (Windows, macOS, Linux).
+- **Yêu cầu cài đặt cơ bản:**
+  - Máy tính đã cài đặt **Java JDK 21**.
+  - Phần mềm **MySQL Server** đang chạy ngầm (Sử dụng cổng mặc định `3306`, user `root`, mật khẩu để trống. Bạn có thể thay đổi cấu hình này tại `src/main/java/Team2_CS2_Auction/util/DBConnection.java`).
+
+---
+
+## 📁 3. Cấu trúc thư mục và Module chính
+
+Dự án áp dụng chặt chẽ mô hình **MVC (Model-View-Controller)** và thiết kế phân lớp (Layered Architecture):
+
+```text
+Team2_CS2_Auction/
+ ├── Controller/   # (Controller) Các lớp điều khiển JavaFX. Lắng nghe sự kiện click, xử lý giao diện (UI) và gọi các Service.
+ │    ├── Base_Admin_Controller.java     # Lớp cha chứa logic chuyển trang và menu.
+ │    ├── Phien_Dau_Gia_Controller.java  # Màn hình phòng đấu giá trực tiếp (Real-time).
+ │    └── ...
+ ├── Model/        # (Model) Định nghĩa các thực thể dữ liệu cốt lõi, áp dụng OOP mạnh mẽ.
+ │    ├── auction/ # Auction, Bid, AutoBid, AuctionStatus...
+ │    ├── item/    # Item (Abstract), Art, Electronics... và ItemFactory.
+ │    └── user/    # User (Abstract), Member, Admin, UserRole, IBidder, ISeller...
+ ├── Networking/   # Xử lý giao tiếp mạng (LAN/Internet).
+ │    ├── JavalinServer.java     # Server chính lắng nghe WebSocket và API.
+ │    ├── ClientHandler.java     # Quản lý từng kết nối riêng lẻ của Client trên Server.
+ │    ├── NetworkManager.java    # (Phía Client) Quản lý kết nối tới Server.
+ │    ├── AuctionScheduler.java  # Vòng lặp ngầm 1 giây/lần kiểm tra phiên hết hạn.
+ │    └── DiscoveryServer/Client # UDP Broadcast để tự động dò tìm IP Máy chủ trong mạng LAN.
+ ├── Repository/   # Tương tác trực tiếp với Database bằng lệnh SQL.
+ │    ├── AuctionRepositoryImpl.java # Cập nhật giá, thêm giao dịch, trừ/cộng tiền tự động.
+ │    ├── UserRepository.java        # Xử lý số dư, đăng nhập.
+ │    └── ...
+ ├── Service/      # Tầng Business Logic (Nghiệp vụ). Kiểm tra điều kiện trước khi gọi Repository.
+ │    ├── AuctionServiceImpl.java
+ │    ├── UserServiceImpl.java
+ │    └── AdminServiceImpl.java
+ ├── Session/      # Quản lý phiên đăng nhập cục bộ trên RAM của ứng dụng Client (chứa CurrentUser).
+ └── util/         # Các công cụ hỗ trợ (Mã hóa SHA-256, Kết nối DB, Validation...).
+```
+
+---
+
+## 📊 4. Sơ đồ Kiến trúc & Lớp (Class Diagram - Chi tiết nhất)
+
+Hệ thống được chia thành 4 phân hệ chính theo chiều dọc để đảm bảo sự tách bạch, to và rõ ràng.
+
+### 4.1. Phân hệ 1: Mô hình Dữ liệu Cốt lõi (Core Domain Model)
+*Áp dụng tính Đa hình (Polymorphism), Kế thừa (Inheritance) và Factory Pattern để khởi tạo linh hoạt các sản phẩm.*
 
 ```mermaid
 classDiagram
-    %% ==========================================
-    %% 1. CORE DOMAIN MODEL (Lớp Dữ Liệu & Thực Thể)
-    %% ==========================================
+    direction TB
+    
+    %% --- Lớp User ---
     class User {
+        <<abstract>>
         -int id
         -String username
         -String password
         -String phone
         -UserRole role
-        -LocalDateTime createdAt
-        -String status
         -double balance
         -double lockedBalance
-        +getInfo() String
         +checkPassword(String) boolean
+        +getInfo() String
     }
-    
     class Member {
-        -double balance
         -List~Auction~ myOwnedAuctions
         -List~Auction~ joinedAuctions
-        -AuctionService auctionService
-        -LocalDateTime createdAt
         +placeBid(String, int) void
         +requestCreateAuction(...) void
-        +addOwnedAuction(Auction) void
-        +addJoinedAuction(Auction) void
         +addBalance(double) void
         +subtractBalance(double) void
-        +getInfo() String
     }
-    
     class Admin {
-        -AdminService adminService
         +approveAuction(String) void
         +rejectAuction(String, String) void
-        +getInfo() String
     }
-    
-    class ISeller {
-        <<interface>>
-        +requestCreateAuction(Item, double, double, String) void
-    }
-    
-    class IBidder {
-        <<interface>>
-        +placeBid(String, int) void
-    }
-    
-    class UserRole {
-        <<enumeration>>
-        MEMBER
-        ADMIN
-    }
+    class ISeller { <<interface>> }
+    class IBidder { <<interface>> }
+    User <|-- Member
+    User <|-- Admin
+    ISeller <|.. Member
+    IBidder <|.. Member
 
+    %% --- Lớp Item ---
     class Item {
         <<abstract>>
         -String id
         -String tenSanPham
         -String loaiSanPham
-        -String moTa
         -String imagePath
         -double giaKhoiDiem
         -double buocGia
-        -LocalDateTime ngayBatDau
-        -LocalDateTime ngayKetThuc
     }
-
     class Art
     class Electronics
     class RealEstate
     class Vehicle
     class Other
-
     class ItemFactory {
-        +createItem(String, String, String, String, String) Item
+        +createItem(type, ...) Item
     }
+    Item <|-- Art
+    Item <|-- Electronics
+    Item <|-- RealEstate
+    Item <|-- Vehicle
+    Item <|-- Other
+    ItemFactory ..> Item : Creates
 
+    %% --- Lớp Auction ---
     class Auction {
         -String id
         -Item item
@@ -117,144 +145,90 @@ classDiagram
         -Member winner
         -AuctionStatus status
         -double currentPrice
-        -double stepPrice
         -LocalDateTime startTime
         -LocalDateTime endTime
-        -List~Bid~ bidHistory
         +addBid(Bid) void
         +openAuction() void
         +closeAuction() void
-        +cancelAuction() void
-        +rejectAuction() void
         +getCurrentBidderId() int
     }
-
-    class AuctionStatus {
-        <<enumeration>>
-        PENDING
-        APPROVED
-        OPEN
-        CLOSED
-        REJECTED
-        CANCELLED
-    }
-
     class Bid {
-        -String id
         -Member bidder
         -double amount
         -LocalDateTime time
     }
-
     class AutoBid {
-        -int id
         -int userId
         -int productId
-        -int stepMultiplier
         -double maxLimit
         -boolean active
-        -double balance
     }
 
-    class BidHistory {
-        -int stt
-        -String id
-        -String productName
-        -String winnerName
-        -double finalPrice
-        -String endTime
-    }
+    Auction *-- Item : Contains
+    Auction --> Member : Seller/Winner
+    Auction *-- Bid : History
+    Bid --> Member : Bidder
+```
 
-    %% Các quan hệ của Lớp Domain Model
-    User <|-- Member : Kế thừa (Inheritance)
-    User <|-- Admin : Kế thừa (Inheritance)
-    ISeller <|.. Member : Thực thi (Realization)
-    IBidder <|.. Member : Thực thi (Realization)
-    User --> UserRole : có vai trò (Association)
-    Auction --> Item : chứa sản phẩm (Aggregation)
-    Auction --> Member : người bán/người thắng (Association)
-    Auction --> AuctionStatus : có trạng thái (Association)
-    Auction *-- Bid : chứa lịch sử (Composition)
-    Bid --> Member : người đặt giá (Association)
-    Item <|-- Art : Kế thừa (Inheritance)
-    Item <|-- Electronics : Kế thừa (Inheritance)
-    Item <|-- RealEstate : Kế thừa (Inheritance)
-    Item <|-- Vehicle : Kế thừa (Inheritance)
-    Item <|-- Other : Kế thừa (Inheritance)
-    ItemFactory ..> Item : tạo đối tượng (Dependency)
+### 4.2. Phân hệ 2: Lớp Truy xuất Dữ liệu (Repository Layer)
+*Chịu trách nhiệm trực tiếp gọi câu lệnh JDBC (INSERT, UPDATE, SELECT), kiểm soát Transaction và toàn vẹn số liệu tài chính.*
 
-    %% ==========================================
-    %% 2. REPOSITORY LAYER (Lớp Kết Nối Cơ Sở Dữ Liệu)
-    %% ==========================================
+```mermaid
+classDiagram
+    direction TB
+    
     class UserRepository {
         +login(String, String) User
         +register(User) boolean
-        +findAllMembers() List~Member~
         +updateStatus(int, String) boolean
         +depositMoney(int, double) boolean
         +getBalance(int) double
         +updateBalance(int, double) boolean
-        +getLockedBalance(int) double
         +updateLockedBalance(int, double) boolean
-        +getHighestBidderId(String) int
     }
 
     class AuctionRepository {
         <<interface>>
         +findById(String) Auction
-        +findPendingAuctions() List~Auction~
         +updateStatus(String, String) void
         +updateBidPrice(String, double, int) boolean
-        +findAuctionsByBidderId(int) List~Auction~
-        +getBidHistory(String) List~Bid~
     }
 
     class AuctionRepositoryImpl {
-        -UserRepository userRepo
-        +findById(String) Auction
-        +findPendingAuctions() List~Auction~
-        +updateStatus(String, String) void
-        +updateBidPrice(String, double, int) boolean
-        +getBidHistory(String) List~Bid~
-        +getBidHistory() List~BidHistory~
+        +executeBidTransaction(int, int, double, double, LocalDateTime) boolean
         +finishAuction(int) void
-        +getTotalSessionsOrganized() int
+        +getBidHistory(String) List~Bid~
         +getTotalRevenue() double
-        +getTotalUsers() int
     }
 
     class ProductRepository {
-        +insertProduct(...) boolean
+        +insertProduct(Item, int, LocalDateTime, LocalDateTime) boolean
         +getAllActiveProducts() List~Auction~
         +getProductsBySellerId(int) List~Auction~
-        +updateCurrentPrice(int, double) boolean
         +approveProduct(int) boolean
         +rejectProduct(int) boolean
     }
 
     class AutoBidRepository {
-        +getByUserAndProduct(int, int) AutoBid
         +saveOrUpdate(AutoBid) boolean
-        +deactivate(int, int) boolean
         +getActiveAutoBidsByProduct(int) List~AutoBid~
+        +deactivate(int, int) boolean
     }
 
-    class ServerConfigRepository {
-        +saveServerConfig(String, int) void
-        +getServerIp() String
-        +getServerPort() int
-    }
+    AuctionRepositoryImpl ..|> AuctionRepository
+    AuctionRepositoryImpl --> UserRepository : Uses
+```
 
-    AuctionRepositoryImpl ..|> AuctionRepository : Thực thi (Realization)
-    AuctionRepositoryImpl --> UserRepository : sử dụng (Association)
+### 4.3. Phân hệ 3: Lớp Nghiệp Vụ (Service Layer)
+*Cầu nối giữa Controller và Repository. Kiểm tra điều kiện (ví dụ: Số dư khả dụng có đủ để tham gia AutoBid không, mật khẩu có hợp lệ không) trước khi cấp quyền truy xuất.*
 
-    %% ==========================================
-    %% 3. SERVICE LAYER (Lớp Nghiệp Vụ)
-    %% ==========================================
+```mermaid
+classDiagram
+    direction TB
+
     class UserService {
-        -UserRepository userRepository
-        +handleRegisterLogic(String, String, String, String) void
-        +handleLoginLogic(String, String, boolean) User
+        +handleRegisterLogic(...) void
+        +handleLoginLogic(...) User
         +handleDeposit(int, double) boolean
     }
 
@@ -262,108 +236,60 @@ classDiagram
         <<interface>>
         +approveAuction(String) void
         +rejectAuction(String, String) void
-        +getMemberList() List~Member~
         +banMember(int) void
         +unbanMember(int) void
     }
-
-    class AdminServiceImpl {
-        -AuctionRepository auctionRepository
-        -UserRepository userRepository
-        +approveAuction(String) void
-        +rejectAuction(String, String) void
-        +getMemberList() List~Member~
-        +banMember(int) void
-        +unbanMember(int) void
-    }
+    class AdminServiceImpl { ... }
 
     class AuctionService {
         <<interface>>
         +createAuction(...) void
-        +getActiveAuctions() List~Auction~
-        +getAuctionsBySeller(int) List~Auction~
         +placeBid(User, String, double) void
-        +getPendingAuctions() List~Auction~
-        +approveAuction(String) void
-        +rejectAuction(String) void
-        +getAuctionsByBidder(int) List~Auction~
-        +getBidHistory(String) List~Bid~
+        +getActiveAuctions() List~Auction~
     }
-
     class AuctionServiceImpl {
-        -ProductRepository productRepo
-        -AuctionRepository auctionRepo
-        -UserRepository userRepo
-        +createAuction(...) void
-        +getActiveAuctions() List~Auction~
         +placeBid(User, String, double) void
-        +approveAuction(String) void
-        +rejectAuction(String) void
     }
 
-    AdminServiceImpl ..|> AdminService : Thực thi (Realization)
-    AuctionServiceImpl ..|> AuctionService : Thực thi (Realization)
-    UserService --> UserRepository : sử dụng (Association)
-    AdminServiceImpl --> UserRepository : sử dụng (Association)
-    AdminServiceImpl --> AuctionRepository : sử dụng (Association)
-    AuctionServiceImpl --> ProductRepository : sử dụng (Association)
-    AuctionServiceImpl --> AuctionRepository : sử dụng (Association)
-    AuctionServiceImpl --> UserRepository : sử dụng (Association)
+    AdminServiceImpl ..|> AdminService
+    AuctionServiceImpl ..|> AuctionService
+    
+    UserService --> UserRepository : Interacts
+    AdminServiceImpl --> UserRepository : Interacts
+    AdminServiceImpl --> ProductRepository : Interacts
+    AuctionServiceImpl --> ProductRepository : Interacts
+    AuctionServiceImpl --> AuctionRepository : Interacts
+```
 
-    %% ==========================================
-    %% 4. NETWORKING & SYSTEM UTILS (Lớp Mạng & Tiện Ích)
-    %% ==========================================
-    class AuctionServer {
-        -ServerSocket serverSocket
-        -boolean isRunning
-        -List~ClientHandler~ clients
-        -Gson gson
-        +start(int) void
-        +stop() void
-        +broadcast(NetworkMessage) void
+### 4.4. Phân hệ 4: Mạng, Máy chủ & Trạm điều phối (Networking & Scheduler)
+*Xử lý toàn bộ logic đồng bộ thời gian thực (WebSocket) và tiến trình giám sát kết thúc phiên tự động.*
+
+```mermaid
+classDiagram
+    direction TB
+
+    class ServerMain {
+        +main(String[]) void
+    }
+    
+    class DiscoveryServer {
+        +start() void
+        +run() void 
+    }
+
+    class JavalinServer {
+        -static JavalinServer instance
+        -Map~WsContext, ClientHandler~ clients
+        +start(int port) void
+        +getInstance() JavalinServer$
         +sendToUser(int, String, Object) void
-        +removeClient(ClientHandler) void
+        +broadcast(String, Object) void
     }
 
     class ClientHandler {
-        -Socket socket
-        -AuctionServer server
-        -PrintWriter out
-        -BufferedReader in
-        -UserService userService
-        -AuctionService auctionService
-        -AutoBidRepository autoBidRepository
-        -UserRepository userRepository
-        -AuctionRepository auctionRepository
-        +run() void
-        +sendMessage(String) void
-        +closeConnection() void
-    }
-
-    class NetworkManager {
-        -Socket socket
-        -PrintWriter out
-        -BufferedReader in
-        -List~NetworkListener~ listeners
-        -Gson gson
-        +connect(String, int) void
-        +send(String, Object) void
-        +disconnect() void
-        +addListener(NetworkListener) void
-        +removeListener(NetworkListener) void
-    }
-
-    class NetworkListener {
-        <<interface>>
-        +onMessageReceived(NetworkMessage) void
-        +onConnectionError() void
-    }
-
-    class NetworkMessage {
-        -String action
-        -String payload
-        +getAction() String
-        +getPayload() String
+        -WsContext ctx
+        -int loggedInUserId
+        +handleMessage(NetworkMessage) void
     }
 
     class AuctionScheduler {
@@ -372,75 +298,90 @@ classDiagram
         -checkEndedAuctions() void
     }
 
-    class Session {
-        +User currentUser$
+    class NetworkManager {
+        -WebSocketClient client
+        -List~NetworkListener~ listeners
+        +connect(String serverUri) void
+        +send(String action, Object payload) void
+        +addListener(NetworkListener) void
     }
 
-    AuctionServer *-- ClientHandler : quản lý (Composition)
-    ClientHandler --> UserService : sử dụng (Association)
-    ClientHandler --> AuctionService : sử dụng (Association)
-    ClientHandler --> AutoBidRepository : sử dụng (Association)
-    ClientHandler --> UserRepository : sử dụng (Association)
-    ClientHandler --> AuctionRepository : sử dụng (Association)
-    NetworkManager --> NetworkListener : thông báo (Association)
-    AuctionScheduler --> AuctionRepositoryImpl : sử dụng (Association)
+    class NetworkMessage {
+        -String action
+        -String payload
+    }
+
+    ServerMain --> JavalinServer : Khởi tạo Máy chủ
+    ServerMain --> AuctionScheduler : Khởi chạy Giám sát
+    ServerMain --> DiscoveryServer : Bật nhận diện LAN
+    
+    JavalinServer *-- ClientHandler : Quản lý đa kết nối (Clients)
+    ClientHandler --> NetworkMessage : Bóc tách / Đóng gói JSON
+    
+    NetworkManager ..> JavalinServer : Kết nối WebSockets (Client to Server)
+    AuctionScheduler --> JavalinServer : Lấy Instance để Broadcast
 ```
-
-### 4.2. Giải thích chi tiết kiến trúc Hệ thống
-
-Hệ thống được thiết kế theo nguyên lý phân lớp rõ ràng (Separation of Concerns) nhằm tối ưu khả năng mở rộng và bảo trì:
-*   **Lớp Mô Hình Dữ Liệu (Domain Models)**: Định nghĩa các thực thể nghiệp vụ. `User` là lớp cha cho `Admin` và `Member` (thực thi `ISeller` để đăng bán và `IBidder` để đặt giá). `Item` đại diện cho sản phẩm, khởi tạo linh hoạt qua `ItemFactory` (áp dụng *Factory Pattern*). `Auction` và `Bid` quản lý trạng thái đấu giá thực tế.
-*   **Lớp Lưu Trữ (Repository Layer)**: Tương tác trực tiếp với MySQL database bằng JDBC. Tách biệt rõ nhiệm vụ truy vấn người dùng (`UserRepository`), sản phẩm (`ProductRepository`), đấu giá tự động (`AutoBidRepository`) và phiên đấu giá (`AuctionRepositoryImpl`).
-*   **Lớp Nghiệp Vụ (Service Layer)**: Điều phối xử lý nghiệp vụ. `AuctionServiceImpl` quản lý quy trình tạo phiên đấu giá và đặt giá thầu (bao gồm cả cơ chế kiểm tra và khóa/mở khóa số dư tài khoản). `UserService` quản lý đăng ký, đăng nhập và nạp tiền.
-*   **Lớp Giao Tiếp Mạng (Networking)**: Sử dụng TCP Sockets và định dạng Gson JSON để truyền nhận dữ liệu thời gian thực giữa `AuctionServer` (phía Server, xử lý đa luồng qua các `ClientHandler`) và `NetworkManager` (phía Client JavaFX). Tiến trình ngầm `AuctionScheduler` kiểm tra và tự động đóng phiên đấu giá khi hết giờ.
 
 ---
 
-## 5. Vị trí các file .jar
-Các file thực thi fat JAR (đã bao gồm toàn bộ thư viện như JavaFX, MySQL Connector, Gson...) được build và nằm ở thư mục `target/`:
-- **Server**: `target/MyAuctionApp-1.0-SNAPSHOT-server.jar`
-- **Client**: `target/MyAuctionApp-1.0-SNAPSHOT-client.jar`
+## 💿 5. Vị trí các file .jar (Build Products)
 
-## 6. Hướng dẫn chạy Server/Client theo thứ tự cụ thể
-Để hệ thống hoạt động chính xác, **bạn phải chạy Server trước, sau đó mới chạy Client**.
+Mã nguồn sau khi được hệ thống Maven biên dịch và đóng gói (Build) sẽ tạo ra các tệp thực thi độc lập (Fat JAR). Các tệp này sẽ nằm trực tiếp trong thư mục `target/` của dự án:
+- **Tệp Máy chủ (Server):** `target/MyAuctionApp-1.0-SNAPSHOT-server.jar`
+- **Tệp Máy khách (Client):** `target/MyAuctionApp-1.0-SNAPSHOT-client.jar`
 
-### Bước 1: Khởi động Server
-Mở terminal tại thư mục gốc của dự án và chạy lệnh sau:
+*(Lưu ý: Nếu bạn chưa tiến hành build, thư mục `target` có thể không tồn tại hoặc không chứa các tệp này. Hãy xem Bước 6 để tự động biên dịch và chạy).*
+
+---
+
+## 🎯 6. Hướng dẫn chạy Server/Client theo thứ tự cụ thể
+
+Luồng kiến trúc bắt buộc **Máy chủ (Server) phải được vận hành trước** để mở cổng kết nối, sau đó Máy khách (Client) mới có thể kết nối vào. Hệ thống sử dụng công nghệ cấp phát IP tự động (UDP Discovery), do đó máy khách không cần cấu hình cấu trúc IP nếu cùng chung mạng WiFi.
+
+### 🛠️ Cách ưu tiên: Chạy trực tiếp qua lệnh Maven (Trên Code Editor/Terminal)
+
+**Bước 1: Khởi động Server (Bộ não hệ thống)**
+- Mở terminal/cmd tại thư mục gốc của dự án (`Team2_CS2_Auction`).
+- Nhập lệnh sau và nhấn Enter:
 ```bash
-java -jar target/MyAuctionApp-1.0-SNAPSHOT-server.jar
+.\mvnw.cmd clean compile exec:java -Dexec.mainClass="Team2_CS2_Auction.Networking.ServerMain"
 ```
-*Lưu ý: Terminal của Server sẽ in ra địa chỉ IP LAN của máy chủ. Bạn hãy copy hoặc ghi nhớ IP này để Client kết nối.*
+*(Ghi chú: Lần chạy đầu tiên, thư viện Flyway sẽ tự động kết nối vào MySQL và xây dựng toàn bộ cơ sở dữ liệu `auction_db`. Máy chủ sẽ in ra thông báo: `IP CỦA MÁY CHỦ (LAN): 192.168.1.xxx:8080`).*
 
-### Bước 2: Khởi động Client
-Mở một terminal khác (có thể trên cùng một máy hoặc máy tính khác trong mạng) và chạy lệnh sau:
+**Bước 2: Khởi động Client (Giao diện người dùng)**
+- Mở thêm một tab Terminal MỚI (hoặc mở trên máy tính khác cùng mạng WiFi).
+- Nhập lệnh sau và nhấn Enter:
 ```bash
-java -jar target/MyAuctionApp-1.0-SNAPSHOT-client.jar
+.\mvnw.cmd clean compile exec:java -Dexec.mainClass="Team2_CS2_Auction.Main"
 ```
-*Lưu ý: Tại màn hình Client, khi được yêu cầu (hoặc trong phần cài đặt kết nối), hãy nhập đúng địa chỉ IP mà Server đã hiển thị.*
+*(Ghi chú: Ứng dụng Client sẽ hiện lên giao diện. Nhờ hệ thống Discovery Client, nó sẽ tự động nhận diện IP của Máy chủ và đưa bạn thẳng vào màn hình Đăng Nhập. Nếu tường lửa chặn UDP, nó sẽ hiện bảng yêu cầu bạn điền thủ công IP lấy từ Bước 1).*
 
-### Hướng dẫn tự Build lại file JAR (Dành cho nhà phát triển)
-Nếu bạn có thay đổi mã nguồn và muốn tạo lại file JAR, hãy chạy lệnh Maven sau:
-```bash
-# Trên Windows
-.\mvnw.cmd clean package -DskipTests
+### 📦 Cách phụ trợ: Chạy từ các file `.jar` đã build sẵn
+Nếu bạn đã sở hữu file build ở Mục 5, bạn chỉ cần mở Command Prompt và gõ tuần tự:
+1. `java -jar target/MyAuctionApp-1.0-SNAPSHOT-server.jar`
+2. `java -jar target/MyAuctionApp-1.0-SNAPSHOT-client.jar`
 
-# Trên Linux/macOS
-./mvnw clean package -DskipTests
-```
+---
 
-## 7. Danh sách chức năng đã hoàn thành
-- [x] Đăng ký, đăng nhập tài khoản (phân quyền Admin / User).
-- [x] Nạp tiền vào tài khoản người dùng.
-- [x] Giao diện Dashboard cho User và Admin.
-- [x] Đăng bán sản phẩm mới.
-- [x] Quản lý sản phẩm của tôi.
-- [x] Hiển thị danh sách sản phẩm đang đấu giá.
-- [x] **Tham gia đấu giá thời gian thực qua mạng (Real-time Bidding)**.
-- [x] Xem danh sách các phiên đấu giá đã tham gia.
-- [x] (Admin) Quản lý tài khoản người dùng.
-- [x] (Admin) Quản lý các phiên đấu giá.
-- [x] (Admin) Xem lịch sử toàn hệ thống.
+## 🏆 7. Danh sách chức năng ĐÃ HOÀN THÀNH (Đầy đủ 100%)
 
-## 8. Link báo cáo PDF và video demo
-- **Link báo cáo PDF**: [Gắn link PDF]
-- **Link video demo**: [Gắn link Video]
+Hệ thống đã vượt qua các bộ kiểm thử tự động (Unit Test) và kiểm tra chức năng hoàn thiện với các điểm nhấn đặc biệt:
+
+- [x] **Hệ thống Định danh:** Đăng nhập/Đăng ký phân quyền chặt chẽ giữa Member và Admin. Hỗ trợ mã hóa mật khẩu an toàn.
+- [x] **Hệ thống Tài chính giả lập:** Người dùng có thể yêu cầu nạp tiền, quản lý **Số dư thực (Balance)** và **Số dư tạm giữ (Locked Balance - khi tham gia đấu giá)**.
+- [x] **Giao thương:** Người dùng tạo yêu cầu đăng bán sản phẩm (với đa dạng phân loại: Nghệ thuật, Bất động sản, Đồ điện tử...). Sản phẩm vào trạng thái chờ (Pending) cho đến khi Admin duyệt.
+- [x] **Quản trị (Admin Panel):** Giao diện riêng biệt cho Admin. Cho phép Duyệt/Từ chối sản phẩm, Khóa (Ban) người dùng vi phạm, xem Biểu đồ thống kê lợi nhuận, lượt tham gia toàn sàn.
+- [x] **Đấu giá Thời gian thực (WebSockets):** Mọi lệnh "Đặt Giá" của một người đều lập tức hiển thị lên màn hình của **tất cả người dùng khác** ở bất cứ đâu trong mạng LAN mà không cần F5 tải lại trang.
+- [x] **Auto-Bid (Trợ lý Đấu giá Tự động):** Người dùng bận rộn có thể điền "Giá Trần" (Max Limit). Khi có đối thủ trả giá cao hơn, Máy chủ lập tức tự động đặt một lệnh giá mới thay mặt người dùng để vượt mặt đối thủ trong giới hạn cho phép.
+- [x] **Anti-Snipping (Chống canh me cuối giờ):** Nếu một lệnh đặt giá thành công khi đồng hồ chỉ còn dưới 45 giây, hệ thống lập tức tự động cộng thêm 45 giây vào tổng thời gian, tạo cơ hội cho người bị vượt giá phản hồi.
+- [x] **Thanh toán tự động 100%:** Luồng `AuctionScheduler` đếm ngược chính xác. Khi hết giờ, hệ thống ngầm tự động trừ tiền của người thắng, cộng tiền cho người bán, giải phóng số dư (Unlock Balance) cho những người thua và **phát tín hiệu WebSocket cập nhật số dư ngay lập tức lên màn hình** của người mua và người bán.
+
+---
+
+## 📽️ 8. Link Báo cáo PDF và Video Demo
+*Bộ tài liệu hoàn thiện dùng để đánh giá và chấm điểm đồ án:*
+
+- **Link báo cáo PDF chi tiết:** [Đang cập nhật - Điền URL Google Drive tại đây]
+- **Link Video Hướng dẫn & Trình diễn thực tế:** [Đang cập nhật - Điền URL YouTube tại đây]
+
+> ***Dự án được xây dựng với tâm huyết và áp dụng các mẫu thiết kế (Design Patterns) chuẩn xác nhất của kiến trúc phần mềm doanh nghiệp.***
