@@ -11,14 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class JavalinServer {
     private Javalin app;
-    // Map Context to ClientHandler to maintain state (like loggedInUserId) per connection
     private final Map<WsContext, ClientHandler> clients = new ConcurrentHashMap<>();
     private final Gson gson = GsonUtil.getGson();
     private final UserService userService = new UserService();
 
     public void start(int port) {
         app = Javalin.create(config -> {
-            // Cấu hình CORS nếu sau này có Web Frontend
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
         }).start(port);
 
@@ -27,9 +25,6 @@ public class JavalinServer {
         System.out.println("  API & WebSocket đang chờ kết nối...");
         System.out.println("=================================================");
 
-        // ==========================================
-        // 1. REST API: Đăng nhập
-        // ==========================================
         app.post("/api/login", ctx -> {
             try {
                 String body = ctx.body();
@@ -41,19 +36,14 @@ public class JavalinServer {
                 User user = userService.handleLoginLogic(username, password, isAdminLogin);
                 UserDTO dto = UserDTO.fromUser(user);
                 
-                // Trả về JSON chuẩn của REST bằng Gson có sẵn
                 ctx.status(200).contentType("application/json").result(gson.toJson(dto));
                 System.out.println("REST: Đăng nhập thành công -> " + username);
             } catch (Exception e) {
-                // Trả về mã lỗi HTTP 401 Unauthorized kèm message
                 ctx.status(401).result(e.getMessage());
                 System.out.println("REST: Đăng nhập thất bại -> " + e.getMessage());
             }
         });
 
-        // ==========================================
-        // 2. WebSocket: Real-time Bidding & Events
-        // ==========================================
         app.ws("/ws/auction", ws -> {
             ws.onConnect(ctx -> {
                 ctx.session.setIdleTimeout(java.time.Duration.ofHours(24));
