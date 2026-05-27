@@ -580,13 +580,15 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             // nhưng INSERT `transaction` lại thất bại => dữ liệu bị mất
             conn.setAutoCommit(false);
 
-            // 1. Kiểm tra đã FINISHED chưa
-            String checkSql = "SELECT status FROM products WHERE id = ?";
+            // 1. Kiểm tra đã FINISHED chưa và lấy seller_id
+            String checkSql = "SELECT status, seller_id FROM products WHERE id = ?";
+            int sellerId = -1;
             try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
                 checkPs.setInt(1, productId);
                 try (ResultSet checkRs = checkPs.executeQuery()) {
                     if (checkRs.next()) {
                         String status = checkRs.getString("status");
+                        sellerId = checkRs.getInt("seller_id");
                         if ("FINISHED".equals(status) || "NO_BID".equals(status)) {
                             System.out.println("[SCHEDULER] Product " + productId + " đã kết thúc trước đó với trạng thái " + status);
                             conn.rollback();
@@ -664,6 +666,19 @@ public class AuctionRepositoryImpl implements AuctionRepository {
             }
 
             System.out.println("[SCHEDULER] Đã trừ tiền người thắng " + winnerId + " (Balance còn: " + newWinnerBalance + ")");
+
+            // ===============================
+            // THANH TOÁN CHO NGƯỜI BÁN
+            // ===============================
+            if (sellerId != -1 && sellerId != winnerId) {
+                String updateSellerSql = "UPDATE user SET balance = balance + ? WHERE id = ?";
+                try (PreparedStatement psSeller = conn.prepareStatement(updateSellerSql)) {
+                    psSeller.setDouble(1, finalPrice);
+                    psSeller.setInt(2, sellerId);
+                    psSeller.executeUpdate();
+                }
+                System.out.println("[SCHEDULER] Đã cộng tiền cho người bán " + sellerId + " số tiền: " + finalPrice);
+            }
 
             // ===============================
             // LƯU Ý: KHÔNG CẦN UNLOCK NGƯỜI THUA

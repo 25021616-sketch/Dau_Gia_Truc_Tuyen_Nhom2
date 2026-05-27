@@ -77,6 +77,10 @@ public class Man_hinh_chinh_Users_Controller extends Base_Admin_Controller imple
                                 for (Item_Card_Controller ctrl : activeControllers) {
                                     if (ctrl != null && ctrl.getAuction() != null && ctrl.getAuction().getAuctionId().equals(rcvAuctionId)) {
                                         ctrl.updatePrice(newPrice);
+                                        if (payload.has("newEndTime")) {
+                                            String newEndTimeStr = payload.get("newEndTime").getAsString();
+                                            ctrl.getAuction().setEndTime(java.time.LocalDateTime.parse(newEndTimeStr));
+                                        }
                                         break;
                                     }
                                 }
