@@ -98,6 +98,23 @@ public class Admin_quan_li_User_Controller extends Base_Admin_Controller {
         SortedList<Member> sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(userTable.comparatorProperty());
         userTable.setItems(sortedData);
+
+        // Bôi đỏ tài khoản bị khóa (BANNED)
+        userTable.setRowFactory(tv -> new TableRow<Member>() {
+            @Override
+            protected void updateItem(Member item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setStyle("");
+                } else {
+                    if ("BANNED".equals(item.getStatus())) {
+                        setStyle("-fx-background-color: #ffcccc;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
     }
 
     private void loadData() {
