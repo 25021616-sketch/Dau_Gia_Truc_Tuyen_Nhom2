@@ -41,6 +41,16 @@ public class LoginUITest extends ApplicationTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    @org.junit.jupiter.api.BeforeEach
+    public void setUp() {
+        interact(() -> {
+            TextField tfUser = lookup("#Ten_dang_nhap").queryAs(TextField.class);
+            javafx.scene.control.PasswordField pfPass = lookup("#Mat_khau").queryAs(javafx.scene.control.PasswordField.class);
+            if (tfUser != null) tfUser.clear();
+            if (pfPass != null) pfPass.clear();
+        });
+    }
+
     @Test
     public void testLoginFormHasRequiredFields() {
         // Kiểm tra TextField đăng nhập tồn tại trong scene
@@ -80,10 +90,21 @@ public class LoginUITest extends ApplicationTest {
     @Test
     public void testEnterUsernameAndPassword() {
         // Nhập tài khoản và mật khẩu
-        clickOn("#Ten_dang_nhap").write("testuser");
-        clickOn("#Mat_khau").write("testpass");
-
         TextField tfUser = lookup("#Ten_dang_nhap").queryAs(TextField.class);
+        javafx.scene.control.PasswordField pfPass = lookup("#Mat_khau").queryAs(javafx.scene.control.PasswordField.class);
+
+        interact(() -> {
+            tfUser.clear();
+            tfUser.requestFocus();
+        });
+        write("testuser");
+
+        interact(() -> {
+            pfPass.clear();
+            pfPass.requestFocus();
+        });
+        write("testpass");
+
         assertEquals("testuser", tfUser.getText(), "TextField phải lưu đúng username đã nhập");
     }
 
