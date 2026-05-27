@@ -46,7 +46,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     @FXML private TextField autoLimitField;
     @FXML private Button btnActivateAutoBid;
 
-    // ===== OWNER MANAGEMENT =====
     @FXML private javafx.scene.layout.VBox ownerActionsBox;
     @FXML private Button btnXoa;
     @FXML private Button btnDangLai;
@@ -72,14 +71,12 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
 
         stepSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTargetPrice());
 
-        // Khởi tạo đồ thị
         bidSeries = new XYChart.Series<>();
         bidSeries.setName("Giá ($)");
         if (bidHistoryChart != null) {
             bidHistoryChart.getData().add(bidSeries);
         }
 
-        // Thiết lập Listener để nhận tin nhắn Broadcast từ Server
         setupNetworkListener();
     }
 
@@ -94,28 +91,22 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                             JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
                             String rcvAuctionId = payload.get("auctionId").getAsString();
                             
-                            // Chỉ cập nhật nếu tin nhắn thuộc về món hàng đang xem
                             if (currentAuction != null && currentAuction.getAuctionId().equals(rcvAuctionId)) {
                                 double newPrice = payload.get("newPrice").getAsDouble();
-                                
-                                // Kiểm tra xem có gia hạn thời gian không (Anti-sniping)
                                 if (payload.has("newEndTime")) {
                                     String newEndTimeStr = payload.get("newEndTime").getAsString();
                                     currentAuction.setEndTime(java.time.LocalDateTime.parse(newEndTimeStr));
                                 }
 
-                                // Cập nhật UI
                                 currentAuction.setCurrentPrice(newPrice);
                                 currentPrice = newPrice;
                                 currentBidLabel.setText(formatter.format(newPrice));
                                 updateTargetPrice();
 
-                                // Cập nhật đồ thị Realtime
                                 if (bidSeries != null) {
                                     String timeNow = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
                                     timeNow = getUniqueTimeStr(timeNow);
                                     bidSeries.getData().add(new XYChart.Data<>(timeNow, newPrice));
-                                    // Giới hạn hiển thị 20 điểm gần nhất cho đỡ rối
                                     if (bidSeries.getData().size() > 20) {
                                         XYChart.Data<String, Number> removed = bidSeries.getData().remove(0);
                                         if (bidHistoryChart != null && bidHistoryChart.getXAxis() instanceof javafx.scene.chart.CategoryAxis) {
@@ -205,20 +196,17 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                             showStyledAlert("Đấu giá tự động", "Hệ thống đã tự động đặt thầu thành công thay cho bạn!", Alert.AlertType.INFORMATION);
                         }
                     } else if ("BALANCE_UPDATED".equals(message.getAction())) {
-                        // Server vừa xử lý xong việc đặt giá -> cập nhật số dư trên header
                         try {
                             com.google.gson.JsonObject balPayload = GsonUtil.getGson().fromJson(message.getPayload(), com.google.gson.JsonObject.class);
                             double newBalance = balPayload.get("balance").getAsDouble();
                             if (Team2_CS2_Auction.Session.Session.currentUser != null) {
                                 Team2_CS2_Auction.Session.Session.currentUser.setBalance(newBalance);
                             }
-                            // Gọi hàm cập nhật số dư ở header (kế thừa từ Base_Admin_Controller)
                             updateBalanceDisplay();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     } else if ("CANCEL_SUCCESS".equals(message.getAction())) {
-                        // Server xác nhận xóa thành công
                         showStyledAlert("Thành công", "Phiên đấu giá đã được xóa thành công!", Alert.AlertType.INFORMATION);
                         if (timeline != null) timeline.stop();
                         nm.removeListener(networkListener);
@@ -268,7 +256,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             bidStepField.setDisable(true);
         }
 
-        // Chạy luồng ngầm để load lịch sử đấu giá từ Database
         new Thread(() -> {
             try {
                 List<Bid> history = auctionService.getBidHistory(auction.getAuctionId());
@@ -280,11 +267,9 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                         bidSeries.getData().clear();
                         
                         if (history.isEmpty()) {
-                            // Nếu chưa có lịch sử, vẽ điểm xuất phát
                             String timeNow = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM\nHH:mm:ss"));
                             bidSeries.getData().add(new XYChart.Data<>(timeNow, currentPrice));
                         } else {
-                            // Chỉ vẽ tối đa 20 điểm cuối cùng để biểu đồ không bị nén quá chật
                             int startIdx = Math.max(0, history.size() - 20);
                             for (int i = startIdx; i < history.size(); i++) {
                                 Bid b = history.get(i);
@@ -303,7 +288,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         updateTargetPrice();
         startCountdown();
 
-        // Hiện phần quản lý nếu user là chủ sản phẩm
         if (Session.currentUser != null && auction.getSeller() != null
                 && Session.currentUser.getId() == auction.getSeller().getId()) {
             isOwnerView = true;
@@ -313,7 +297,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             }
         }
 
-        // Lấy cấu hình Đấu giá tự động của người dùng nếu có
         if (Session.currentUser != null) {
             JsonObject payload = new JsonObject();
             payload.addProperty("auctionId", auction.getAuctionId());
@@ -357,7 +340,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         lblThoiGian.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold; -fx-font-size: 18px;");
     }
 
-    // Hàm phụ: Giúp tạo ra các chuỗi thời gian duy nhất (tránh lỗi Duplicate Category của JavaFX LineChart)
     private String getUniqueTimeStr(String timeStr) {
         if (bidSeries == null) return timeStr;
         String uniqueStr = timeStr;
@@ -394,7 +376,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             Member currentUser = (Member) Team2_CS2_Auction.Session.Session.currentUser;
             double finalPrice = Double.parseDouble(targetPriceLabel.getText().replaceAll("[^\\d]", "")); // Lấy số sạch
 
-            // GỬI LỆNH LÊN SERVER QUA SOCKET, KHÔNG CHẠY DATABASE Ở ĐÂY NỮA
             JsonObject payload = new JsonObject();
             payload.addProperty("auctionId", currentAuction.getAuctionId());
             payload.addProperty("bidAmount", finalPrice);
@@ -406,7 +387,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             }
             
             nm.send("PLACE_BID", payload);
-            // Không cập nhật UI ngay lập tức. Đợi Server Broadcast NEW_BID về thì UI mới cập nhật!
             
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
@@ -416,7 +396,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     @FXML
     private void handleClose(javafx.event.ActionEvent event) {
         if (timeline != null) timeline.stop();
-        // Gỡ bỏ Listener khi thoát khỏi trang này để tránh rác bộ nhớ
         if (networkListener != null) {
             nm.removeListener(networkListener);
         }
@@ -427,7 +406,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
     private void handleXoa(javafx.event.ActionEvent event) {
         if (currentAuction == null || Session.currentUser == null) return;
 
-        // Xác nhận trước khi xóa
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xác nhận xóa");
         confirm.setHeaderText(null);
@@ -443,7 +421,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 payload.addProperty("sellerId", Session.currentUser.getId());
                 payload.addProperty("productName", currentAuction.getItem().getTenSanPham());
                 nm.send("CANCEL_AUCTION", payload);
-                // Quay lại trang chủ sau khi gửi lệnh (response CANCEL_SUCCESS sẽ show alert)
                 if (timeline != null) timeline.stop();
                 if (networkListener != null) nm.removeListener(networkListener);
                 switchScene(event, "Man_hinh_chinh_Users.fxml", "Trang chủ");
@@ -458,7 +435,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
         if (timeline != null) timeline.stop();
         if (networkListener != null) nm.removeListener(networkListener);
 
-        // Chuyển sang màn hình thêm sản phẩm và truyền dữ liệu phiên cũ
         switchSceneWithData(event, "them_san_pham.fxml", "Đăng lại sản phẩm", this.currentAuction);
     }
 
@@ -470,20 +446,17 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
             return;
         }
 
-        // Kiểm tra an toàn tránh lỗi NullPointerException nếu FXML chưa được đồng bộ/rebuild đúng
         if (autoStepsCountField == null || autoLimitField == null) {
             showStyledAlert("Lỗi đồng bộ", "Giao diện đấu giá tự động chưa được tải đúng. Vui lòng Clean và Rebuild lại dự án trong IntelliJ!", Alert.AlertType.ERROR);
             return;
         }
 
         if (isAutoBidActive) {
-            // Hủy kích hoạt Auto Bid
             JsonObject payload = new JsonObject();
             payload.addProperty("auctionId", currentAuction.getAuctionId());
             payload.addProperty("userId", Session.currentUser.getId());
             nm.send("DEACTIVATE_AUTO_BID", payload);
         } else {
-            // Đọc và kiểm tra Số lần bước giá
             String stepStr = autoStepsCountField.getText().trim();
             int stepMult = 1;
             if (!stepStr.isEmpty()) {
@@ -499,7 +472,6 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 }
             }
 
-            // Đọc và kiểm tra Hạn mức tối đa
             String limitStr = autoLimitField.getText().trim().replaceAll("[^\\d\\.]", ""); // Lấy số
             if (limitStr.isEmpty()) {
                 showStyledAlert("Lỗi", "Vui lòng nhập giới hạn tối đa ($)!", Alert.AlertType.ERROR);
@@ -514,14 +486,12 @@ public class Phien_Dau_Gia_Controller extends Base_Admin_Controller implements I
                 return;
             }
 
-            // Logic kiểm tra xem hạn mức có đủ cho mức nhảy đầu tiên không
             double nextBidPrice = currentPrice + (stepMult * currentAuction.getStepPrice());
             if (maxLimit < nextBidPrice) {
                 showStyledAlert("Lỗi", "Giới hạn tối đa phải lớn hơn hoặc bằng giá thầu tiếp theo dự kiến ($" + formatter.format(nextBidPrice) + ")!", Alert.AlertType.ERROR);
                 return;
             }
 
-            // Gửi yêu cầu kích hoạt lên Server
             JsonObject payload = new JsonObject();
             payload.addProperty("auctionId", currentAuction.getAuctionId());
             payload.addProperty("userId", Session.currentUser.getId());
