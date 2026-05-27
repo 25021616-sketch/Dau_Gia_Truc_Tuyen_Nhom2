@@ -52,9 +52,6 @@ public class NetworkManager {
         return webSocket != null && !webSocket.isOutputClosed() && !webSocket.isInputClosed();
     }
 
-    // ==============================================================
-    // 1. REST API Client: Dùng cho các Request/Response đồng bộ
-    // ==============================================================
     public UserDTO login(String host, int port, String username, String password, boolean isAdminLogin) throws Exception {
         this.currentHost = host;
         this.currentPort = port;
@@ -79,9 +76,6 @@ public class NetworkManager {
         }
     }
 
-    // ==============================================================
-    // 2. WebSocket Client: Dùng cho Real-time Bidding & Events
-    // ==============================================================
     public void connect(String host, int port) {
         this.currentHost = host;
         this.currentPort = port;
