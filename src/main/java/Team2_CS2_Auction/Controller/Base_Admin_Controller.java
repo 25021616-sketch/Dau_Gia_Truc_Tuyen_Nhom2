@@ -32,18 +32,13 @@ public abstract class Base_Admin_Controller {
         final String username = Team2_CS2_Auction.Session.Session.currentUser.getUsername();
         final int userId = Team2_CS2_Auction.Session.Session.currentUser.getId();
 
-        // FIX BUG #5: Chạy query DB trên background thread để KHÔNG block JavaFX UI thread
-        // Tránh cảm giác "đơ/lag" mỗi khi click chuyển màn hình
+        // Chạy query trên background thread để không block JavaFX UI thread
         new Thread(() -> {
             try {
                 double balance = userRepository.getBalance(userId);
                 Platform.runLater(() -> {
-                    if (lblUsername != null) {
-                        lblUsername.setText(username);
-                    }
-                    if (lblBalance != null) {
-                        lblBalance.setText(String.format("%.2f $", balance));
-                    }
+                    if (lblUsername != null) lblUsername.setText(username);
+                    if (lblBalance != null) lblBalance.setText(String.format("%.2f $", balance));
                 });
             } catch (Exception e) {
                 System.err.println("[Balance] Lỗi lấy số dư: " + e.getMessage());
@@ -59,11 +54,10 @@ public abstract class Base_Admin_Controller {
         navigate(event, fxmlFileName, title, data);
     }
 
-    // Bộ nhớ đệm lưu trữ các giao diện đã tải (Scene Caching)
+    /** Cache Scene và Controller đã tải để chuyển màn hình không bị lag */
     private static final java.util.Map<String, Parent> sceneCache = new java.util.HashMap<>();
     private static final java.util.Map<String, Object> controllerCache = new java.util.HashMap<>();
 
-    // Lưu lại controller hiện tại đang hiển thị để gọi hook
     private static Object currentController = null;
 
     public static Object getCurrentController() {
@@ -81,7 +75,6 @@ public abstract class Base_Admin_Controller {
                     Object controller = loader.getController();
                     sceneCache.put(fxmlFileName, root);
                     controllerCache.put(fxmlFileName, controller);
-                    System.out.println("⚡ [Tối ưu] Đã tải trước bộ nhớ đệm cho: " + fxmlFileName);
                 }
             } catch (IOException e) {
                 System.err.println("Lỗi tải trước giao diện " + fxmlFileName + ": " + e.getMessage());
@@ -91,7 +84,6 @@ public abstract class Base_Admin_Controller {
 
     private void navigate(ActionEvent event, String fxmlFileName, String title, Object data) {
         try {
-            // 1. Gọi hook dọn dẹp (tạm dừng timer/socket) trước khi rời màn hình cũ
             if (currentController instanceof Base_Admin_Controller) {
                 ((Base_Admin_Controller) currentController).cleanup();
             }
@@ -99,8 +91,7 @@ public abstract class Base_Admin_Controller {
             Parent root = sceneCache.get(fxmlFileName);
             Object controller = controllerCache.get(fxmlFileName);
 
-            // 2. Nếu chưa có trong Cache thì tiến hành nạp từ file FXML
-            // FIX BUG #4: KHÔNG cache Phien_Dau_Gia.fxml vì mỗi lần vào là một phiên khác nhau
+            // Phien_Dau_Gia.fxml không được cache vì mỗi lần vào là một phiên khác nhau
             boolean shouldCache = !"Phien_Dau_Gia.fxml".equals(fxmlFileName);
 
             if (root == null) {
@@ -115,14 +106,11 @@ public abstract class Base_Admin_Controller {
                 }
             }
 
-            // Cập nhật controller hiện tại
             currentController = controller;
 
-            // 3. Chuyển dữ liệu và hiển thị màn hình (Lấy từ Cache nên tức thì 0 giây)
             passDataToController(controller, data);
             displayScene(event, root, title);
 
-            // 4. Gọi hook thức dậy (Resume) để fetch data ngầm sau khi màn hình đã hiện
             if (controller instanceof Base_Admin_Controller) {
                 Base_Admin_Controller baseCtrl = (Base_Admin_Controller) controller;
                 baseCtrl.updateBalanceDisplay();
@@ -130,27 +118,25 @@ public abstract class Base_Admin_Controller {
             }
 
         } catch (java.io.IOException e) {
-            System.err.println("Lỗi trong quá trình nạp giao diện (" + fxmlFileName + "): " + e.getMessage());
+            System.err.println("Lỗi nạp giao diện (" + fxmlFileName + "): " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     /**
-     * Hook gọi ngay trước khi rời màn hình (Tạm dừng tài nguyên)
+     * Hook gọi ngay trước khi rời màn hình — dùng để tạm dừng timer/socket.
      */
-    protected void cleanup() {
-    }
+    protected void cleanup() {}
 
     /**
-     * Hook gọi ngay sau khi màn hình được hiển thị lại từ Cache (Cập nhật dữ liệu ngầm)
+     * Hook gọi ngay sau khi màn hình được hiển thị lại từ Cache — dùng để cập nhật dữ liệu.
      */
-    protected void onResume() {
-    }
+    protected void onResume() {}
 
     private FXMLLoader getFXMLLoader(String fxmlFileName) {
         URL fxmlLocation = getClass().getResource(BASE_PATH + fxmlFileName);
         if (fxmlLocation == null) {
-            System.err.println("Không tìm thấy file FXML tại đường dẫn: " + BASE_PATH + fxmlFileName);
+            System.err.println("Không tìm thấy file FXML: " + BASE_PATH + fxmlFileName);
             return null;
         }
         return new FXMLLoader(fxmlLocation);
@@ -160,11 +146,9 @@ public abstract class Base_Admin_Controller {
         if (data == null || controller == null) return;
 
         if (controller instanceof Phien_Dau_Gia_Controller && data instanceof Auction) {
-            Phien_Dau_Gia_Controller targetController = (Phien_Dau_Gia_Controller) controller;
-            targetController.setAuctionData((Auction) data);
+            ((Phien_Dau_Gia_Controller) controller).setAuctionData((Auction) data);
         } else if (controller instanceof Them_san_pham_controller && data instanceof Auction) {
-            Them_san_pham_controller targetController = (Them_san_pham_controller) controller;
-            targetController.setRelistData((Auction) data);
+            ((Them_san_pham_controller) controller).setRelistData((Auction) data);
         }
     }
 
@@ -172,7 +156,6 @@ public abstract class Base_Admin_Controller {
         Stage stage = getStageFromEvent(event);
 
         if (stage.getScene() == null) {
-            // Lần đầu tiên — tạo Scene mới và fade in
             newRoot.setOpacity(0);
             stage.setScene(new Scene(newRoot));
             stage.setTitle(title);
@@ -180,9 +163,7 @@ public abstract class Base_Admin_Controller {
             stage.show();
             playFadeIn(newRoot);
         } else {
-            // Đã có Scene — FadeOut màn hình cũ rồi swap + FadeIn màn hình mới
             Parent oldRoot = stage.getScene().getRoot();
-
             FadeTransition fadeOut = new FadeTransition(Duration.millis(120), oldRoot);
             fadeOut.setFromValue(1.0);
             fadeOut.setToValue(0.0);
@@ -197,7 +178,7 @@ public abstract class Base_Admin_Controller {
         }
     }
 
-    /** Fade in nhanh 160ms sau khi màn hình mới được gắn vào Scene */
+    /** Fade in 160ms sau khi màn hình mới được gắn vào Scene */
     private void playFadeIn(Parent root) {
         FadeTransition fadeIn = new FadeTransition(Duration.millis(160), root);
         fadeIn.setFromValue(0.0);
@@ -206,11 +187,9 @@ public abstract class Base_Admin_Controller {
     }
 
     private Stage getStageFromEvent(ActionEvent event) {
-        Node sourceNode = (Node) event.getSource();
-        return (Stage) sourceNode.getScene().getWindow();
+        return (Stage) ((Node) event.getSource()).getScene().getWindow();
     }
 
-    // ================== CÁC HÀM XỬ LÝ THANH ĐIỀU HƯỚNG (SIDEBAR & NAVBAR) CHUNG ==================
     @javafx.fxml.FXML
     public void handleQuayLaiTrangChu(ActionEvent event) { switchScene(event, "Man_hinh_chinh_Users.fxml", "Màn hình chính"); }
 
@@ -247,7 +226,6 @@ public abstract class Base_Admin_Controller {
             popupStage.setScene(new Scene(root));
             popupStage.showAndWait();
 
-            // Hàm load lại dữ liệu nếu có, các lớp con có thể override
             onNapTienSuccess();
 
         } catch (IOException e) {
@@ -255,7 +233,7 @@ public abstract class Base_Admin_Controller {
         }
     }
 
-    // Hàm ảo để các lớp con override nếu muốn load lại data sau khi nạp tiền
+    /** Gọi sau khi popup nạp tiền đóng lại — các lớp con có thể override để reload data */
     protected void onNapTienSuccess() {
         updateBalanceDisplay();
     }
