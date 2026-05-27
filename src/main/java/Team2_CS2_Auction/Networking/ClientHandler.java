@@ -34,10 +34,9 @@ public class ClientHandler {
         return loggedInUserId;
     }
 
-    // Được gọi bởi JavalinServer mỗi khi nhận tin nhắn WebSocket
+    /** Xử lý tin nhắn WebSocket đến từ client */
     public void handleIncomingMessage(String jsonMessage) {
         try {
-            System.out.println("WebSocket Server nhận: " + jsonMessage);
             NetworkMessage message = gson.fromJson(jsonMessage, NetworkMessage.class);
             handleMessage(message);
         } catch (Exception e) {
@@ -50,11 +49,10 @@ public class ClientHandler {
         
         switch (action) {
             case "LOGIN_WEBSOCKET":
-                // Gửi một dummy action nếu client muốn báo cho server biết session này thuộc về user nào (sau khi REST login)
+                // Gắn session WebSocket này với userId sau khi REST login thành công
                 try {
                     JsonObject payload = gson.fromJson(message.getPayload(), JsonObject.class);
                     this.loggedInUserId = payload.get("userId").getAsInt();
-                    System.out.println("WebSocket Session gắn với User ID: " + this.loggedInUserId);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -67,13 +65,9 @@ public class ClientHandler {
                     double bidAmount = bidPayload.get("bidAmount").getAsDouble();
                     int userId = bidPayload.get("userId").getAsInt();
 
-                    // Tạo dummy Member chỉ với ID để qua bài test của Service
                     Member dummyBidder = new Member(userId, "Dummy", "HIDDEN", "000");
-
-                    // Gọi Database và nhận newEndTime (nếu có gia hạn)
                     java.time.LocalDateTime newEndTime = auctionService.placeBid(dummyBidder, auctionId, bidAmount);
 
-                    // THÀNH CÔNG: BROADCAST GIÁ MỚI cho toàn mạng
                     JsonObject broadcastPayload = new JsonObject();
                     broadcastPayload.addProperty("auctionId", auctionId);
                     broadcastPayload.addProperty("newPrice", bidAmount);
@@ -83,20 +77,14 @@ public class ClientHandler {
                     }
 
                     server.broadcast("NEW_BID", broadcastPayload);
-                    System.out.println("Đã broadcast giá mới cho " + auctionId + ": $" + bidAmount);
-
-                    // Gửi số dư mới nhất cho người vừa đặt giá
                     sendBalanceUpdated(userId);
 
-                    // Kích hoạt tiến trình thầu tự động trên luồng phụ
                     int prodId = Integer.parseInt(auctionId.replace("AUC_", ""));
                     new Thread(() -> triggerAutoBidsStart(prodId, userId, bidAmount)).start();
 
                 } catch (Exception e) {
-                    // THẤT BẠI: Chỉ gửi lỗi cho người đặt giá này
                     NetworkMessage errResponse = new NetworkMessage("BID_FAILED", e.getMessage());
                     sendMessage(gson.toJson(errResponse));
-                    System.out.println("Đặt giá thất bại: " + e.getMessage());
                 }
                 break;
             case "GET_AUTO_BID_STATUS":
@@ -160,22 +148,17 @@ public class ClientHandler {
                 }
                 break;
             case "CANCEL_AUCTION":
-                // Chủ sản phẩm xóa phiên đấu giá
                 try {
                     JsonObject cancelPayload = gson.fromJson(message.getPayload(), JsonObject.class);
                     String cancelAuctionId = cancelPayload.get("auctionId").getAsString();
                     int cancelSellerId = cancelPayload.get("sellerId").getAsInt();
 
-                    // 1. Lấy danh sách bidders trước khi hủy để thông báo
                     List<Integer> bidders = auctionRepository.getDistinctBidderIds(cancelAuctionId);
-
-                    // 2. Hủy phiên
                     auctionService.cancelAuction(cancelAuctionId);
 
-                    // 3. Thông báo cho từng bidder biết SP bị xóa / đăng lại
                     String productName = cancelPayload.has("productName") ? cancelPayload.get("productName").getAsString() : "Không rõ";
                     String type = (cancelPayload.has("relist") && cancelPayload.get("relist").getAsBoolean()) ? "RELISTED" : "DELETED";
-                    
+
                     JsonObject notif = new JsonObject();
                     notif.addProperty("auctionId", cancelAuctionId);
                     notif.addProperty("type", type);
@@ -186,35 +169,25 @@ public class ClientHandler {
                         }
                     }
 
-                    // 4. Thông báo cho toàn bộ để reload danh sách
                     server.broadcast("PRODUCT_UPDATED", "");
-
-                    // 5. Xác nhận cho seller
                     sendMessage(gson.toJson(new NetworkMessage("CANCEL_SUCCESS", cancelAuctionId)));
-                    System.out.println("[EVENT] Phiên " + cancelAuctionId + " đã bị hủy bởi seller " + cancelSellerId);
                 } catch (Exception e) {
                     sendMessage(gson.toJson(new NetworkMessage("CANCEL_FAILED", "Lỗi: " + e.getMessage())));
                 }
                 break;
 
             case "RELIST_AUCTION":
-                // Chủ sản phẩm đăng lại phiên đấu giá với thời gian mới
                 try {
                     JsonObject relistPayload = gson.fromJson(message.getPayload(), JsonObject.class);
                     String oldAuctionId = relistPayload.get("auctionId").getAsString();
                     int relistSellerId = relistPayload.get("sellerId").getAsInt();
 
-                    // 1. Lấy danh sách bidders cũ để thông báo
                     List<Integer> oldBidders = auctionRepository.getDistinctBidderIds(oldAuctionId);
-
-                    // 2. Lấy thông tin SP gốc
                     Auction oldAuction = auctionService.getAuctionById(oldAuctionId);
                     if (oldAuction == null) throw new Exception("Không tìm thấy phiên đấu giá!");
 
-                    // 3. Hủy phiên cũ
                     auctionService.cancelAuction(oldAuctionId);
 
-                    // 4. Tạo phiên mới với thời gian mới
                     String newStartStr = relistPayload.get("startTime").getAsString();
                     String newEndStr   = relistPayload.get("endTime").getAsString();
                     java.time.LocalDateTime newStart = java.time.LocalDateTime.parse(newStartStr);
@@ -233,7 +206,6 @@ public class ClientHandler {
                         newEnd
                     );
 
-                    // 5. Thông báo bidders cũ biết SP đã thay đổi
                     JsonObject notifRelist = new JsonObject();
                     notifRelist.addProperty("auctionId", oldAuctionId);
                     notifRelist.addProperty("type", "RELISTED");
@@ -244,21 +216,14 @@ public class ClientHandler {
                         }
                     }
 
-                    // 6. Broadcast toàn mạng để Admin thấy SP mới (chờ duyệt)
                     server.broadcast("PRODUCT_UPDATED", "");
-
-                    // 7. Xác nhận cho seller
                     sendMessage(gson.toJson(new NetworkMessage("RELIST_SUCCESS", "Đã đăng lại thành công!")));
-                    System.out.println("[EVENT] Phiên " + oldAuctionId + " đã được đăng lại bởi seller " + relistSellerId);
                 } catch (Exception e) {
                     sendMessage(gson.toJson(new NetworkMessage("RELIST_FAILED", "Lỗi: " + e.getMessage())));
                 }
                 break;
 
             case "PRODUCT_UPDATED":
-                // Nhận tín hiệu từ 1 client (Admin duyệt/từ chối, User đăng SP)
-                // và phát thanh (Broadcast) lại cho TẤT CẢ client biết để reload danh sách
-                System.out.println("[EVENT] Nhận PRODUCT_UPDATED -> Broadcast toàn mạng");
                 server.broadcast("PRODUCT_UPDATED", "");
                 break;
             case "TEST":
@@ -280,7 +245,6 @@ public class ClientHandler {
             if (currentAuction == null) return;
             double stepPrice = currentAuction.getStepPrice();
             double actualCurrentPrice = (currentPrice < 0) ? currentAuction.getCurrentPrice() : currentPrice;
-            
             triggerAutoBids(productId, currentWinnerId, actualCurrentPrice, stepPrice);
         } catch (Exception e) {
             e.printStackTrace();
@@ -288,11 +252,10 @@ public class ClientHandler {
     }
 
     private void triggerAutoBids(int productId, int currentWinnerId, double currentPrice, double stepPrice) {
-        // VÒNG LẶP thay vì đệ quy: tránh tạo vô số Thread và gây cạn kiệt pool kết nối DB
-        // Giới hạn tối đa 50 vòng để đề phòng vòng thầu vô tận (2 người cùng auto-bid nhau)
+        // Sử dụng vòng lặp thay vì đệ quy để tránh tạo vô số Thread và cạn kiệt pool kết nối DB.
+        // Giới hạn tối đa 50 vòng để ngăn vòng thầu vô tận khi 2 người cùng auto-bid nhau.
         final int MAX_ROUNDS = 50;
         int round = 0;
-
         int winnerId = currentWinnerId;
         double price = currentPrice;
 
@@ -311,12 +274,10 @@ public class ClientHandler {
             boolean anyBidPlaced = false;
 
             for (AutoBid activeBid : activeBids) {
-                // Bỏ qua nếu người đang dẫn đầu (không tự thầu đè lên chính mình)
                 if (activeBid.getUserId() == winnerId) continue;
 
                 double targetPrice = price + (activeBid.getStepMultiplier() * stepPrice);
 
-                // Kiểm tra giới hạn tối đa
                 if (targetPrice > activeBid.getMaxLimit()) {
                     autoBidRepository.deactivate(activeBid.getUserId(), productId);
                     server.sendToUser(activeBid.getUserId(), "AUTO_BID_CANCELLED",
@@ -324,7 +285,6 @@ public class ClientHandler {
                     continue;
                 }
 
-                // Kiểm tra số dư khả dụng
                 double balance = activeBid.getBalance();
                 double lockedBalance = userRepository.getLockedBalance(activeBid.getUserId());
                 double availableBalance = balance - lockedBalance;
@@ -335,7 +295,6 @@ public class ClientHandler {
                     continue;
                 }
 
-                // Hợp lệ → Đặt thầu tự động
                 Member activeBidder = new Member(activeBid.getUserId(), "User_" + activeBid.getUserId(), "123456", "000");
                 try {
                     java.time.LocalDateTime newEndTime = auctionService.placeBid(activeBidder, auctionId, targetPrice);
@@ -351,13 +310,11 @@ public class ClientHandler {
 
                     server.sendToUser(activeBid.getUserId(), "AUTO_BID_PLACED", String.valueOf(targetPrice));
                     sendBalanceUpdatedToUser(activeBid.getUserId());
-                    System.out.println("[AUTO-BID] Vòng " + round + " - User " + activeBid.getUserId() + " → $" + targetPrice);
 
-                    // Cập nhật trạng thái cho vòng kế tiếp
                     winnerId = activeBid.getUserId();
                     price = targetPrice;
                     anyBidPlaced = true;
-                    break; // Chỉ xử lý 1 auto-bid mỗi vòng, vòng kế tiếp sẽ xử lý tiếp
+                    break; // Chỉ xử lý 1 auto-bid mỗi vòng, vòng kế tiếp xử lý tiếp
 
                 } catch (Exception ex) {
                     System.err.println("[AUTO-BID] Lỗi đặt thầu: " + ex.getMessage());
@@ -367,7 +324,6 @@ public class ClientHandler {
                 }
             }
 
-            // Không có ai thầu thêm → kết thúc vòng lặp
             if (!anyBidPlaced) break;
         }
 
