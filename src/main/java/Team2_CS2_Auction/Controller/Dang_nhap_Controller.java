@@ -32,7 +32,6 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
 
     @FXML
     public void initialize() {
-        // Tải trước giao diện trang chủ trong bộ nhớ đệm ngay khi vừa mở màn hình đăng nhập để tối ưu tốc độ vào
         preLoadScene(FXML_USER_HOME);
     }
 
@@ -41,10 +40,8 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
         if (lblMessage != null) {
             lblMessage.setText("");
         }
-        // Phục hồi lại trạng thái của các nút bấm và ô nhập liệu
         restoreLoginUIState();
 
-        // Reset trạng thái hiển thị mật khẩu về mặc định (ẩn) khi quay lại
         isPasswordVisible = false;
         if (txtMatKhauShow != null) {
             txtMatKhauShow.setText("");
@@ -65,7 +62,6 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
     @FXML
     private void handleTogglePassword(ActionEvent event) {
         if (isPasswordVisible) {
-            // Đang hiển thị mật khẩu -> Chuyển sang ẩn mật khẩu
             Mat_khau.setText(txtMatKhauShow.getText());
 
             txtMatKhauShow.setVisible(false);
@@ -81,7 +77,6 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
 
             isPasswordVisible = false;
         } else {
-            // Đang ẩn mật khẩu -> Chuyển sang hiển thị mật khẩu
             txtMatKhauShow.setText(Mat_khau.getText());
 
             Mat_khau.setVisible(false);
@@ -103,7 +98,6 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
     private void handleLogin(ActionEvent event) {
         String username = Ten_dang_nhap.getText().trim();
         
-        // Đồng bộ mật khẩu trước khi xử lý đăng nhập
         String password;
         if (isPasswordVisible) {
             password = txtMatKhauShow.getText();
@@ -123,7 +117,6 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
             return;
         }
 
-        // Tối ưu hóa UI: Vô hiệu hóa các trường nhập và thay đổi văn bản nút để thông báo tiến trình cho người dùng
         if (btnLogin != null) {
             btnLogin.setDisable(true);
             btnLogin.setText("ĐANG ĐĂNG NHẬP...");
@@ -137,26 +130,21 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
             lblMessage.setText("⏳ Đang kết nối tới máy chủ...");
         }
 
-        // Khởi động Background Thread để làm việc với mạng (Loại bỏ hoàn toàn cảm giác lag đơ)
         new Thread(() -> {
             NetworkManager nm = NetworkManager.getInstance();
             String host = Team2_CS2_Auction.Main.getLastServerHost();
             int port = Team2_CS2_Auction.Main.getLastServerPort();
 
             try {
-                // 1. Gọi REST API để xác thực đăng nhập
                 UserDTO userDTO = nm.login(host, port, username, password, isAdminLogin);
                 User user = userDTO.toUser();
                 Session.currentUser = user;
 
-                // 2. Mở kết nối WebSocket sau khi đăng nhập thành công.
-                // Nếu đã có kết nối cũ (ví dụ: login lần 2), ngắt kết nối cũ trước.
                 if (nm.isConnected()) {
                     nm.disconnect();
                 }
                 nm.connect(host, port);
                 
-                // Báo cho Server biết session WebSocket này thuộc về user nào
                 JsonObject wsPayload = new JsonObject();
                 wsPayload.addProperty("userId", user.getId());
                 nm.send("LOGIN_WEBSOCKET", wsPayload);
@@ -185,7 +173,6 @@ public class Dang_nhap_Controller extends Base_Admin_Controller {
                 });
 
             } catch (Exception e) {
-                // Đăng nhập thất bại hoặc lỗi kết nối
                 Platform.runLater(() -> {
                     restoreLoginUIState();
                     if (lblMessage != null) {
