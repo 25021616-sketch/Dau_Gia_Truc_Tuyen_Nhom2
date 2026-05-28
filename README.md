@@ -422,9 +422,9 @@ java -jar client.jar
 
 | Vai trò | Username | Password |
 |---------|----------|----------|
-| Admin | `admin` | `admin` |
-| Member | `user1` | `123456` |
-| Member | `user2` | `123456` |
+| Admin | `HaiDuong` | `haiduong123` |
+| Member | `HDAnh` | `ducanh1234` |
+| Member | `HDAdz` | `danh123` |
 
 ---
 
@@ -449,6 +449,6 @@ java -jar client.jar
 *Bộ tài liệu hoàn thiện dùng để đánh giá và chấm điểm đồ án:*
 
 - **📄 Báo cáo PDF:** [Đang cập nhật - Điền URL Google Drive tại đây]
-- **🎬 Video Demo:** [Đang cập nhật - Điền URL YouTube tại đây]
+- **🎬 Video Demo:** [[https://drive.google.com/file/d/1ZCykEmtjCcu0WkQrAwJQCvEF-lPQoLJ5/view?usp=sharing](video_demo)]
 
 ---
