@@ -422,9 +422,9 @@ java -jar client.jar
 
 | Vai trò | Username | Password |
 |---------|----------|----------|
-| Admin | `admin` | `admin` |
-| Member | `user1` | `123456` |
-| Member | `user2` | `123456` |
+| Admin | `HaiDuong` | `haiduong123` |
+| Member | `HoangDucAnh` | `danh123` |
+| Member | `HDAdz` | `danh123` |
 
 ---
 
