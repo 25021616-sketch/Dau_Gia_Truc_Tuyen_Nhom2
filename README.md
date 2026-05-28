@@ -328,19 +328,33 @@ classDiagram
 
 ---
 
-## 💿 5. Vị trí các file .jar
+## 💿 5. Vị trí và Link tải các file .jar
 
-Nhóm đã tự build sẵn hai file **Fat JAR** (đã bao gồm toàn bộ thư viện bên trong), đặt trực tiếp tại **thư mục gốc** của repository:
+Nhóm đã tự build sẵn hai file **Fat JAR** (đã bao gồm toàn bộ thư viện bên trong), commit trực tiếp vào **thư mục gốc** của repository. Giáo viên có thể tải về theo 2 cách:
 
-| File | Vai trò | Lệnh chạy |
-|------|---------|-----------|
-| `server.jar` | Máy chủ (Backend) | `java -jar server.jar` |
-| `client.jar` | Máy khách (Frontend / UI) | `java -jar client.jar` |
+### 📥 Cách A: Tải file JAR trực tiếp (Không cần clone)
 
-> **Lưu ý:** Nếu muốn tự build lại từ source, chạy lệnh sau tại thư mục gốc dự án. Hai file `server.jar` và `client.jar` sẽ được tạo lại tại thư mục gốc:
-> ```bash
-> mvn clean package -DskipTests
-> ```
+| File | Vai trò | Link tải thẳng |
+|------|---------|----------------|
+| `server.jar` | Máy chủ (Backend) | **[⬇️ Tải server.jar](https://github.com/25021616-sketch/Dau_Gia_Truc_Tuyen_Nhom2/raw/main/server.jar)** |
+| `client.jar` | Máy khách (Frontend / UI) | **[⬇️ Tải client.jar](https://github.com/25021616-sketch/Dau_Gia_Truc_Tuyen_Nhom2/raw/main/client.jar)** |
+
+> Sau khi tải về, đặt `server.jar` và `client.jar` cùng một thư mục, sau đó làm theo **Mục 6** để chạy.
+
+### 📥 Cách B: Clone toàn bộ repository
+
+```bash
+git clone https://github.com/25021616-sketch/Dau_Gia_Truc_Tuyen_Nhom2.git
+cd Dau_Gia_Truc_Tuyen_Nhom2
+# Hai file server.jar và client.jar đã có sẵn ở đây
+```
+
+### 🔨 Cách C: Tự build lại từ source code
+
+```bash
+mvn clean package -DskipTests
+# server.jar và client.jar sẽ được tạo tại thư mục gốc
+```
 
 ---
 
