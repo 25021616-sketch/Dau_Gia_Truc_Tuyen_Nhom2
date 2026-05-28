@@ -449,6 +449,6 @@ java -jar client.jar
 *Bộ tài liệu hoàn thiện dùng để đánh giá và chấm điểm đồ án:*
 
 - **📄 Báo cáo PDF:** [Đang cập nhật - Điền URL Google Drive tại đây]
-- **🎬 Video Demo:** [[https://drive.google.com/file/d/1ZCykEmtjCcu0WkQrAwJQCvEF-lPQoLJ5/view?usp=sharing](video_demo)]
+- **🎬 Video Demo:** [https://drive.google.com/file/d/1ZCykEmtjCcu0WkQrAwJQCvEF-lPQoLJ5/view?usp=sharing]
 
 ---
