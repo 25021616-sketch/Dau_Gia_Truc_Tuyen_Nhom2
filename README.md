@@ -52,18 +52,20 @@ Dự án này triển khai một **hệ thống đấu giá trực tuyến** nơ
 
 ## 3. Cấu trúc thư mục chính (MVC Architecture)
 
-Dự án tuân thủ nghiêm ngặt mô hình **MVC (Model-View-Controller)** và thiết kế phân lớp, giúp tách bạch nghiệp vụ và giao diện.
+Dự án tuân thủ nghiêm ngặt mô hình **MVC (Model-View-Controller)** và thiết kế phân lớp. Cấu trúc mã nguồn chính nằm trong thư mục `src/main/java/Team2_CS2_Auction/`:
 
-| Tên thư mục / Package | Vai trò và Chức năng |
-| :--- | :--- |
-| `Controller/` | Chứa các lớp điều khiển sự kiện giao diện (JavaFX Controllers). Nơi tiếp nhận thao tác người dùng (click, nhập liệu) và cập nhật thay đổi lên màn hình. |
-| `Model/` | Định nghĩa các thực thể dữ liệu (User, Product, Auction, Bid, AutoBid...). Sử dụng Kế thừa, Đa hình và tính Đóng gói để phân biệt vai trò/sản phẩm. |
-| `Networking/` | Chứa lõi giao tiếp mạng Client-Server. Bao gồm lớp `JavalinServer` lắng nghe kết nối, `ClientHandler` xử lý từng người dùng, và hệ thống UDP Discovery tự động dò IP. |
-| `Repository/` | Tầng Data Access (DAO). Chứa toàn bộ các câu lệnh thực thi truy vấn SQL (INSERT, SELECT, UPDATE) giao tiếp trực tiếp với MySQL thông qua JDBC. |
-| `Service/` | Tầng Nghiệp Vụ (Business Logic). Nhận dữ liệu từ Controller, kiểm tra các điều kiện ràng buộc (số dư đủ không, mật khẩu đúng không) trước khi ra lệnh cho Repository. |
-| `Session/` | Quản lý phiên đăng nhập cục bộ trên RAM của máy khách. Lưu trữ đối tượng `CurrentUser` để phân quyền UI (hiện menu Admin hay Member). |
-| `util/` | Tập hợp các lớp công cụ tĩnh (Static Helpers): Tạo kết nối Database, Hash mật khẩu, hiển thị thông báo lỗi (AlertUtils). |
-| `src/main/resources/` | Chứa toàn bộ tài nguyên giao diện FXML, CSS tùy biến, hình ảnh và thư mục `db/migration` chứa file SQL để Flyway tự tạo bảng tự động. |
+```text
+Team2_CS2_Auction/
+├── Controller/     # Bộ điều khiển sự kiện giao diện (JavaFX Controllers)
+├── Model/          # Định nghĩa thực thể dữ liệu (User, Product, Auction, Bid...)
+├── Networking/     # Lõi giao tiếp mạng Client-Server (Socket, WebSocket, JSON)
+├── Repository/     # Lớp truy xuất cơ sở dữ liệu JDBC (DAO)
+├── Service/        # Lớp nghiệp vụ xử lý logic (Business Logic)
+├── Session/        # Quản lý phiên đăng nhập cục bộ trên RAM của máy khách
+└── util/           # Các tiện ích hệ thống (Database Connection, Hash, Alerts)
+```
+
+*Ngoài ra: Thư mục `src/main/resources/` chứa toàn bộ tài nguyên giao diện FXML, CSS, hình ảnh và thư mục `db/migration` chứa các script SQL khởi tạo tự động của Flyway.*
 
 ## 4. Sơ đồ Kiến trúc & Lớp (Class Diagram)
 
@@ -205,11 +207,18 @@ classDiagram
 
 ### 4.5. Giải thích chi tiết kiến trúc Hệ thống
 
-Hệ thống được thiết kế theo nguyên lý phân lớp rõ ràng (Separation of Concerns) nhằm tối ưu khả năng mở rộng và bảo trì:
-*   **Lớp Mô Hình Dữ Liệu (Domain Models)**: Định nghĩa các thực thể nghiệp vụ. `User` là lớp cha cho `Admin` và `Member` (thực thi `ISeller` để đăng bán và `IBidder` để đặt giá). `Item` đại diện cho sản phẩm, khởi tạo linh hoạt qua `ItemFactory` (áp dụng *Factory Pattern*). `Auction` và `Bid` quản lý trạng thái đấu giá thực tế.
-*   **Lớp Lưu Trữ (Repository Layer)**: Tương tác trực tiếp với MySQL database bằng JDBC. Tách biệt rõ nhiệm vụ truy vấn người dùng (`UserRepository`), sản phẩm (`ProductRepository`), đấu giá tự động (`AutoBidRepository`) và phiên đấu giá (`AuctionRepositoryImpl`).
-*   **Lớp Nghiệp Vụ (Service Layer)**: Điều phối xử lý nghiệp vụ. `AuctionServiceImpl` quản lý quy trình tạo phiên đấu giá và đặt giá thầu (bao gồm cả cơ chế kiểm tra và khóa/mở khóa số dư tài khoản). `UserService` quản lý đăng ký, đăng nhập và nạp tiền.
-*   **Lớp Giao Tiếp Mạng (Networking)**: Sử dụng TCP Sockets và định dạng Gson JSON để truyền nhận dữ liệu thời gian thực giữa `AuctionServer` (phía Server, xử lý đa luồng qua các `ClientHandler`) và `NetworkManager` (phía Client JavaFX). Tiến trình ngầm `AuctionScheduler` kiểm tra và tự động đóng phiên đấu giá khi hết giờ.
+Hệ thống được thiết kế theo nguyên lý **Phân tách trách nhiệm (Separation of Concerns)**, tổ chức thành các tầng (layer) riêng biệt nhằm tối ưu khả năng bảo trì và mở rộng:
+
+> 🗄️ **1. Tầng Dữ liệu (Domain Models & Repositories)**
+> - **Domain Models:** Các thực thể như `User`, `Item`, `Auction` được thiết kế hướng đối tượng (OOP). Áp dụng **Factory Pattern** (`ItemFactory`) để khởi tạo đa dạng loại sản phẩm.
+> - **Repository Layer:** Tương tác trực tiếp với MySQL qua JDBC. Tách biệt hoàn toàn các tác vụ truy vấn, cập nhật cho Người dùng, Sản phẩm và Phiên đấu giá.
+
+> ⚙️ **2. Tầng Nghiệp vụ (Service Layer)**
+> - Đóng vai trò trung tâm điều phối luồng dữ liệu. Lớp `AuctionServiceImpl` kiểm soát vòng đời phiên đấu giá, thuật toán đặt giá thầu, quản lý và đảm bảo an toàn tuyệt đối số dư tài khoản của thành viên.
+
+> 🌐 **3. Tầng Giao tiếp (Networking & Schedulers)**
+> - **Client-Server Communication:** Giao tiếp TCP tốc độ cao, đóng gói dữ liệu dạng **JSON** qua Google Gson. Máy chủ xử lý đa luồng (Multi-threading) thông qua các `ClientHandler`.
+> - **AuctionScheduler:** Luồng hệ thống chạy ngầm đếm ngược thời gian, tự động chốt sổ và thanh toán tiền khi phiên đấu giá kết thúc mà không cần bất kỳ sự can thiệp nào của con người.
 
 ---
 
