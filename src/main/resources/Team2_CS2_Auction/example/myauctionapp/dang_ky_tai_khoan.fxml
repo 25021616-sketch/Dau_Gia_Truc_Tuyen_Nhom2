@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<StackPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #f1f5f9;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Dang_ki_tai_khoan_Controller">
+<StackPane style="-fx-background-color: #f1f5f9;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Team2_CS2_Auction.Controller.Dang_ki_tai_khoan_Controller">
     <children>
         <HBox alignment="CENTER" maxHeight="520.0" maxWidth="720.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 30, 0, 0, 15);">
             <children>

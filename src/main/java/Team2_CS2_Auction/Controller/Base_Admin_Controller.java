@@ -171,7 +171,7 @@ public abstract class Base_Admin_Controller {
                 newRoot.setOpacity(0);
                 stage.getScene().setRoot(newRoot);
                 stage.setTitle(title);
-                stage.setMaximized(true);
+                // Giữ nguyên trạng thái cửa sổ (maximize/thường) không ép buộc
                 playFadeIn(newRoot);
             });
             fadeOut.play();
