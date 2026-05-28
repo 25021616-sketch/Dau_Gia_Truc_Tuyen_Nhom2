@@ -159,8 +159,8 @@ public abstract class Base_Admin_Controller {
             newRoot.setOpacity(0);
             stage.setScene(new Scene(newRoot));
             stage.setTitle(title);
-            stage.setMaximized(true);
             stage.show();
+            stage.setMaximized(true);
             playFadeIn(newRoot);
         } else {
             Parent oldRoot = stage.getScene().getRoot();

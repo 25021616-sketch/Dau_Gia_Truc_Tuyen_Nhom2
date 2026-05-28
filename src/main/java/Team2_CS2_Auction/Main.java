@@ -128,8 +128,8 @@ public class Main extends Application {
                 stage.hide();
                 stage.setTitle("Hệ Thống Đấu Giá Trực Tuyến - ĐHQGHN");
                 stage.setScene(scene);
-                stage.setMaximized(true);
                 stage.show();
+                stage.setMaximized(true);
 
             } catch (IOException e) {
                 System.err.println("Lỗi: Không tìm thấy file FXML!");
