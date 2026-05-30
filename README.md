@@ -360,12 +360,6 @@ mvn clean package -DskipTests
 
 ## 🎯 6. Hướng dẫn chạy Server/Client theo thứ tự cụ thể
 
-> ⚠️ **Bắt buộc:** MySQL Server phải đang chạy ngầm trước khi thực hiện các bước dưới đây.
-
-Luồng kiến trúc bắt buộc **Máy chủ (Server) phải được khởi động trước**, sau đó mới chạy các Client.
-
----
-
 ### ▶️ Cách 1: Chạy từ file `.jar` đã build sẵn (Khuyến nghị cho giáo viên chấm)
 
 Mở **3 cửa sổ Terminal** tại thư mục gốc của dự án (nơi chứa `server.jar` và `client.jar`):
